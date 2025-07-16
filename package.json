@@ -12,6 +12,7 @@
     "inngest": "inngest-cli@latest dev",
     "postinstall": "prisma generate"
   },
+
   "dependencies": {
     "@clerk/nextjs": "^6.25.0",
     "@e2b/code-interpreter": "^1.5.1",
