@@ -1,6 +1,6 @@
 import { Navbar } from "@/modules/home/ui/components/navbar"
 
-export const Layout = ({children}: {children: React.ReactNode}) => {
+ const Layout = ({children}: {children: React.ReactNode}) => {
      return (
           <main className="flex flex-col h-screen max-h-screen overflow-y-auto">
                <Navbar />
