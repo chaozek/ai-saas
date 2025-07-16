@@ -1,0 +1,17 @@
+# This is a config for E2B sandbox template.
+# You can use template ID (hnxu8asng3oe15enjx6l) or template name (vibe-ai) to create a sandbox:
+
+# Python SDK
+# from e2b import Sandbox, AsyncSandbox
+# sandbox = Sandbox("vibe-ai") # Sync sandbox
+# sandbox = await AsyncSandbox.create("vibe-ai") # Async sandbox
+
+# JS SDK
+# import { Sandbox } from 'e2b'
+# const sandbox = await Sandbox.create('vibe-ai')
+
+team_id = "71fae0ae-a09f-4882-bbc4-808d03ade310"
+start_cmd = "/compile_page.sh"
+dockerfile = "e2b.Dockerfile"
+template_name = "vibe-ai"
+template_id = "hnxu8asng3oe15enjx6l"
