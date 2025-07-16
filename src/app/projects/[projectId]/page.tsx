@@ -1,7 +1,6 @@
 import { ProjectViews } from "@/modules/projects/ui/views/project-views";
 import { getQueryClient, trpc } from "@/trcp/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { Suspense } from "react";
 
 const ProjectPage = async ({params}: {params: {projectId: string}}) => {
      const {projectId} = await params;

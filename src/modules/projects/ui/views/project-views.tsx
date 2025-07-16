@@ -1,17 +1,16 @@
 "use client"
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { SignedIn, SignedOut, SignInButton, SignOutButton, UserButton, useAuth } from "@clerk/nextjs"
+import { SignedIn, UserButton, useAuth } from "@clerk/nextjs"
 
 import { MessagesContainer } from "../components/messages-container";
 import { Suspense, useState } from "react";
 import { Fragment } from "@/generated/prisma";
 import { FragmentWeb } from "../components/fragment-web";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CodeIcon, CrownIcon, EyeIcon, PlusIcon } from "lucide-react"
+import { CodeIcon, CrownIcon, EyeIcon } from "lucide-react"
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CodeView } from "@/components/code-view";
 import { FileCollection, FileExplorer } from "@/components/file-explorer";
 import { useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";

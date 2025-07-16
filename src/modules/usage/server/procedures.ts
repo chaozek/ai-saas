@@ -20,7 +20,7 @@ export const usageRouter = createTRPCRouter({
      }),
      consumeCredits: protectedProcedure.input(z.object({
           amount: z.number()
-     })).mutation(async ({ctx, input}) => {
+     })).mutation(async ({}) => {
           const credits = await consumeCredits()
           return credits
      })

@@ -85,7 +85,7 @@ export const FileExplorer = ({files}: {files: FileCollection}) => {
         if(files[path]) {
           setSelectedFile(path)
         }
-     }, [])
+     }, [files])
      return (
           <ResizablePanelGroup direction="horizontal">
                <ResizablePanel defaultSize={30} minSize={20} className="bg-sidebar">

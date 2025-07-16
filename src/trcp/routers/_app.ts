@@ -1,5 +1,4 @@
-import { baseProcedure, createTRPCRouter } from '@/trcp/init';
-import { inngest } from '@/inngest/client';
+import { createTRPCRouter } from '@/trcp/init';
 import { messagesRouter } from '@/modules/messages/server/procedures';
 import { projectsRouter } from '@/modules/projects/server/procedures';
 import { usageRouter } from '@/modules/usage/server/procedures';
