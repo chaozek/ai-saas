@@ -226,7 +226,7 @@ export const buildAgent = inngest.createFunction(
         sandboxUrl = await step.run("get-sandbox-url", async () => {
           const sandbox = await getSandbox(sandboxId);
           const host = sandbox.getHost(3000);
-          return `http://${host}`;
+          return `https://${host}`;
         });
         await step.run("save-result", async () => {
           if(isError) {
