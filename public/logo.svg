@@ -1,1 +1,25 @@
-<svg id="logo-44" width="41" height="40" viewBox="0 0 41 40" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M20 0C8.9543 0 0 8.9543 0 20C11.0457 20 20 11.0457 20 0Z" fill="#df9b8e" class="ccustom"></path> <path d="M20 40C31.0457 40 40 31.0457 40 20C28.9543 20 20 28.9543 20 40Z" fill="#df9b8e" class="ccustom"></path> <path d="M20 0C31.0457 0 40 8.9543 40 20C28.9543 20 20 11.0457 20 0Z" fill="#C96342" class="ccompli2"></path> <path d="M20 40C8.9543 40 -9.65645e-07 31.0457 0 20C11.0457 20 20 28.9543 20 40Z" fill="#C96342" class="ccompli2"></path> </svg>
+<!--?xml version="1.0" encoding="UTF-8" standalone="no"?-->
+<svg width="300" height="80" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- AI chip -->
+  <g transform="translate(10,10)">
+    <rect width="60" height="60" rx="10" fill="#0f172a"></rect>
+    <rect x="10" y="10" width="40" height="40" rx="6" fill="#1e293b"></rect>
+    <path d="M20 30h20 M30 20v20" stroke="#38bdf8" stroke-width="2"></path>
+    <circle cx="30" cy="30" r="3" fill="#38bdf8"></circle>
+    
+    <!-- Pins -->
+    <g stroke="#38bdf8" stroke-width="2">
+      <line x1="-5" y1="15" x2="0" y2="15"></line>
+      <line x1="-5" y1="30" x2="0" y2="30"></line>
+      <line x1="-5" y1="45" x2="0" y2="45"></line>
+      <line x1="60" y1="15" x2="65" y2="15"></line>
+      <line x1="60" y1="30" x2="65" y2="30"></line>
+      <line x1="60" y1="45" x2="65" y2="45"></line>
+    </g>
+  </g>
+
+  <!-- Logo text -->
+  <text x="85" y="55" font-family="Segoe UI, sans-serif" font-size="32" font-weight="bold" fill="#0f172a">
+    ai<tspan fill="#38bdf8">engine</tspan>.cz
+  </text>
+</svg>

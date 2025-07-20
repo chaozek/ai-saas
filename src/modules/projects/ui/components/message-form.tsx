@@ -13,7 +13,7 @@ import { Usage } from "@/modules/home/ui/components/usage";
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
-     value: z.string().min(1, {message: "Message is required"})
+     value: z.string().min(1, {message: "Zpráva je povinná"})
 })
 
      export const MessageForm = ({projectId}: {projectId: string}) => {
@@ -89,7 +89,7 @@ console.log(usage, "USAGE")
                           <kbd className="px-1.5 py-0.5 rounded bg-muted-foreground/20 text-xs font-semibold tracking-wide border border-muted-foreground/20">
                                <span className="font-sans">&#8984;</span>Enter
                           </kbd>
-                          <span className="ml-1">to send</span>
+                          <span className="ml-1">k odeslání</span>
                    </div>
                    <Button variant="outline" size="icon" disabled={isDisabled} className={cn(isDisabled && "opacity-50")}>
                     {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <SendIcon className="w-4 h-4" />}

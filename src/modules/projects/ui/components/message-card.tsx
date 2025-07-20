@@ -18,7 +18,7 @@ const UserMessage = ({content, createdAt}: {content: string, createdAt: Date}) =
 
 const FragmentCard = ({isActiveFragment, fragment, onFragmentClick}: {isActiveFragment: boolean, fragment: Fragment, onFragmentClick: () => void}) => {
      return <div className={cn("flex items-center gap-2 mt-2 p-2 rounded-lg transition-colors justify-between  border border-muted-foreground/10", isActiveFragment ? "bg-accent/30 border-primary" : "bg-muted/50 hover:bg-accent/20 cursor-pointer") } onClick={onFragmentClick}>
-          <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate max-w-[120px]">{fragment.title || "Untitled"} preview</p>
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate max-w-[120px]">{fragment.title || "Bez názvu"} náhled</p>
           <Button asChild variant="outline" size="icon"  >
             <Link href={fragment.sandboxUrl} target="_blank">
             <ExternalLinkIcon className="w-4 h-4" />
@@ -36,7 +36,7 @@ const AssistantMessage = ({content, createdAt, type, isActiveFragment, fragment,
              : "bg-muted border-muted-foreground/10"
          )}>
          <div className="flex items-center gap-2 mb-1">
-         <Image src="/logo.svg" alt="agent" width={24} height={24} className="w-6 h-6 rounded-full bg-white border" />
+         <Image src="/logo.svg" alt="asistent" width={24} height={24} className="w-6 h-6 rounded-full bg-white border" />
          <p className="text-xs text-muted-foreground opacity-70">{format(createdAt, "MMM d, yyyy h:mm a")}</p>
          </div>
           <p className="text-base leading-relaxed break-words">{content}</p>

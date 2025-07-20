@@ -14,8 +14,8 @@ export const Navbar = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-x-3">
           <Link href="/" className="flex items-center gap-x-2">
-            <Image src="/logo.svg" alt="Logo" width={32} height={32} />
-            <span className="font-bold text-lg tracking-tight">AI SaaS</span>
+            <Image src="/logo.svg" alt="Logo" width={150} height={32} />
+            <span className="font-bold text-lg tracking-tight"></span>
           </Link>
         </div>
         <div className="flex items-center gap-x-2">

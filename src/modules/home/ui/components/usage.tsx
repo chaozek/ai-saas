@@ -14,12 +14,12 @@ export const Usage = ({remainingPoints, msBeforeNext}: {remainingPoints: number,
      return <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 justify-between w-full">
                <span className="text-sm text-muted-foreground">
-                    Resets in: {formatDistanceToNow(new Date(Date.now() + msBeforeNext), { includeSeconds: true })}
+                    Obnoví se za: {formatDistanceToNow(new Date(Date.now() + msBeforeNext), { includeSeconds: true })}
                     </span>
                <span className="text-sm text-muted-foreground">
-                    Points: {remainingPoints}
+                    Body: {remainingPoints}
                     </span>
-                    {!hasProAccess && <Button variant="outline" size="sm" className="w-fit h-fit flex items-center gap-1 flex-row"><Link href="/pricing" className="flex items-center gap-1 p-1"> <CreditCard /> Buy Credits</Link></Button>}
+                    {!hasProAccess && <Button variant="outline" size="sm" className="w-fit h-fit flex items-center gap-1 flex-row"><Link href="/pricing" className="flex items-center gap-1 p-1"> <CreditCard /> Koupit kredity</Link></Button>}
 
           </div>
      </div>

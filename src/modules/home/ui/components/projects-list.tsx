@@ -12,7 +12,7 @@ export const ProjectsList = () => {
      const {data: projects} = useQuery(trcp.projects.getmany.queryOptions())
      if(projects?.length === 0) return null
      return <div className="w-full bg-white dark:bg-sidebar rounded-xl p-8 border flex flex-col gap-y-6 sm:gap-4">
-          <h2 className="text-2xl font-bold">Saved projects</h2>
+          <h2 className="text-2xl font-bold">Uložené projekty</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects?.length === 0 ? (
                <div className="flex flex-col gap-y-2 bg-white dark:bg-sidebar rounded-xl p-4 border">

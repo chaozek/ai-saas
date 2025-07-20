@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useMemo, useState } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./ui/resizable"
 import { CodeView } from "./code-view"
 import "./code-view/code-theme.css"
@@ -73,10 +73,26 @@ return (
 )
 }
 export const FileExplorer = ({files}: {files: FileCollection}) => {
+     console.log(files, "filesfilesfiles")
+     const fileKeys = Object.keys(files)
+
      const [selectedFile, setSelectedFile] = useState<string | null>(()=>{
-          const fileKeys = Object.keys(files)
           return fileKeys.length > 0 ? fileKeys[0] : null
      })
+     console.log(fileKeys, "KEYSS")
+
+     // Aktualizuj selectedFile když se změní files
+     useEffect(() => {
+          if (fileKeys.length > 0) {
+               // Pokud je selectedFile null nebo už neexistuje, vyber první soubor
+               if (!selectedFile || !files[selectedFile]) {
+                    setSelectedFile(fileKeys[0])
+               }
+          } else {
+               setSelectedFile(null)
+          }
+     }, [files, selectedFile, fileKeys])
+
      const treeData = useMemo(()=>{
           return convertFilesToTreeItems(files)
      }, [files])
@@ -96,7 +112,7 @@ export const FileExplorer = ({files}: {files: FileCollection}) => {
                     { selectedFile && files[selectedFile] ? <div className="flex h-full flex-col text-muted-foreground">
                          <div className="border-b bg-sidebar px-4 py-2 flex justify-between items-center gap-x-2">
                               <FileBreadcrumb filePath={selectedFile} />
-                              <Hint text="Copy to clipboard" side="bottom">
+                              <Hint text="Kopírovat do schránky" side="bottom">
                                    <Button variant="outline" size="icon" className="ml-auto" disabled={false} onClick={()=>{
                                         navigator.clipboard.writeText(files[selectedFile])
                                    }}>
@@ -107,7 +123,7 @@ export const FileExplorer = ({files}: {files: FileCollection}) => {
                          <div className="flex-1 overflow-auto">
                               <CodeView lang={getLanguageExtension(selectedFile)} code={files[selectedFile]} />
                          </div>
-                    </div> : <div className="flex h-full items-center justify-center text-muted-foreground">Select a file to view</div>}
+                    </div> : <div className="flex h-full items-center justify-center text-muted-foreground">Vyberte soubor k zobrazení</div>}
                </ResizablePanel>
           </ResizablePanelGroup>
      )

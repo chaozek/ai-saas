@@ -21,15 +21,15 @@ const [activeFragment, setActiveFragment] = useState<Fragment | null>(null)
  const {has} = useAuth()
  const hasProAccess = has?.({plan: "pro"})
  const [isHydrated, setIsHydrated] = useState(false);
-
+console.log(activeFragment, "activeFragment")
  useEffect(() => {
    setIsHydrated(true);
  }, []);
      return <div className="h-screen w-screen flex flex-col">
           <ResizablePanelGroup direction="horizontal">
                <ResizablePanel defaultSize={35} minSize={20} className=" flex flex-col min-h-0">
-                    <ErrorBoundary fallback={<div>Error</div>}>
-                    <Suspense fallback={<div>Loading...</div>}>
+                    <ErrorBoundary fallback={<div>Chyba</div>}>
+                    <Suspense fallback={<div>Načítání...</div>}>
                     <MessagesContainer activeFragment={activeFragment} setActiveFragment={setActiveFragment} projectId={projectId} />
                     </Suspense>
                     </ErrorBoundary>
@@ -39,8 +39,8 @@ const [activeFragment, setActiveFragment] = useState<Fragment | null>(null)
                 <Tabs defaultValue="preview" className="h-full">
                          <div className="flex items-center justify-between mx-2 mt-2">
                            <TabsList>
-                             <TabsTrigger value="preview" className="flex items-center gap-2">Preview <EyeIcon className="w-4 h-4" /></TabsTrigger>
-                             <TabsTrigger value="code">Code <CodeIcon className="w-4 h-4" /></TabsTrigger>
+                             <TabsTrigger value="preview" className="flex items-center gap-2">Náhled <EyeIcon className="w-4 h-4" /></TabsTrigger>
+                             <TabsTrigger value="code">Kód <CodeIcon className="w-4 h-4" /></TabsTrigger>
                            </TabsList>
                         <div className="flex items-center gap-2">
                         {!hasProAccess && (

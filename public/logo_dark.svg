@@ -1,0 +1,25 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<svg width="300" height="80" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- AI chip -->
+  <g transform="translate(10,10)">
+    <rect width="60" height="60" rx="10" fill="#1e293b"></rect>
+    <rect x="10" y="10" width="40" height="40" rx="6" fill="#334155"></rect>
+    <path d="M20 30h20 M30 20v20" stroke="#67e8f9" stroke-width="2"></path>
+    <circle cx="30" cy="30" r="3" fill="#67e8f9"></circle>
+    
+    <!-- Pins -->
+    <g stroke="#67e8f9" stroke-width="2">
+      <line x1="-5" y1="15" x2="0" y2="15"></line>
+      <line x1="-5" y1="30" x2="0" y2="30"></line>
+      <line x1="-5" y1="45" x2="0" y2="45"></line>
+      <line x1="60" y1="15" x2="65" y2="15"></line>
+      <line x1="60" y1="30" x2="65" y2="30"></line>
+      <line x1="60" y1="45" x2="65" y2="45"></line>
+    </g>
+  </g>
+
+  <!-- Text -->
+  <text x="85" y="55" font-family="Segoe UI, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">
+    ai<tspan fill="#67e8f9">engine</tspan>.cz
+  </text>
+</svg>

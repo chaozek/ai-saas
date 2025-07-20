@@ -34,8 +34,8 @@ const lastMessage = messages[messages.length - 1]
 const isLastMessageUser = lastMessage?.role === "USER"
      return (
       <div className="flex flex-col h-full max-h-[80vh] rounded-2xl border border-muted-foreground/10 bg-background/80 shadow-md overflow-hidden">
-          <ErrorBoundary fallback={<div>Error</div>}>
-            <Suspense fallback={<div>Loading...</div>}>
+          <ErrorBoundary fallback={<div>Chyba</div>}>
+            <Suspense fallback={<div>Načítání...</div>}>
             <ProjectHeader projectId={projectId} />
             </Suspense>
           </ErrorBoundary>

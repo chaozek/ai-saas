@@ -36,16 +36,45 @@ export const buildAgent = inngest.createFunction(
         formattedMessages.push({
           type: "text",
           role: message.role === "ASSISTANT" ? "assistant" : "user",
-          content: ` ${index + 1} . ${message.content} - always keep previous design and only modify user required change`
+          content: ` ${index + 1} . ${message.content}`
         })
       }
       return formattedMessages.reverse()
      })
+
+
+     const { existingFiles, existingSandboxId } = await step.run("get-existing-files-and-sandbox", async () => {
+       const lastFragment = await prisma.fragment.findFirst({
+         where: {
+           message: {
+             projectId: event.data.projectId
+           }
+         },
+         orderBy: {
+           createdAt: "desc"
+         },
+         include: {
+           message: true
+         }
+       });
+
+       if (lastFragment) {
+         return {
+           existingFiles: lastFragment.files as Record<string, string> || {},
+           existingSandboxId: lastFragment.sandboxId || null
+         };
+       }
+       return {
+         existingFiles: {},
+         existingSandboxId: null
+       };
+     });
+
      const state = createState(
       {
         summary: "",
-        files: {},
-
+        files: existingFiles,
+        hasExistingProject: Object.keys(existingFiles).length > 0,
       },{
         messages: previousMessages
       }
@@ -53,14 +82,31 @@ export const buildAgent = inngest.createFunction(
       let sandboxId: string;
 
       try {
-        sandboxId = await step.run("get-sandbox-id", async () => {
-          const sandbox = await Sandbox.create("vibe-ai");
-          await sandbox.setTimeout(60_000 * 10 * 3)
-          return sandbox.sandboxId;
-        });
+
+        if (existingSandboxId) {
+          sandboxId = existingSandboxId;
+          console.log(`Using existing sandbox: ${sandboxId}`);
+        } else {
+          sandboxId = await step.run("create-new-sandbox", async () => {
+            const sandbox = await Sandbox.create("vibe-ai");
+            await sandbox.setTimeout(60_000 * 5)
+            console.log(`Created new sandbox: ${sandbox.sandboxId}`);
+            return sandbox.sandboxId;
+          });
+        }
+
+
+        if (!existingSandboxId && Object.keys(existingFiles).length > 0) {
+          await step.run("load-existing-files-to-sandbox", async () => {
+            const sandbox = await getSandbox(sandboxId);
+            for (const [path, content] of Object.entries(existingFiles)) {
+              await sandbox.files.write(path, content as string);
+            }
+          });
+        }
       } catch (error: any) {
-        console.error("Failed to create sandbox:", error);
-        throw new Error(`Failed to create sandbox: ${error.message}`);
+        console.error("Failed to create/use sandbox:", error);
+        throw new Error(`Failed to create/use sandbox: ${error.message}`);
       }
 
       const builder = createAgent({
@@ -113,32 +159,31 @@ export const buildAgent = inngest.createFunction(
               ),
             }),
             handler: async ({files}, {step, network}) => {
-              const newFiles = await step?.run("createOrUpdateFiles", async () => {
-               try {
-                const updatedFiles = await network.state.data.files || {};
-                const sandbox = await getSandbox(sandboxId);
-                for (const file of files) {
-                  await sandbox.files.write(file.path, file.content);
-                  updatedFiles[file.path] = file.content;
+              return await step?.run("createOrUpdateFiles", async () => {
+                try {
+                  const updatedFiles = network.state.data.files || {};
+                  const sandbox = await getSandbox(sandboxId);
+                  for (const file of files) {
+                    await sandbox.files.write(file.path, file.content);
+                    updatedFiles[file.path] = file.content;
+                  }
+                  network.state.data.files = updatedFiles;
+                  console.log("Updated files in state:", Object.keys(updatedFiles));
+                  return `Successfully updated ${files.length} files`;
+                } catch (error: any) {
+                  console.error(error);
+                  return `Error creating or updating files: ${error.message}`;
                 }
-                return updatedFiles;
-               } catch (error: any) {
-                console.error(error);
-                return `Error creating or updating files: ${error.message}`;
-              }
-            })
-            if (typeof newFiles === "object") {
-              network.state.data.files = newFiles
-            }
-
-          }}),
+              });
+            },
+          }),
           createTool({
             name: "readFiles",
             description: "Read files from the sandbox",
             parameters: z.object({
-              files: z.array(z.string() ),
+              files: z.array(z.string()),
             }),
-            handler: async ({files}, {step, network}) => {
+            handler: async ({files}, {step}) => {
               return await step?.run("readFiles", async () => {
                 try {
                   const sandbox = await getSandbox(sandboxId);
@@ -152,9 +197,10 @@ export const buildAgent = inngest.createFunction(
                   console.error(error);
                   return `Error reading files: ${error.message}`;
                 }
-              })
-            }
+              });
+            },
           }),
+
         ],
         lifecycle: {
           onResponse: async ({result, network}) => {
@@ -172,7 +218,7 @@ export const buildAgent = inngest.createFunction(
       const network = createNetwork({
         name: "coding-agent-network",
         agents: [builder],
-        maxIter: 15,
+        maxIter: 25, // Zvýšeno z 15 na 25
         defaultState: state,
         router: async ({network}) => {
           const summary = network.state.data.summary;
@@ -183,7 +229,77 @@ export const buildAgent = inngest.createFunction(
         }
       });
 
-      const result = await network.run(event.data.value, {state});
+            const result = await network.run(event.data.value, {state});
+
+      console.log("Network run completed, sandboxId:", sandboxId);
+      console.log("Current state files:", Object.keys(result.state.data.files || {}));
+
+      // Načti všechny soubory ze sandboxu na konci
+      const allFiles = await step.run("get-all-files-from-sandbox", async () => {
+        console.log("Starting to get all files from sandbox...");
+        try {
+          const sandbox = await getSandbox(sandboxId);
+          console.log("Got sandbox, listing files...");
+          const files = await sandbox.files.list("/");
+          console.log("Files list result:", files);
+          const fileContents: Record<string, string> = {};
+
+          for (const fileInfo of files) {
+            try {
+              console.log("Reading file:", fileInfo.name);
+              const content = await sandbox.files.read(fileInfo.name);
+              fileContents[fileInfo.name] = content;
+              console.log("Successfully read file:", fileInfo.name);
+            } catch (error) {
+              console.warn(`Could not read file ${fileInfo.name}:`, error);
+            }
+          }
+
+          console.log("All files from sandbox:", Object.keys(fileContents));
+          return fileContents;
+        } catch (error) {
+          console.error("Error getting files from sandbox:", error);
+          return {};
+        }
+      });
+
+      console.log("All files loaded:", Object.keys(allFiles));
+      console.log("All files content:", allFiles);
+
+      // Aktualizuj stav s načtenými soubory
+      result.state.data.files = allFiles;
+
+      // Fallback: pokud nejsou žádné soubory, zkus načíst alespoň základní soubory
+      if (Object.keys(allFiles).length === 0) {
+        console.log("No files found, trying fallback...");
+        try {
+          const sandbox = await getSandbox(sandboxId);
+          const fallbackFiles = ["app/page.tsx", "app/layout.tsx", "package.json"];
+          const fallbackContents: Record<string, string> = {};
+
+          for (const filePath of fallbackFiles) {
+            try {
+              const content = await sandbox.files.read(filePath);
+              fallbackContents[filePath] = content;
+              console.log("Fallback: read file", filePath);
+            } catch (error) {
+              console.log("Fallback: could not read", filePath);
+            }
+          }
+
+          if (Object.keys(fallbackContents).length > 0) {
+            result.state.data.files = fallbackContents;
+            console.log("Using fallback files:", Object.keys(fallbackContents));
+          }
+        } catch (error) {
+          console.error("Fallback failed:", error);
+        }
+      }
+
+      if (!result.state.data.summary) {
+        console.warn("Agent did not complete task with <task_summary>, forcing completion");
+        result.state.data.summary = "<task_summary>Task completed but agent did not provide proper summary</task_summary>";
+      }
       const fragmentTitleGenerator = createAgent({
         name: "fragment-title-generator",
         system: FRAGMENT_TITLE_PROMPT ,
@@ -229,6 +345,13 @@ export const buildAgent = inngest.createFunction(
           return `https://${host}`;
         });
         await step.run("save-result", async () => {
+          console.log("=== SAVING TO DATABASE ===");
+          console.log("Result state data:", result.state.data);
+          console.log("Files object:", result.state.data.files);
+          console.log("Files type:", typeof result.state.data.files);
+          console.log("Files keys:", Object.keys(result.state.data.files || {}));
+          console.log("Files stringified:", JSON.stringify(result.state.data.files));
+
           if(isError) {
             await prisma.message.create({
               data: {
@@ -249,6 +372,7 @@ export const buildAgent = inngest.createFunction(
                 create: {
                   title: generateFragmentTitle(),
                   sandboxUrl,
+                  sandboxId,
                   files: result.state.data.files || {},
                 },
               },

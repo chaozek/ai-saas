@@ -13,9 +13,9 @@ export default function PricingPage() {
                <div>
                     <Image src="/logo.svg" alt="logo" width={100} height={100} />
                </div>
-               <h1 className="text-2xl font-bold">Pricing</h1>
+               <h1 className="text-2xl font-bold">Ceník</h1>
                <p className="text-sm text-muted-foreground">
-                    No credit card required. Cancel anytime.
+                    Kreditní karta není vyžadována. Zrušte kdykoliv.
                </p>
           <PricingTable
           appearance={{

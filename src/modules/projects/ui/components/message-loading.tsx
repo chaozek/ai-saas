@@ -3,13 +3,13 @@ import { useEffect, useState } from "react"
 
 export const MessageLoading = () => {
      const messages = [
-          "Generating...",
-          "Thinking...",
-          "Analyzing...",
-          "Processing...",
-          "Creating...",
-          "Preparing...",
-          "Loading...",
+          "Generování...",
+          "Přemýšlím...",
+          "Analyzuji...",
+          "Zpracovávám...",
+          "Vytvářím...",
+          "Připravuji...",
+          "Načítám...",
      ]
      const [currentMessagesIndex, setCurrentMessagesIndex] = useState(0)
 
@@ -21,7 +21,7 @@ export const MessageLoading = () => {
      }, [messages.length])
           const shimmerMessages = <p className="text-sm text-muted-foreground animate-pulse">{messages[currentMessagesIndex]}</p>
      return <div className="flex gap-2 justify-center items-center p-4">
-          <Image src="/logo.svg" alt="Loading" width={18} height={18} className="w-4 h-4" />
+          <Image src="/logo.svg" alt="Načítání" width={18} height={18} className="w-4 h-4" />
           {shimmerMessages}
      </div>
 }

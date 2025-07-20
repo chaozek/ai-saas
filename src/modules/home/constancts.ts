@@ -1,50 +1,50 @@
 export const PROJECT_TEMPLATES = [
      {
        emoji: "🎬",
-       title: "Build a Netflix clone",
+       title: "Vytvoř Netflix klon",
        prompt:
-         "Build a Netflix-style homepage with a hero banner (use a nice, dark-mode compatible gradient here), movie sections, responsive cards, and a modal for viewing details using mock data and local state. Use dark mode.",
+         "Vytvoř Netflix-style homepage s hero bannerem (použij pěkný gradient kompatibilní s tmavým režimem), sekcemi filmů, responzivními kartami a modálním oknem pro zobrazení detailů pomocí mock dat a lokálního stavu. Použij tmavý režim.",
      },
      {
        emoji: "📦",
-       title: "Build an admin dashboard",
+       title: "Vytvoř admin dashboard",
        prompt:
-         "Create an admin dashboard with a sidebar, stat cards, a chart placeholder, and a basic table with filter and pagination using local state. Use clear visual grouping and balance in your design for a modern, professional look.",
+         "Vytvoř admin dashboard s postranním panelem, statistikami, placeholder pro graf a základní tabulku s filtrem a stránkováním pomocí lokálního stavu. Použij jasné vizuální seskupení a rovnováhu v designu pro moderní, profesionální vzhled.",
      },
      {
        emoji: "📋",
-       title: "Build a kanban board",
+       title: "Vytvoř kanban tabuli",
        prompt:
-         "Build a kanban board with drag-and-drop using react-beautiful-dnd and support for adding and removing tasks with local state. Use consistent spacing, column widths, and hover effects for a polished UI.",
+         "Vytvoř kanban tabuli s drag-and-drop pomocí react-beautiful-dnd a podporou pro přidávání a odebírání úkolů s lokálním stavem. Použij konzistentní rozestupy, šířky sloupců a hover efekty pro elegantní UI.",
      },
      {
        emoji: "🗂️",
-       title: "Build a file manager",
+       title: "Vytvoř správce souborů",
        prompt:
-         "Build a file manager with folder list, file grid, and options to rename or delete items using mock data and local state. Focus on spacing, clear icons, and visual distinction between folders and files.",
+         "Vytvoř správce souborů se seznamem složek, mřížkou souborů a možnostmi přejmenování nebo smazání položek pomocí mock dat a lokálního stavu. Zaměř se na rozestupy, jasné ikony a vizuální rozlišení mezi složkami a soubory.",
      },
      {
        emoji: "📺",
-       title: "Build a YouTube clone",
+       title: "Vytvoř YouTube klon",
        prompt:
-         "Build a YouTube-style homepage with mock video thumbnails, a category sidebar, and a modal preview with title and description using local state. Ensure clean alignment and a well-organized grid layout.",
+         "Vytvoř YouTube-style homepage s mock náhledy videí, postranním panelem kategorií a modálním náhledem s názvem a popisem pomocí lokálního stavu. Zajisti čisté zarovnání a dobře organizované rozložení mřížky.",
      },
      {
        emoji: "🛍️",
-       title: "Build a store page",
+       title: "Vytvoř stránku obchodu",
        prompt:
-         "Build a store page with category filters, a product grid, and local cart logic to add and remove items. Focus on clear typography, spacing, and button states for a great e-commerce UI.",
+         "Vytvoř stránku obchodu s filtry kategorií, mřížkou produktů a lokální logikou košíku pro přidávání a odebírání položek. Zaměř se na jasnou typografii, rozestupy a stavy tlačítek pro skvělé e-commerce UI.",
      },
      {
        emoji: "🏡",
-       title: "Build an Airbnb clone",
+       title: "Vytvoř Airbnb klon",
        prompt:
-         "Build an Airbnb-style listings grid with mock data, filter sidebar, and a modal with property details using local state. Use card spacing, soft shadows, and clean layout for a welcoming design.",
+         "Vytvoř Airbnb-style mřížku nabídek s mock daty, postranním panelem filtrů a modálním oknem s detaily nemovitosti pomocí lokálního stavu. Použij rozestupy karet, jemné stíny a čisté rozložení pro přívětivý design.",
      },
      {
        emoji: "🎵",
-       title: "Build a Spotify clone",
+       title: "Vytvoř Spotify klon",
        prompt:
-         "Build a Spotify-style music player with a sidebar for playlists, a main area for song details, and playback controls. Use local state for managing playback and song selection. Prioritize layout balance and intuitive control placement for a smooth user experience. Use dark mode.",
+         "Vytvoř Spotify-style hudební přehrávač s postranním panelem pro playlisty, hlavní oblastí pro detaily písní a ovládacími prvky přehrávání. Použij lokální stav pro správu přehrávání a výběru písní. Prioritizuj rovnováhu rozložení a intuitivní umístění ovládacích prvků pro plynulý uživatelský zážitek. Použij tmavý režim.",
      }
    ] as const;

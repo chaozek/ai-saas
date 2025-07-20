@@ -8,12 +8,12 @@ export default function Page() {
    <div className="flex flex-col max-w-5xl mx-auto w-full">
     <section className="space-y-6 py-[16vh] 2xl:py-48">
      <div className="flex flex-col items-center gap-4">
-     <Image src="/logo.svg" alt="logo" width={50} height={50} />
+     <Image src="/logo.svg" alt="logo" width={200} height={100} />
      <h1 className="text-4xl font-bold">
-      Your AI-powered coding assistant.
+      Váš AI-asistent pro programování.
      </h1>
      <p className="text-lg text-muted-foreground">
-      Code faster with AI-powered coding assistant
+      Programujte rychleji s AI-asistentem pro kódování
      </p>
      </div>
 <div className="max-w-3xl mx-auto w-full">

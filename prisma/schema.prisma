@@ -43,6 +43,7 @@ model Fragment {
   message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   messageId String   @unique
   sandboxUrl String?
+  sandboxId  String?
 }
 
 model Project {
