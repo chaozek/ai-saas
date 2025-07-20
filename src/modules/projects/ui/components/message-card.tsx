@@ -3,7 +3,7 @@ import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card"
 import { MessageRole, MessageType, Fragment } from "@/generated/prisma"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
-import Image from "next/image"
+import { Logo } from "@/components/ui/logo"
 import Link from "next/link"
 import { ExternalLinkIcon } from "lucide-react"
 
@@ -36,7 +36,7 @@ const AssistantMessage = ({content, createdAt, type, isActiveFragment, fragment,
              : "bg-muted border-muted-foreground/10"
          )}>
          <div className="flex items-center gap-2 mb-1">
-         <Image src="/logo.svg" alt="asistent" width={24} height={24} className="w-6 h-6 rounded-full bg-white border" />
+         <Logo alt="asistent" width={24} height={24} className="w-6 h-6 rounded-full bg-white border" />
          <p className="text-xs text-muted-foreground opacity-70">{format(createdAt, "MMM d, yyyy h:mm a")}</p>
          </div>
           <p className="text-base leading-relaxed break-words">{content}</p>

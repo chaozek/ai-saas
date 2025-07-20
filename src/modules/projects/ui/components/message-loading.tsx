@@ -1,4 +1,4 @@
-import Image from "next/image"
+import { Logo } from "@/components/ui/logo"
 import { useEffect, useState } from "react"
 
 export const MessageLoading = () => {
@@ -21,7 +21,7 @@ export const MessageLoading = () => {
      }, [messages.length])
           const shimmerMessages = <p className="text-sm text-muted-foreground animate-pulse">{messages[currentMessagesIndex]}</p>
      return <div className="flex gap-2 justify-center items-center p-4">
-          <Image src="/logo.svg" alt="Načítání" width={18} height={18} className="w-4 h-4" />
+          <Logo alt="Načítání" width={18} height={18} className="w-4 h-4" />
           {shimmerMessages}
      </div>
 }
