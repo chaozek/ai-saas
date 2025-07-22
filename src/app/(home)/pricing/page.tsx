@@ -10,8 +10,8 @@ import Link from "next/link"
 const pricingPlans = [
   {
     name: "Starter",
-    description: "Perfect for beginners starting their fitness journey",
-    price: "Free",
+    description: "Ideální pro začátečníky na začátku své fitness cesty",
+    price: "Zdarma",
     period: "forever",
     features: [
       "AI-powered fitness assessment",
@@ -22,44 +22,44 @@ const pricingPlans = [
     ],
     icon: <Target className="w-6 h-6" />,
     popular: false,
-    cta: "Get Started Free"
+    cta: "Začít zdarma"
   },
   {
     name: "Pro",
-    description: "For serious fitness enthusiasts who want personalized coaching",
+    description: "Pro seriózní fitness entuziasty, kteří chtějí osobní koučování",
     price: "$19",
-    period: "per month",
+    period: "za měsíc",
     features: [
-      "Everything in Starter",
-      "8-week personalized plans",
-      "Advanced progress analytics",
-      "Nutrition guidance",
-      "Workout modifications",
-      "Priority support",
-      "Mobile app access"
+      "Vše v Starter",
+      "8-týdenní osobně přizpůsobené plány",
+      "Pokročilé analýzy progresu",
+      "Nutriční doporučení",
+      "Pracovní plány s modifikacemi",
+      "Prioritní podpora",
+      "Přístup k mobilní aplikaci"
     ],
     icon: <Zap className="w-6 h-6" />,
     popular: true,
-    cta: "Start Free Trial"
+    cta: "Vyzkoušet zdarma"
   },
   {
     name: "Elite",
-    description: "Ultimate fitness coaching with premium features",
+    description: "Ultimate fitness coaching s premium funkcemi",
     price: "$39",
-    period: "per month",
+    period: "za měsíc",
     features: [
-      "Everything in Pro",
-      "12-week advanced programs",
-      "1-on-1 coaching sessions",
-      "Custom meal plans",
-      "Recovery tracking",
-      "Video form analysis",
-      "24/7 priority support",
-      "Exclusive content library"
+      "Vše v Pro",
+      "12-týdenní pokročilé programy",
+      "1-na-1 konzultace",
+      "Vlastní plány na jídlo",
+      "Sledování obnovy",
+      "Videový analytický formulář",
+      "24/7 prioritní podpora",
+      "Výhradní knihovna obsahu"
     ],
     icon: <Crown className="w-6 h-6" />,
     popular: false,
-    cta: "Start Free Trial"
+    cta: "Vyzkoušet zdarma"
   }
 ];
 
@@ -76,12 +76,12 @@ export default function PricingPage() {
               <span className="text-2xl">💪</span>
             </div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-              Choose Your Fitness Journey
+              Vyberte si svou fitness cestu
             </h1>
           </div>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Start with our free assessment and choose the plan that fits your goals.
-            No credit card required for free plans.
+            Začněte s naším bezplatným vyšetřením a vyberte si tarif, který odpovídá vašim cílům.
+            Žádná kreditní karta není potřeba pro bezplatné plány.
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export default function PricingPage() {
             >
               {plan.popular && (
                 <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white">
-                  Most Popular
+                  Nejoblíbenější
                 </Badge>
               )}
 
@@ -121,7 +121,7 @@ export default function PricingPage() {
                     )}
                   </div>
                   {plan.period === "forever" && (
-                    <p className="text-sm text-gray-500 mt-1">No credit card required</p>
+                    <p className="text-sm text-gray-500 mt-1">Žádná kreditní karta není potřeba</p>
                   )}
                 </div>
 
@@ -151,48 +151,48 @@ export default function PricingPage() {
 
         {/* FAQ Section */}
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-bold text-center mb-8">Nejčastější dotazy</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Can I cancel anytime?</CardTitle>
+                <CardTitle className="text-lg">Můžu se zrušit kdykoli?</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Yes! You can cancel your subscription at any time. Your access will continue until the end of your billing period.
+                  Ano! Můžete zrušit své předplatné v jakýkoliv čas. Vaše přístupové právo pokračuje do konce vašeho fakturačního období.
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">What if I'm not satisfied?</CardTitle>
+                <CardTitle className="text-lg">Co když nejsem spokojen?</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  We offer a 30-day money-back guarantee. If you're not happy with your results, we'll refund your subscription.
+                  Nabízíme 30denní záruku vrácení peněz. Pokud nejste spokojeni s výsledky, vrátíme vám své předplatné.
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Do I need equipment?</CardTitle>
+                <CardTitle className="text-lg">Potřebuji vybavení?</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  No! We create plans that work with whatever equipment you have, from no equipment to a full gym setup.
+                  Ne! Vytvoříme plány, které fungují s jakýmkoli vybavením, od žádného vybavení až po úplnou tělocvičnu.
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">How personalized are the plans?</CardTitle>
+                <CardTitle className="text-lg">Jak jsou plány osobně přizpůsobeny?</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Very! Our AI considers your goals, experience, schedule, equipment, injuries, and preferences to create truly personalized plans.
+                  Velmi! Naše AI zvažuje vaše cíle, zkušenosti, rozvrh, vybavení, zranění a preference k vytvoření skutečně osobně přizpůsobených plánů.
                 </p>
               </CardContent>
             </Card>
@@ -203,16 +203,16 @@ export default function PricingPage() {
         <div className="text-center mt-12">
           <Card className="max-w-2xl mx-auto bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
             <CardContent className="py-8">
-              <h3 className="text-2xl font-bold mb-4">Ready to Transform Your Fitness?</h3>
+              <h3 className="text-2xl font-bold mb-4">Jste připraveni transformovat své fitness?</h3>
               <p className="text-gray-600 mb-6">
-                Join thousands of users who have already achieved their fitness goals with our AI-powered coaching.
+                Připojte se tisíce uživatelů, kteří již dosáhli svých fitness cílů pomocí naší AI-powered koučování.
                </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" onClick={() => openSignUp()}>
-                  Start Free Assessment
+                  Začít zdarma
                 </Button>
                 <Button variant="outline" size="lg" asChild>
-                  <Link href="/">Learn More</Link>
+                  <Link href="/">Zjistit více</Link>
                 </Button>
               </div>
             </CardContent>

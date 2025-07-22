@@ -14,51 +14,51 @@ import {
 const features = [
   {
     icon: <Brain className="w-6 h-6" />,
-    title: "AI-Powered Personalization",
-    description: "Our advanced AI analyzes your goals, experience, and preferences to create the perfect workout plan just for you.",
-    badge: "Smart"
+    title: "AI-Powered Personalizace",
+    description: "Náš pokročilý AI analyzuje vaše cíle, zkušenosti a preference, aby vytvořil perfektní tréninkový plán přesně pro vás.",
+    badge: "Chytré"
   },
   {
     icon: <Target className="w-6 h-6" />,
-    title: "Goal-Oriented Plans",
-    description: "Whether you want to lose weight, build muscle, or improve endurance, we create plans that align with your specific objectives.",
-    badge: "Focused"
+    title: "Cíle Orientované Plány",
+    description: "Ať už chcete zhubnout, nabrat svaly nebo zlepšit vytrvalost, vytváříme plány, které odpovídají vašim konkrétním cílům.",
+    badge: "Zaměřené"
   },
   {
     icon: <TrendingUp className="w-6 h-6" />,
-    title: "Progress Tracking",
-    description: "Monitor your fitness journey with detailed progress logs, measurements, and performance analytics.",
-    badge: "Analytics"
+    title: "Sledování Pokroku",
+    description: "Sledujte svou fitness cestu s detailními záznamy pokroku, měřeními a analytikou výkonu.",
+    badge: "Analytika"
   },
   {
     icon: <Calendar className="w-6 h-6" />,
-    title: "Flexible Scheduling",
-    description: "Workouts that fit your lifestyle. Choose your available days and preferred duration.",
-    badge: "Adaptive"
+    title: "Flexibilní Plánování",
+    description: "Tréninky, které se přizpůsobují vašemu životnímu stylu. Vyberte si dostupné dny a preferovanou délku.",
+    badge: "Adaptivní"
   },
   {
     icon: <Shield className="w-6 h-6" />,
-    title: "Safety First",
-    description: "We consider your injuries, medical conditions, and experience level to ensure safe and effective workouts.",
-    badge: "Safe"
+    title: "Bezpečnost Na Prvním Místě",
+    description: "Bereme v úvahu vaše zranění, zdravotní stav a úroveň zkušeností, abychom zajistili bezpečné a efektivní tréninky.",
+    badge: "Bezpečné"
   },
   {
     icon: <Users className="w-6 h-6" />,
-    title: "Expert Guidance",
-    description: "Access to professional fitness knowledge and techniques, personalized for your level and equipment.",
-    badge: "Expert"
+    title: "Odborné Vedení",
+    description: "Přístup k profesionálním fitness znalostem a technikám, personalizovaným pro vaši úroveň a vybavení.",
+    badge: "Odborné"
   },
   {
     icon: <Zap className="w-6 h-6" />,
-    title: "Quick Assessment",
-    description: "Get your personalized plan in minutes with our streamlined 5-step assessment process.",
-    badge: "Fast"
+    title: "Rychlé Hodnocení",
+    description: "Získejte svůj personalizovaný plán během minut s naším zjednodušeným 5krokovým procesem hodnocení.",
+    badge: "Rychlé"
   },
   {
     icon: <BarChart3 className="w-6 h-6" />,
-    title: "Comprehensive Dashboard",
-    description: "View your workout plan, track progress, and manage your fitness journey all in one place.",
-    badge: "Complete"
+    title: "Komplexní Dashboard",
+    description: "Zobrazte svůj tréninkový plán, sledujte pokrok a spravujte svou fitness cestu vše na jednom místě.",
+    badge: "Kompletní"
   }
 ];
 
@@ -66,9 +66,9 @@ export const FitnessFeatures = () => {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
-        <h2 className="text-3xl font-bold">Why Choose Our AI Fitness Coach?</h2>
+        <h2 className="text-3xl font-bold">Proč si vybrat našeho AI fitness trenéra?</h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Experience the future of fitness with personalized AI coaching that adapts to your needs and helps you achieve your goals faster.
+          Zažijte budoucnost fitness s personalizovaným AI koučováním, které se přizpůsobuje vašim potřebám a pomáhá vám dosáhnout vašich cílů rychleji.
         </p>
       </div>
 
@@ -97,24 +97,24 @@ export const FitnessFeatures = () => {
 
       <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-8 text-center space-y-4">
         <h3 className="text-2xl font-bold text-green-800">
-          Ready to Transform Your Fitness Journey?
+          Připraveni transformovat vaši fitness cestu?
         </h3>
         <p className="text-green-700 max-w-2xl mx-auto">
-          Join thousands of users who have already achieved their fitness goals with our AI-powered coaching system.
-          Start your personalized fitness journey today!
+          Připojte se k tisícům uživatelů, kteří již dosáhli svých fitness cílů s naším AI-powered koučovacím systémem.
+          Začněte svou personalizovanou fitness cestu ještě dnes!
         </p>
         <div className="flex items-center justify-center gap-4 text-sm text-green-600">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>5-minute assessment</span>
+            <span>5minutové hodnocení</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Instant plan generation</span>
+            <span>Okamžité vytvoření plánu</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Free to start</span>
+            <span>Začít zdarma</span>
           </div>
         </div>
       </div>

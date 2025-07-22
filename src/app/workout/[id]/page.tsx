@@ -151,7 +151,7 @@ export default function WorkoutPage({ params }: { params: { id: string } }) {
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            Zpět
           </Button>
           <div>
             <h1 className="text-2xl font-bold">{workout.name}</h1>
@@ -166,10 +166,10 @@ export default function WorkoutPage({ params }: { params: { id: string } }) {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Target className="w-5 h-5" />
-                  Workout Progress
+                  Průběh tréninku
                 </CardTitle>
                 <CardDescription>
-                  {completedExercises} of {workout.exercises.length} exercises completed
+                  {completedExercises} z {workout.exercises.length} cvičení dokončeno
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -181,7 +181,7 @@ export default function WorkoutPage({ params }: { params: { id: string } }) {
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Progress</span>
+                <span>Průběh</span>
                 <span>{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} className="h-2" />
@@ -195,7 +195,7 @@ export default function WorkoutPage({ params }: { params: { id: string } }) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Play className="w-5 h-5 text-green-600" />
-                Current Exercise: {getCurrentExercise().name}
+                Aktuální cvičení: {getCurrentExercise().name}
               </CardTitle>
               <CardDescription>
                 {getCurrentExercise().description}
@@ -206,25 +206,25 @@ export default function WorkoutPage({ params }: { params: { id: string } }) {
                 {getCurrentExercise().sets && (
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">{getCurrentExercise().sets}</div>
-                    <div className="text-sm text-gray-600">Sets</div>
+                    <div className="text-sm text-gray-600">Série</div>
                   </div>
                 )}
                 {getCurrentExercise().reps && (
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">{getCurrentExercise().reps}</div>
-                    <div className="text-sm text-gray-600">Reps</div>
+                    <div className="text-sm text-gray-600">Opakování</div>
                   </div>
                 )}
                 {getCurrentExercise().duration && (
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">{getCurrentExercise().duration}s</div>
-                    <div className="text-sm text-gray-600">Duration</div>
+                    <div className="text-sm text-gray-600">Doba trvání</div>
                   </div>
                 )}
                 {getCurrentExercise().restTime && (
                   <div className="text-center">
                     <div className="text-2xl font-bold text-orange-600">{getCurrentExercise().restTime}s</div>
-                    <div className="text-sm text-gray-600">Rest</div>
+                    <div className="text-sm text-gray-600">Odpočinek</div>
                   </div>
                 )}
               </div>
@@ -235,11 +235,11 @@ export default function WorkoutPage({ params }: { params: { id: string } }) {
                   onClick={() => completeExercise(getCurrentExercise().id)}
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
-                  Complete Exercise
+                  Dokončit cvičení
                 </Button>
                 <Button variant="outline" onClick={skipExercise}>
                   <SkipForward className="w-4 h-4 mr-2" />
-                  Skip
+                  Přeskočit
                 </Button>
               </div>
             </CardContent>
@@ -249,9 +249,9 @@ export default function WorkoutPage({ params }: { params: { id: string } }) {
         {/* Exercise List */}
         <Card>
           <CardHeader>
-            <CardTitle>All Exercises</CardTitle>
+            <CardTitle>Všechna cvičení</CardTitle>
             <CardDescription>
-              {workout.exercises.length} exercises • {workout.duration} minutes
+              {workout.exercises.length} cvičení • {workout.duration} minut
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -286,16 +286,16 @@ export default function WorkoutPage({ params }: { params: { id: string } }) {
                       <p className="text-sm text-gray-600">{exercise.description}</p>
                       <div className="flex items-center gap-4 mt-1">
                         {exercise.sets && (
-                          <span className="text-xs text-gray-500">{exercise.sets} sets</span>
+                          <span className="text-xs text-gray-500">{exercise.sets} série</span>
                         )}
                         {exercise.reps && (
-                          <span className="text-xs text-gray-500">{exercise.reps} reps</span>
+                          <span className="text-xs text-gray-500">{exercise.reps} opakování</span>
                         )}
                         {exercise.duration && (
                           <span className="text-xs text-gray-500">{exercise.duration}s</span>
                         )}
                         {exercise.restTime && (
-                          <span className="text-xs text-gray-500">{exercise.restTime}s rest</span>
+                          <span className="text-xs text-gray-500">{exercise.restTime}s odpočinek</span>
                         )}
                       </div>
                     </div>
@@ -314,7 +314,7 @@ export default function WorkoutPage({ params }: { params: { id: string } }) {
           {!isActive && !workout.completed && (
             <Button size="lg" className="flex-1" onClick={startWorkout}>
               <Play className="w-5 h-5 mr-2" />
-              Start Workout
+              Začít trénink
             </Button>
           )}
 
@@ -322,12 +322,12 @@ export default function WorkoutPage({ params }: { params: { id: string } }) {
             <Card className="w-full bg-green-50 border-green-200">
               <CardContent className="py-6 text-center">
                 <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-green-800 mb-2">Workout Complete!</h3>
+                <h3 className="text-xl font-bold text-green-800 mb-2">Trénink dokončen!</h3>
                 <p className="text-green-700 mb-4">
-                  Great job! You've completed all {workout.exercises.length} exercises.
+                  Výborně! Dokončili jste všechna {workout.exercises.length} cvičení.
                 </p>
                 <Button onClick={() => router.push('/dashboard')}>
-                  Back to Dashboard
+                  Zpět na řídicí panel
                 </Button>
               </CardContent>
             </Card>

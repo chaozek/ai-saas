@@ -16,11 +16,11 @@ export default function Page() {
           </div>
           <div className="space-y-4">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-              Your Personal AI Fitness Coach
+              Váš osobní AI fitness trenér
      </h1>
             <p className="text-xl text-muted-foreground max-w-2xl">
-              Get a personalized workout plan tailored to your goals, experience level, and lifestyle.
-              Our AI coach asks the right questions and creates the perfect plan for you.
+              Získejte personalizovaný tréninkový plán na míru vašim cílům, zkušenostem a životnímu stylu.
+              Naše AI trenér se zeptá na správné otázky a vytvoří pro vás perfektní plán.
      </p>
      </div>
         </div>

@@ -342,6 +342,10 @@ export const fitnessRouter = createTRPCRouter({
               include: {
                 recipes: true,
               },
+              orderBy: [
+                { dayOfWeek: "asc" },
+                { mealType: "asc" }
+              ],
             },
           },
           orderBy: { createdAt: "desc" },
@@ -372,6 +376,10 @@ export const fitnessRouter = createTRPCRouter({
                   include: {
                     recipes: true,
                   },
+                  orderBy: [
+                    { dayOfWeek: "asc" },
+                    { mealType: "asc" }
+                  ],
                 },
               },
             },
@@ -413,6 +421,10 @@ export const fitnessRouter = createTRPCRouter({
                   include: {
                     recipes: true,
                   },
+                  orderBy: [
+                    { dayOfWeek: "asc" },
+                    { mealType: "asc" }
+                  ],
                 },
               },
             },
@@ -453,6 +465,43 @@ export const fitnessRouter = createTRPCRouter({
           mealPlanComplete: false,
           isGenerating: false,
         };
+      }
+    }),
+
+  getShoppingList: protectedProcedure
+    .input(z.object({ weekNumber: z.number() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        // Find the project that contains the shopping list for this week
+        const projects = await prisma.project.findMany({
+          where: {
+            userId: ctx.auth.userId,
+            name: {
+              contains: `Week ${input.weekNumber} Shopping List`
+            }
+          },
+          include: {
+            messages: {
+              orderBy: { createdAt: 'desc' },
+              take: 1
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        });
+
+        if (projects.length === 0 || !projects[0].messages.length) {
+          return null;
+        }
+
+        return {
+          content: projects[0].messages[0].content,
+          projectId: projects[0].id,
+          createdAt: projects[0].createdAt
+        };
+      } catch (error) {
+        console.error("Error fetching shopping list:", error);
+        return null;
       }
     }),
 });

@@ -20,19 +20,19 @@ export const Navbar = () => {
                     <div className="hidden md:flex items-center gap-4">
                          <Link href="/dashboard" className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                               <BarChart3 className="w-4 h-4" />
-                              Dashboard
+                              Přehled
                          </Link>
                          <Link href="/workouts" className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                               <Dumbbell className="w-4 h-4" />
-                              Workouts
+                              Tréninky
                          </Link>
                          <Link href="/progress" className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                               <Target className="w-4 h-4" />
-                              Progress
+                              Pokrok
                          </Link>
                          <Link href="/schedule" className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                               <Calendar className="w-4 h-4" />
-                              Schedule
+                              Rozvrh
                          </Link>
                     </div>
                </SignedIn>
@@ -41,17 +41,17 @@ export const Navbar = () => {
           <div className="flex items-center gap-4">
                <SignedIn>
                     <Button variant="outline" size="sm" asChild>
-                         <Link href="/dashboard">My Plan</Link>
+                         <Link href="/dashboard">Můj Plán</Link>
                     </Button>
                     <UserButton />
                </SignedIn>
                <SignedOut>
                     <div className="flex items-center gap-3">
                          <Button variant="ghost" size="sm" asChild>
-                              <Link href="/pricing">Pricing</Link>
+                              <Link href="/pricing">Ceník</Link>
                          </Button>
                     <Button asChild>
-                              <Link href="/sign-in">Get Started</Link>
+                              <Link href="/sign-in">Začít</Link>
                     </Button>
                     </div>
                </SignedOut>

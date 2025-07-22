@@ -51,83 +51,85 @@ interface AssessmentData {
 }
 
 const FITNESS_GOALS = [
-  { value: "WEIGHT_LOSS", label: "Weight Loss", icon: "⚖️" },
-  { value: "MUSCLE_GAIN", label: "Muscle Gain", icon: "💪" },
+  { value: "WEIGHT_LOSS", label: "Hmotnostní ztráta", icon: "⚖️" },
+  { value: "MUSCLE_GAIN", label: "Svalová získání", icon: "💪" },
   { value: "ENDURANCE", label: "Endurance", icon: "🏃" },
-  { value: "STRENGTH", label: "Strength", icon: "🏋️" },
-  { value: "FLEXIBILITY", label: "Flexibility", icon: "🧘" },
-  { value: "GENERAL_FITNESS", label: "General Fitness", icon: "🌟" },
+  { value: "STRENGTH", label: "Síla", icon: "🏋️" },
+  { value: "FLEXIBILITY", label: "Flexibilita", icon: "🧘" },
+  { value: "GENERAL_FITNESS", label: "Obecná fitness", icon: "🌟" },
 ];
 
 const ACTIVITY_LEVELS = [
-  { value: "SEDENTARY", label: "Sedentary (little to no exercise)" },
-  { value: "LIGHTLY_ACTIVE", label: "Lightly Active (light exercise 1-3 days/week)" },
-  { value: "MODERATELY_ACTIVE", label: "Moderately Active (moderate exercise 3-5 days/week)" },
-  { value: "VERY_ACTIVE", label: "Very Active (hard exercise 6-7 days/week)" },
-  { value: "EXTREMELY_ACTIVE", label: "Extremely Active (very hard exercise, physical job)" },
+  { value: "SEDENTARY", label: "Sedentární (málo nebo žádná pohybová aktivita)" },
+  { value: "LIGHTLY_ACTIVE", label: "Lehce aktivní (lehká cvičení 1-3x týdně)" },
+  { value: "MODERATELY_ACTIVE", label: "Středně aktivní (střední cvičení 3-5x týdně)" },
+  { value: "VERY_ACTIVE", label: "Velmi aktivní (těžká cvičení 6-7x týdně)" },
+  { value: "EXTREMELY_ACTIVE", label: "Velmi těžce aktivní (velmi těžké cvičení, fyzická práce)" },
 ];
 
 const EXPERIENCE_LEVELS = [
-  { value: "BEGINNER", label: "Beginner (0-1 years)" },
-  { value: "INTERMEDIATE", label: "Intermediate (1-3 years)" },
-  { value: "ADVANCED", label: "Advanced (3+ years)" },
+  { value: "BEGINNER", label: "Začátečník (0-1 roky)" },
+  { value: "INTERMEDIATE", label: "Střední (1-3 roky)" },
+  { value: "ADVANCED", label: "Pokročilý (3+ roky)" },
 ];
 
 const DAYS_OF_WEEK = [
-  { value: "monday", label: "Monday" },
-  { value: "tuesday", label: "Tuesday" },
-  { value: "wednesday", label: "Wednesday" },
-  { value: "thursday", label: "Thursday" },
-  { value: "friday", label: "Friday" },
-  { value: "saturday", label: "Saturday" },
-  { value: "sunday", label: "Sunday" },
+  { value: "monday", label: "Pondělí" },
+  { value: "tuesday", label: "Úterý" },
+  { value: "wednesday", label: "Středa" },
+  { value: "thursday", label: "Čtvrtek" },
+  { value: "friday", label: "Pátek" },
+  { value: "saturday", label: "Sobota" },
+  { value: "sunday", label: "Neděle" },
 ];
 
 const EQUIPMENT_OPTIONS = [
-  { value: "none", label: "No Equipment" },
-  { value: "dumbbells", label: "Dumbbells" },
-  { value: "resistance_bands", label: "Resistance Bands" },
-  { value: "pull_up_bar", label: "Pull-up Bar" },
-  { value: "bench", label: "Bench" },
+  { value: "none", label: "Žádné vybavení" },
+  { value: "dumbbells", label: "Halové váhy" },
+  { value: "resistance_bands", label: "Odporové pásy" },
+  { value: "pull_up_bar", label: "Vlákno pro zvedání" },
+  { value: "bench", label: "Stůl" },
   { value: "barbell", label: "Barbell" },
   { value: "kettlebell", label: "Kettlebell" },
-  { value: "gym_access", label: "Full Gym Access" },
+  { value: "gym_access", label: "Plné gymnastické centrum" },
 ];
 
 const DIETARY_RESTRICTIONS = [
-  { value: "vegetarian", label: "Vegetarian" },
+  { value: "vegetarian", label: "Vegetariánské" },
   { value: "vegan", label: "Vegan" },
-  { value: "gluten_free", label: "Gluten-Free" },
-  { value: "dairy_free", label: "Dairy-Free" },
+  { value: "gluten_free", label: "Bezlepkové" },
+  { value: "dairy_free", label: "Bezmléčné" },
   { value: "keto", label: "Keto" },
   { value: "paleo", label: "Paleo" },
-  { value: "mediterranean", label: "Mediterranean" },
-  { value: "low_carb", label: "Low-Carb" },
-  { value: "none", label: "No Restrictions" },
+  { value: "mediterranean", label: "Mediterránské" },
+  { value: "low_carb", label: "Nízkohladinové" },
+  { value: "none", label: "Žádné omezení" },
 ];
 
 const CUISINE_OPTIONS = [
-  { value: "italian", label: "Italian" },
-  { value: "mexican", label: "Mexican" },
-  { value: "asian", label: "Asian" },
-  { value: "mediterranean", label: "Mediterranean" },
-  { value: "american", label: "American" },
-  { value: "indian", label: "Indian" },
-  { value: "thai", label: "Thai" },
-  { value: "japanese", label: "Japanese" },
-  { value: "greek", label: "Greek" },
-  { value: "french", label: "French" },
+  { value: "czech", label: "České" },
+  { value: "italian", label: "Italské" },
+  { value: "mexican", label: "Mexické" },
+  { value: "asian", label: "Asijské" },
+  { value: "mediterranean", label: "Mediterránské" },
+  { value: "american", label: "Americké" },
+  { value: "indian", label: "Indické" },
+  { value: "thai", label: "Thajské" },
+  { value: "japanese", label: "Japonské" },
+  { value: "greek", label: "Řecké" },
+  { value: "french", label: "Francouzské" },
 ];
 
 const COOKING_SKILLS = [
-  { value: "BEGINNER", label: "Beginner (basic cooking skills)" },
-  { value: "INTERMEDIATE", label: "Intermediate (can follow recipes)" },
-  { value: "ADVANCED", label: "Advanced (experienced cook)" },
+  { value: "BEGINNER", label: "Začátečník (základní kuchařské dovednosti)" },
+  { value: "INTERMEDIATE", label: "Střední (může následovat recepty)" },
+  { value: "ADVANCED", label: "Pokročilý (zkušený kuchař)" },
 ];
 
 export const FitnessAssessmentForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [trainerAnimation, setTrainerAnimation] = useState(false);
   const router = useRouter();
   const { user } = useClerk();
   const trpc = useTRPC();
@@ -151,7 +153,7 @@ export const FitnessAssessmentForm = () => {
     mealPlanningEnabled: false,
     dietaryRestrictions: [],
     allergies: [],
-    budgetPerWeek: "100",
+    budgetPerWeek: "1000",
     mealPrepTime: "30",
     preferredCuisines: [],
     cookingSkill: "BEGINNER",
@@ -159,33 +161,33 @@ export const FitnessAssessmentForm = () => {
 
   const steps = [
     {
-      title: "Personal Information",
-      description: "Let's start with some basic information about you",
+      title: "Osobní údaje",
+      description: "Začneme několika základními informacemi o vás",
       icon: <Target className="w-5 h-5" />,
     },
     {
-      title: "Fitness Goals",
-      description: "What are your primary fitness objectives?",
+      title: "Fitness cíle",
+      description: "Jaké jsou vaše primární fitness cíle?",
       icon: <Activity className="w-5 h-5" />,
     },
     {
-      title: "Experience & Activity",
-      description: "Tell us about your current fitness level",
+      title: "Zkušenost a aktivita",
+      description: "Řekněte nám o vaší současné úrovni fitness",
       icon: <Dumbbell className="w-5 h-5" />,
     },
     {
-      title: "Health Information",
-      description: "Any injuries or medical conditions we should know about?",
+      title: "Zdravotní stav",
+      description: "Máte nějaké zranění nebo lékařské podmínky, které bychom měli znát?",
       icon: <Activity className="w-5 h-5" />,
     },
     {
-      title: "Preferences",
-      description: "What works best for your schedule and equipment?",
+      title: "Preferované",
+      description: "Co je pro vás nejlepší pro vaši rozvrh a vybavení?",
       icon: <Calendar className="w-5 h-5" />,
     },
     {
-      title: "Meal Planning",
-      description: "Let's set up your nutrition plan",
+      title: "Občerstvení",
+      description: "Nastavme vaši dietní plán",
       icon: <Calendar className="w-5 h-5" />,
     },
   ];
@@ -195,8 +197,18 @@ export const FitnessAssessmentForm = () => {
   };
 
   const nextStep = () => {
+    // Check if we're on step 4 (preferences step) and validate available days
+    if (currentStep === 4 && data.availableDays.length === 0) {
+      toast.error("Prosím, vyberte alespoň jeden den pro vaše cvičení");
+      return;
+    }
+
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setTrainerAnimation(true);
+      setTimeout(() => {
+        setCurrentStep(currentStep + 1);
+        setTrainerAnimation(false);
+      }, 300);
     }
   };
 
@@ -208,29 +220,29 @@ export const FitnessAssessmentForm = () => {
 
   const generatePlan = useMutation(trpc.fitness.generatePlan.mutationOptions({
     onSuccess: async (data) => {
-      toast.success("Fitness plan generation started! Redirecting to dashboard...");
+      toast.success("Generování fitness plánu zahájeno! Přesměrování na řídicí panel...");
       router.push('/dashboard?generating=true');
     },
     onError: (error) => {
       if (error.data?.code === "TOO_MANY_REQUESTS") {
-        toast.error("You have reached your daily limit of fitness plan generations. Please upgrade to a paid plan to continue.");
-        setTimeout(() => {    
+        toast.error("Dosáhli jste denní limit generování fitness plánů. Prosím, upgradujte na placený plán pro pokračování.");
+        setTimeout(() => {
           router.push("/pricing");
         }, 1000);
       } else {
-        toast.error(error.message || "Something went wrong. Please try again.");
+        toast.error(error.message || "Něco se pokazilo. Prosím, zkuste to znovu.");
       }
     }
   }));
 
   const handleSubmit = async () => {
     if (!user) {
-      toast.error("Please sign in to continue");
+      toast.error("Prosím, přihlaste se pro pokračování");
       return;
     }
 
     if (data.availableDays.length === 0) {
-      toast.error("Please select at least one day for your workouts");
+      toast.error("Prosím, vyberte alespoň jeden den pro vaše cvičení");
       return;
     }
 
@@ -251,7 +263,7 @@ export const FitnessAssessmentForm = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="age">Age</Label>
+                <Label htmlFor="age">Věk</Label>
                 <Input
                   id="age"
                   type="number"
@@ -261,22 +273,22 @@ export const FitnessAssessmentForm = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
+                <Label htmlFor="gender">Pohlaví</Label>
                 <Select value={data.gender} onValueChange={(value) => updateData("gender", value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
+                    <SelectValue placeholder="Vyberte pohlaví" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="male">Muž</SelectItem>
+                    <SelectItem value="female">Žena</SelectItem>
+                    <SelectItem value="other">Jiné</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="height">Height (cm)</Label>
+                <Label htmlFor="height">Výška (cm)</Label>
                 <Input
                   id="height"
                   type="number"
@@ -286,7 +298,7 @@ export const FitnessAssessmentForm = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="weight">Current Weight (kg)</Label>
+                <Label htmlFor="weight">Aktuální váha (kg)</Label>
                 <Input
                   id="weight"
                   type="number"
@@ -297,7 +309,7 @@ export const FitnessAssessmentForm = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="targetWeight">Target Weight (kg) - Optional</Label>
+              <Label htmlFor="targetWeight">Cílová váha (kg) - Volitelné</Label>
               <Input
                 id="targetWeight"
                 type="number"
@@ -313,7 +325,7 @@ export const FitnessAssessmentForm = () => {
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              <Label>What's your primary fitness goal?</Label>
+              <Label>Jaké jsou vaše primární fitness cíle?</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {FITNESS_GOALS.map((goal) => (
                   <Button
@@ -335,10 +347,10 @@ export const FitnessAssessmentForm = () => {
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              <Label>What's your current activity level?</Label>
+              <Label>Jaká je vaše aktuální úroveň aktivity?</Label>
               <Select value={data.activityLevel} onValueChange={(value) => updateData("activityLevel", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select activity level" />
+                  <SelectValue placeholder="Vyberte úroveň aktivity" />
                 </SelectTrigger>
                 <SelectContent>
                   {ACTIVITY_LEVELS.map((level) => (
@@ -350,10 +362,10 @@ export const FitnessAssessmentForm = () => {
               </Select>
             </div>
             <div className="space-y-4">
-              <Label>What's your fitness experience level?</Label>
+              <Label>Jaká je vaše zkušenost s fitness?</Label>
               <Select value={data.experienceLevel} onValueChange={(value) => updateData("experienceLevel", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select experience level" />
+                  <SelectValue placeholder="Vyberte úroveň zkušenosti" />
                 </SelectTrigger>
                 <SelectContent>
                   {EXPERIENCE_LEVELS.map((level) => (
@@ -377,21 +389,21 @@ export const FitnessAssessmentForm = () => {
                   checked={data.hasInjuries}
                   onCheckedChange={(checked) => updateData("hasInjuries", checked)}
                 />
-                <Label htmlFor="hasInjuries">Do you have any injuries or limitations?</Label>
+                <Label htmlFor="hasInjuries">Máte nějaké zranění nebo omezení?</Label>
               </div>
               {data.hasInjuries && (
                 <Textarea
-                  placeholder="Please describe your injuries or limitations..."
+                  placeholder="Prosím, popište vaše zranění nebo omezení..."
                   value={data.injuries}
                   onChange={(e) => updateData("injuries", e.target.value)}
                 />
               )}
             </div>
             <div className="space-y-4">
-              <Label htmlFor="medicalConditions">Medical Conditions (Optional)</Label>
+              <Label htmlFor="medicalConditions">Lékařské podmínky (Volitelné)</Label>
               <Textarea
                 id="medicalConditions"
-                placeholder="Any medical conditions we should be aware of..."
+                placeholder="Jaké lékařské podmínky bychom měli být vědomi..."
                 value={data.medicalConditions}
                 onChange={(e) => updateData("medicalConditions", e.target.value)}
               />
@@ -403,7 +415,7 @@ export const FitnessAssessmentForm = () => {
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              <Label>Which days are you available for workouts?</Label>
+              <Label>Které dny jste k dispozici pro cvičení?</Label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {DAYS_OF_WEEK.map((day) => (
                   <div key={day.value} className="flex items-center space-x-2">
@@ -424,21 +436,21 @@ export const FitnessAssessmentForm = () => {
               </div>
             </div>
             <div className="space-y-4">
-              <Label>Preferred workout duration (minutes)</Label>
+              <Label>Preferovaná doba trvání cvičení (minuty)</Label>
               <Select value={data.workoutDuration} onValueChange={(value) => updateData("workoutDuration", value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="30">30 minutes</SelectItem>
-                  <SelectItem value="45">45 minutes</SelectItem>
-                  <SelectItem value="60">60 minutes</SelectItem>
-                  <SelectItem value="90">90 minutes</SelectItem>
+                  <SelectItem value="30">30 minut</SelectItem>
+                  <SelectItem value="45">45 minut</SelectItem>
+                  <SelectItem value="60">60 minut</SelectItem>
+                  <SelectItem value="90">90 minut</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-4">
-              <Label>What equipment do you have access to?</Label>
+              <Label>Jaké vybavení máte k dispozici?</Label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {EQUIPMENT_OPTIONS.map((equipment) => (
                   <div key={equipment.value} className="flex items-center space-x-2">
@@ -459,10 +471,10 @@ export const FitnessAssessmentForm = () => {
               </div>
             </div>
             <div className="space-y-4">
-              <Label htmlFor="preferredExercises">Preferred exercises or activities (Optional)</Label>
+              <Label htmlFor="preferredExercises">Preferované cvičení nebo aktivity (Volitelné)</Label>
               <Textarea
                 id="preferredExercises"
-                placeholder="e.g., running, yoga, weightlifting, swimming..."
+                placeholder="např. běhání, jóga, tělesné výcviky, plavání..."
                 value={data.preferredExercises}
                 onChange={(e) => updateData("preferredExercises", e.target.value)}
               />
@@ -480,17 +492,17 @@ export const FitnessAssessmentForm = () => {
                   checked={data.mealPlanningEnabled}
                   onCheckedChange={(checked) => updateData("mealPlanningEnabled", checked)}
                 />
-                <Label htmlFor="mealPlanningEnabled" className="text-lg font-medium">Enable Meal Planning</Label>
+                <Label htmlFor="mealPlanningEnabled" className="text-lg font-medium">Povolit plánování jídla</Label>
               </div>
               <p className="text-sm text-muted-foreground">
-                Get personalized meal plans and recipes tailored to your fitness goals and preferences.
+                Získejte osobně upravené plány jídla a recepty přizpůsobené vašim fitness cílům a preferencím.
               </p>
             </div>
 
             {data.mealPlanningEnabled && (
               <>
                 <div className="space-y-4">
-                  <Label>Dietary Restrictions</Label>
+                  <Label>Stravovací omezení</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {DIETARY_RESTRICTIONS.map((restriction) => (
                       <div key={restriction.value} className="flex items-center space-x-2">
@@ -512,10 +524,10 @@ export const FitnessAssessmentForm = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <Label htmlFor="allergies">Food Allergies (Optional)</Label>
+                  <Label htmlFor="allergies">Alergie na jídlo (Volitelné)</Label>
                   <Textarea
                     id="allergies"
-                    placeholder="e.g., nuts, shellfish, dairy..."
+                    placeholder="např. oříšky, mořské plody, mléko..."
                     value={data.allergies.join(', ')}
                     onChange={(e) => updateData("allergies", e.target.value.split(',').map(item => item.trim()).filter(item => item))}
                   />
@@ -523,42 +535,42 @@ export const FitnessAssessmentForm = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-4">
-                    <Label>Weekly Food Budget ($)</Label>
+                    <Label>Týdenní rozpočet jídla (CZK)</Label>
                     <Select value={data.budgetPerWeek} onValueChange={(value) => updateData("budgetPerWeek", value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="50">$50</SelectItem>
-                        <SelectItem value="75">$75</SelectItem>
-                        <SelectItem value="100">$100</SelectItem>
-                        <SelectItem value="150">$150</SelectItem>
-                        <SelectItem value="200">$200</SelectItem>
-                        <SelectItem value="250">$250</SelectItem>
-                        <SelectItem value="300">$300+</SelectItem>
+                        <SelectItem value="500">500 Kč</SelectItem>
+                        <SelectItem value="750">750 Kč</SelectItem>
+                        <SelectItem value="1000">1000 Kč</SelectItem>
+                        <SelectItem value="1500">1500 Kč</SelectItem>
+                        <SelectItem value="2000">2000 Kč</SelectItem>
+                        <SelectItem value="2500">2500 Kč</SelectItem>
+                        <SelectItem value="3000">3000+ Kč</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-4">
-                    <Label>Meal Prep Time (minutes per day)</Label>
+                    <Label>Čas přípravy jídla (minut na den)</Label>
                     <Select value={data.mealPrepTime} onValueChange={(value) => updateData("mealPrepTime", value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="45">45 minutes</SelectItem>
-                        <SelectItem value="60">60 minutes</SelectItem>
-                        <SelectItem value="90">90+ minutes</SelectItem>
+                        <SelectItem value="15">15 minut</SelectItem>
+                        <SelectItem value="30">30 minut</SelectItem>
+                        <SelectItem value="45">45 minut</SelectItem>
+                        <SelectItem value="60">60 minut</SelectItem>
+                        <SelectItem value="90">90+ minut</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <Label>Preferred Cuisines</Label>
+                  <Label>Preferované kulinářské směny</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {CUISINE_OPTIONS.map((cuisine) => (
                       <div key={cuisine.value} className="flex items-center space-x-2">
@@ -580,7 +592,7 @@ export const FitnessAssessmentForm = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <Label>Cooking Skill Level</Label>
+                  <Label>Úroveň kuchařských dovedností</Label>
                   <Select value={data.cookingSkill} onValueChange={(value) => updateData("cookingSkill", value)}>
                     <SelectTrigger>
                       <SelectValue />
@@ -605,17 +617,31 @@ export const FitnessAssessmentForm = () => {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          {steps[currentStep].icon}
-          <div>
-            <CardTitle>{steps[currentStep].title}</CardTitle>
-            <CardDescription>{steps[currentStep].description}</CardDescription>
+    <div className="relative">
+                        {/* Trainer image positioned absolutely at the top right */}
+      <div className="absolute -top-32 right-0 z-0">
+        <img
+          src="/trainer.png"
+          alt="Fitness Trainer"
+          className={`w-32 h-32 object-contain transition-all duration-300 ${
+            trainerAnimation
+              ? 'scale-110 rotate-6 translate-x-2 translate-y-2'
+              : 'scale-100 rotate-0 translate-x-0 translate-y-0'
+          }`}
+        />
+      </div>
+
+      <Card className="w-full relative z-10">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            {steps[currentStep].icon}
+            <div>
+              <CardTitle>{steps[currentStep].title}</CardTitle>
+              <CardDescription>{steps[currentStep].description}</CardDescription>
+            </div>
           </div>
-        </div>
-        <Progress value={((currentStep + 1) / steps.length) * 100} className="mt-4" />
-      </CardHeader>
+          <Progress value={((currentStep + 1) / steps.length) * 100} className="mt-4" />
+        </CardHeader>
       <CardContent className="space-y-6">
         {renderStep()}
 
@@ -626,7 +652,7 @@ export const FitnessAssessmentForm = () => {
             disabled={currentStep === 0}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Previous
+            Předchozí
           </Button>
 
           {currentStep === steps.length - 1 ? (
@@ -638,23 +664,24 @@ export const FitnessAssessmentForm = () => {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating Plan...
+                  Vytvoření plánu...
                 </>
               ) : (
                 <>
-                  Generate Plan
+                  Generovat plán
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}
             </Button>
           ) : (
             <Button onClick={nextStep}>
-              Next
+              Další
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           )}
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 };

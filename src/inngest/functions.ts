@@ -492,6 +492,12 @@ export const generateFitnessPlanFunction = inngest.createFunction(
           },
         });
 
+        // Update the fitness profile to point to the new current plan
+        await prisma.fitnessProfile.update({
+          where: { id: fitnessProfile.id },
+          data: { currentPlan: { connect: { id: plan.id } } }
+        });
+
         return plan;
       });
 
@@ -726,6 +732,12 @@ export const generateFitnessPlanFunction = inngest.createFunction(
           const createdMeals = await Promise.all(mealPromises);
           console.log(`Created ${createdMeals.length} meals using ${mealTypes.length} AI-generated templates for meal plan ${mealPlan.id}`);
 
+          // Update the fitness profile to point to the new current meal plan
+          await prisma.fitnessProfile.update({
+            where: { id: fitnessProfile.id },
+            data: { currentMealPlan: { connect: { id: mealPlan.id } } }
+          });
+
           // Verify meal plan was created
           const mealPlanCount = await prisma.mealPlan.count({
             where: { fitnessProfileId: fitnessProfile.id }
@@ -817,7 +829,7 @@ export const generateShoppingListFunction = inngest.createFunction(
     console.log(`Starting shopping list generation for Week ${weekNumber}, user: ${userId}`);
 
     try {
-      // Collect all ingredients from the week's meals
+      // Collect all ingredients from the week's meals with proper quantity calculation
       const allIngredients: any[] = [];
       weekMeals.forEach(meal => {
         meal.recipes?.forEach((recipe: any) => {
@@ -854,21 +866,28 @@ export const generateShoppingListFunction = inngest.createFunction(
 
       console.log(`Collected ${allIngredients.length} unique ingredients for Week ${weekNumber}`);
 
-      // Generate organized shopping list using AI
+      // Generate organized shopping list using AI with better guidance
       const shoppingList = await step.run("generate-organized-list", async () => {
         const openaiClient = new OpenAI({
           apiKey: process.env.OPENAI_API_KEY,
         });
 
-        const prompt = `Create a well-organized shopping list for Week ${weekNumber}. Here are all the ingredients needed:
+        const prompt = `Create a realistic and well-organized shopping list for Week ${weekNumber}. Here are the raw ingredients needed:
 
 ${allIngredients.map(ing => `- ${ing.amount} ${ing.unit} ${ing.name} (used in ${ing.count} recipes)`).join('\n')}
 
+IMPORTANT INSTRUCTIONS:
+1. DO NOT multiply quantities - use the exact amounts provided
+2. Convert to realistic grocery store quantities (e.g., if you need 7 cups of spinach, that's about 2-3 bags of spinach)
+3. For items like sauces, oils, and spices, use reasonable amounts (e.g., 1 bottle of soy sauce, not 21 cups)
+4. Group similar ingredients together
+5. Add any missing staples (salt, pepper, cooking oil if not listed)
+
 Please organize this into a clean shopping list with:
 1. Categories (Produce, Dairy, Meat, Pantry, etc.)
-2. Consolidated quantities
-3. Any additional items that might be needed (cooking oil, spices, etc.)
-4. Tips for shopping efficiently
+2. Realistic quantities that you'd actually buy at the store
+3. Any additional staples needed
+4. Brief shopping tips
 
 Format as a clean, organized list that's easy to follow at the grocery store.`;
 
@@ -877,14 +896,14 @@ Format as a clean, organized list that's easy to follow at the grocery store.`;
           messages: [
             {
               role: "system",
-              content: "You are a helpful assistant that creates organized shopping lists. Always respond with a clean, well-structured shopping list that's easy to follow at the grocery store."
+              content: "You are a helpful assistant that creates realistic and organized shopping lists. Always use realistic grocery store quantities - never suggest buying 21 cups of sauce or other unrealistic amounts. Convert measurements to practical shopping units (e.g., 1 bottle, 1 package, 2-3 bags)."
             },
             {
               role: "user",
               content: prompt
             }
           ],
-          temperature: 0.7,
+          temperature: 0.3,
           max_tokens: 1000,
         });
 
@@ -892,7 +911,7 @@ Format as a clean, organized list that's easy to follow at the grocery store.`;
       });
 
       // Create a project to store the shopping list
-      await step.run("create-shopping-list-project", async () => {
+      const project = await step.run("create-shopping-list-project", async () => {
         const prisma = new PrismaClient();
 
         const project = await prisma.project.create({
@@ -917,6 +936,8 @@ Format as a clean, organized list that's easy to follow at the grocery store.`;
 
       return {
         success: true,
+        projectId: project.id,
+        shoppingList: shoppingList,
         weekNumber,
         shoppingList,
         message: `Shopping list generated for Week ${weekNumber}`,
