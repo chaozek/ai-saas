@@ -1,23 +1,38 @@
-import { AgentResult } from "@inngest/agent-kit";
-import { Sandbox } from "e2b";
+import { Message } from "@inngest/agent-kit";
 
-export async function getSandbox(sandboxId : string){
-     try {
-          const sandbox = await Sandbox.connect(sandboxId);
-          await sandbox.setTimeout(60_000 * 10 * 3)
+export const getAssessmentData = (assessmentString: string) => {
+  try {
+    return JSON.parse(decodeURIComponent(assessmentString));
+  } catch (error) {
+    console.error('Error parsing assessment data:', error);
+    return null;
+  }
+};
 
-          return sandbox;
-     } catch (error: any) {
-          console.error('Failed to connect to sandbox:', error);
-          throw new Error(`Failed to connect to sandbox: ${error.message}`);
-     }
-}
+export const generateFitnessPlan = async (assessmentData: any) => {
+  // This function would integrate with AI to generate a personalized fitness plan
+  // For now, we'll return a basic structure
+  return {
+    name: `${assessmentData.fitnessGoal.replace('_', ' ')} Plan`,
+    description: `Personalized ${assessmentData.fitnessGoal.toLowerCase().replace('_', ' ')} program`,
+    duration: 8,
+    difficulty: assessmentData.experienceLevel,
+    workouts: []
+  };
+};
 
-export function lastAssistantTextMessageContent(result: AgentResult){
-     const lastAssistantTextMessageIndex = result.output.findLastIndex((m)=> m.role === "assistant")
-     const message = result.output[lastAssistantTextMessageIndex]
-     if (message.type === "text") {
-          return message.content ? typeof message.content === "string" ? message.content : message.content.map((c)=> c.type === "text" ? c.text : c.text).join("") : null
-     }
-     return null
-}
+export const lastAssistantTextMessageContent = (result: any): string | null => {
+  if (!result || !result.messages || !Array.isArray(result.messages)) {
+    return null;
+  }
+
+  // Find the last assistant message
+  for (let i = result.messages.length - 1; i >= 0; i--) {
+    const message = result.messages[i];
+    if (message.role === "assistant" && message.type === "text") {
+      return message.content;
+    }
+  }
+
+  return null;
+};

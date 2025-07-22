@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -13,57 +7,249 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Message {
+  id        String      @id @default(uuid())
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  content   String
+  role      MessageRole
+  type      MessageType
+  projectId String?
+  fragment  Fragment?
+  project   Project?    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Fragment {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  title      String?
+  files      Json?
+  messageId  String   @unique
+  sandboxUrl String?
+  sandboxId  String?
+  message    Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  name      String
+  userId    String
+  messages  Message[]
+}
+
+model User {
+  id             String          @id @default(uuid())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  fitnessProfile FitnessProfile?
+}
+
+model FitnessProfile {
+  id                 String           @id @default(uuid())
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  age                Int?
+  gender             String?
+  height             Float?
+  weight             Float?
+  targetWeight       Float?
+  fitnessGoal        FitnessGoal?
+  activityLevel      ActivityLevel?
+  experienceLevel    ExperienceLevel?
+  hasInjuries        Boolean          @default(false)
+  injuries           String?
+  medicalConditions  String?
+  availableDays      String?
+  workoutDuration    Int?
+  preferredExercises String?
+  equipment          String?
+  mealPlanningEnabled Boolean         @default(false)
+  dietaryRestrictions String[]        @default([])
+  allergies          String[]         @default([])
+  budgetPerWeek      Float?
+  mealPrepTime       Int?
+  preferredCuisines  String[]         @default([])
+  cookingSkill       ExperienceLevel?
+  userId             String           @unique
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  progressLogs       ProgressLog[]
+  currentPlan        WorkoutPlan?     @relation("CurrentPlan")
+  workoutPlans       WorkoutPlan[]    @relation("AllPlans")
+  currentMealPlan    MealPlan?        @relation("CurrentMealPlan")
+  mealPlans          MealPlan[]       @relation("AllMealPlans")
+}
+
+model WorkoutPlan {
+  id               String          @id @default(uuid())
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  name             String
+  description      String?
+  duration         Int
+  difficulty       ExperienceLevel
+  isActive         Boolean         @default(false)
+  fitnessProfileId String
+  activeProfileId  String?         @unique
+  workouts         Workout[]
+  activeProfile    FitnessProfile? @relation("CurrentPlan", fields: [activeProfileId], references: [id])
+  fitnessProfile   FitnessProfile  @relation("AllPlans", fields: [fitnessProfileId], references: [id], onDelete: Cascade)
+}
+
+model Workout {
+  id            String      @id @default(uuid())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  name          String
+  description   String?
+  dayOfWeek     Int
+  weekNumber    Int
+  duration      Int
+  workoutPlanId String
+  exercises     Exercise[]
+  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
+}
+
+model Exercise {
+  id           String          @id @default(uuid())
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  name         String
+  description  String?
+  category     String
+  muscleGroups String[]
+  equipment    String[]
+  difficulty   ExperienceLevel
+  sets         Int?
+  reps         Int?
+  duration     Int?
+  restTime     Int?
+  weight       Float?
+  workoutId    String
+  workout      Workout         @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+}
+
+model ProgressLog {
+  id               String         @id @default(uuid())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  weight           Float?
+  bodyFat          Float?
+  measurements     String?
+  workoutNotes     String?
+  energyLevel      Int?
+  difficulty       Int?
+  fitnessProfileId String
+  fitnessProfile   FitnessProfile @relation(fields: [fitnessProfileId], references: [id], onDelete: Cascade)
+}
+
+model MealPlan {
+  id               String          @id @default(uuid())
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  name             String
+  description      String?
+  duration         Int             // days
+  caloriesPerDay   Int?
+  proteinPerDay    Float?
+  carbsPerDay      Float?
+  fatPerDay        Float?
+  budgetPerWeek    Float?
+  isActive         Boolean         @default(false)
+  fitnessProfileId String
+  activeProfileId  String?         @unique
+  meals            Meal[]
+  activeProfile    FitnessProfile? @relation("CurrentMealPlan", fields: [activeProfileId], references: [id])
+  fitnessProfile   FitnessProfile  @relation("AllMealPlans", fields: [fitnessProfileId], references: [id], onDelete: Cascade)
+}
+
+model Meal {
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  name        String
+  description String?
+  mealType    MealType
+  dayOfWeek   Int
+  weekNumber  Int
+  calories    Int?
+  protein     Float?
+  carbs       Float?
+  fat         Float?
+  prepTime    Int?        // minutes
+  cookTime    Int?        // minutes
+  servings    Int?
+  mealPlanId  String
+  recipes     Recipe[]
+  mealPlan    MealPlan    @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+}
+
+model Recipe {
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  name        String
+  description String?
+  instructions String
+  ingredients String      // JSON array of ingredients
+  nutrition   String?     // JSON nutrition info
+  prepTime    Int?        // minutes
+  cookTime    Int?        // minutes
+  servings    Int?
+  difficulty  String?
+  cuisine     String?
+  tags        String[]    // e.g., ["vegetarian", "high-protein", "quick"]
+  mealId      String
+  meal        Meal        @relation(fields: [mealId], references: [id], onDelete: Cascade)
+}
+
+model Usage {
+  key    String    @id @default(uuid())
+  points Int
+  expire DateTime?
+}
+
 enum MessageRole {
   USER
   ASSISTANT
 }
+
 enum MessageType {
   RESULT
   ERROR
-}
-model Message {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  content   String
-  role      MessageRole
-  type      MessageType
-  fragment   Fragment?
-  project    Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId  String?
-
+  ASSESSMENT
+  PLAN_GENERATED
 }
 
-model Fragment {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String?
-  files     Json?
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  messageId String   @unique
-  sandboxUrl String?
-  sandboxId  String?
+enum FitnessGoal {
+  WEIGHT_LOSS
+  MUSCLE_GAIN
+  ENDURANCE
+  STRENGTH
+  FLEXIBILITY
+  GENERAL_FITNESS
 }
 
-model Project {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  name      String
-  messages  Message[]
-  userId    String
+enum ActivityLevel {
+  SEDENTARY
+  LIGHTLY_ACTIVE
+  MODERATELY_ACTIVE
+  VERY_ACTIVE
+  EXTREMELY_ACTIVE
 }
 
-model User {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
 }
 
-model Usage {
-  key       String   @id @default(uuid())
-  points    Int
-  expire    DateTime?
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
 }
