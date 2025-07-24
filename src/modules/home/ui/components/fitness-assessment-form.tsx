@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, ArrowRight, ArrowLeft, Target, Activity, Dumbbell, Calendar, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
+import { SignIn, SignInButton, useClerk } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useTRPC } from "@/trcp/client";
 import { useMutation } from "@tanstack/react-query";
+import { useFitnessAssessmentStore } from "@/lib/fitness-assessment-store";
 
 interface AssessmentData {
   // Personal Information
@@ -127,37 +128,82 @@ const COOKING_SKILLS = [
 ];
 
 export const FitnessAssessmentForm = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [trainerAnimation, setTrainerAnimation] = useState(false);
   const router = useRouter();
   const { user } = useClerk();
   const trpc = useTRPC();
+  const clerk = useClerk();
 
-  const [data, setData] = useState<AssessmentData>({
-    age: "",
-    gender: "",
-    height: "",
-    weight: "",
-    targetWeight: "",
-    fitnessGoal: "GENERAL_FITNESS",
-    activityLevel: "SEDENTARY",
-    experienceLevel: "BEGINNER",
-    hasInjuries: false,
-    injuries: "",
-    medicalConditions: "",
-    availableDays: [],
-    workoutDuration: "45",
-    preferredExercises: "",
-    equipment: [],
-    mealPlanningEnabled: false,
-    dietaryRestrictions: [],
-    allergies: [],
-    budgetPerWeek: "1000",
-    mealPrepTime: "30",
-    preferredCuisines: [],
-    cookingSkill: "BEGINNER",
-  });
+  // Use Zustand store instead of local state
+  const {
+    data,
+    currentStep,
+    isSubmitting,
+    trainerAnimation,
+    pendingSubmission,
+    hasHydrated,
+    updateData,
+    setCurrentStep,
+    setIsSubmitting,
+    setTrainerAnimation,
+    setPendingSubmission,
+    setHasHydrated,
+    reset,
+    nextStep: storeNextStep,
+    prevStep: storePrevStep,
+  } = useFitnessAssessmentStore();
+console.log(currentStep, "AA")
+  const generatePlan = useMutation(trpc.fitness.generatePlan.mutationOptions({
+    onSuccess: async (data) => {
+      toast.success("Generování fitness plánu zahájeno! Přesměrování na řídicí panel...");
+      reset(); // Reset form only on successful submission
+      router.push('/dashboard');
+    },
+    onError: (error) => {
+      if (error.data?.code === "TOO_MANY_REQUESTS") {
+        toast.error("Dosáhli jste denní limit generování fitness plánů. Prosím, upgradujte na placený plán pro pokračování.");
+        setTimeout(() => {
+          router.push("/pricing");
+        }, 1000);
+      } else {
+        toast.error(error.message || "Něco se pokazilo. Prosím, zkuste to znovu.");
+      }
+    }
+  }));
+
+  const handleSubmit = useCallback(async () => {
+    if (!user) {
+      toast.error("Prosím, přihlaste se pro pokračování");
+      setPendingSubmission(true); // Mark that we have a pending submission
+      clerk.openSignIn();
+      return;
+    }
+
+    if (data.availableDays.length === 0) {
+      toast.error("Prosím, vyberte alespoň jeden den pro vaše cvičení");
+      return;
+    }
+
+    setIsSubmitting(true);
+    generatePlan.mutate(data, {
+      onSettled: () => {
+        setIsSubmitting(false);
+      }
+    });
+  }, [user, data, setPendingSubmission, clerk, setIsSubmitting, generatePlan]);
+
+  // Handle pending submission after authentication
+  useEffect(() => {
+    if (user && pendingSubmission) {
+      // User has returned from authentication, submit the form
+      setPendingSubmission(false);
+      handleSubmit();
+    }
+  }, [user, pendingSubmission, setPendingSubmission, handleSubmit]);
+
+  // Only reset when form is successfully submitted
+  // Don't reset on user sign out to preserve form progress
+
+
 
   const steps = [
     {
@@ -192,10 +238,6 @@ export const FitnessAssessmentForm = () => {
     },
   ];
 
-  const updateData = (field: keyof AssessmentData, value: any) => {
-    setData(prev => ({ ...prev, [field]: value }));
-  };
-
   const nextStep = () => {
     // Check if we're on step 4 (preferences step) and validate available days
     if (currentStep === 4 && data.availableDays.length === 0) {
@@ -203,55 +245,17 @@ export const FitnessAssessmentForm = () => {
       return;
     }
 
-    if (currentStep < steps.length - 1) {
+    const success = storeNextStep();
+    if (success) {
       setTrainerAnimation(true);
       setTimeout(() => {
-        setCurrentStep(currentStep + 1);
         setTrainerAnimation(false);
       }, 300);
     }
   };
 
   const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const generatePlan = useMutation(trpc.fitness.generatePlan.mutationOptions({
-    onSuccess: async (data) => {
-      toast.success("Generování fitness plánu zahájeno! Přesměrování na řídicí panel...");
-      router.push('/dashboard?generating=true');
-    },
-    onError: (error) => {
-      if (error.data?.code === "TOO_MANY_REQUESTS") {
-        toast.error("Dosáhli jste denní limit generování fitness plánů. Prosím, upgradujte na placený plán pro pokračování.");
-        setTimeout(() => {
-          router.push("/pricing");
-        }, 1000);
-      } else {
-        toast.error(error.message || "Něco se pokazilo. Prosím, zkuste to znovu.");
-      }
-    }
-  }));
-
-  const handleSubmit = async () => {
-    if (!user) {
-      toast.error("Prosím, přihlaste se pro pokračování");
-      return;
-    }
-
-    if (data.availableDays.length === 0) {
-      toast.error("Prosím, vyberte alespoň jeden den pro vaše cvičení");
-      return;
-    }
-
-    setIsSubmitting(true);
-    generatePlan.mutate(data, {
-      onSettled: () => {
-        setIsSubmitting(false);
-      }
-    });
+    storePrevStep();
   };
 
 
@@ -616,7 +620,31 @@ export const FitnessAssessmentForm = () => {
     }
   };
 
-  return (
+  // Don't render until the store has been hydrated
+  if (!hasHydrated) {
+    return (
+      <div className="relative">
+        <Card className="w-full relative z-10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Target className="w-5 h-5" />
+              <div>
+                <CardTitle>Načítání...</CardTitle>
+                <CardDescription>Načítáme vaše údaje...</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+    return (
     <div className="relative">
                         {/* Trainer image positioned absolutely at the top right */}
       <div className="absolute -top-32 right-0 z-0">

@@ -12,33 +12,31 @@ async function generateWorkoutWithAI(weekNumber: number, dayOfWeek: string, fitn
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  // Retry logic - try up to 3 times
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      console.log(`Attempt ${attempt} to generate workout for ${dayOfWeek}...`);
+  try {
+    console.log(`Generating workout for ${dayOfWeek}...`);
 
-      const prompt = `Generate a workout for ${dayOfWeek} based on these parameters:
-- Fitness Goal: ${fitnessGoal}
-- Experience Level: ${experienceLevel}
-- Available Equipment: ${availableEquipment.join(', ')}
-- Workout Duration: ${workoutDuration} minutes
+    const prompt = `Vygeneruj trénink pro ${dayOfWeek} na základě těchto parametrů:
+- Fitness cíl: ${fitnessGoal}
+- Úroveň zkušeností: ${experienceLevel}
+- Dostupné vybavení: ${availableEquipment.join(', ')}
+- Doba trvání tréninku: ${workoutDuration} minut
 
-Create a progressive workout that:
-- Matches the fitness goal (weight loss = cardio focus, muscle gain = strength focus, etc.)
-- Is appropriate for the experience level
-- Uses available equipment
-- Fits within the time limit
-- Includes 4-6 exercises with proper progression
+Vytvoř progresivní trénink, který:
+- Odpovídá fitness cíli (hubnutí = zaměření na kardio, nabírání svalů = zaměření na sílu, atd.)
+- Je vhodný pro úroveň zkušeností
+- Používá dostupné vybavení
+- Vejde se do časového limitu
+- Obsahuje 4-6 cviků s řádnou progresí
 
-CRITICAL: You must respond with ONLY valid JSON in this exact format. No additional text, no explanations, no markdown formatting:
+KRITICKÉ: Musíš odpovědět POUZE platným JSON v tomto přesném formátu. Žádný další text, žádná vysvětlení, žádné markdown formátování:
 
 {
-  "name": "Workout Name",
-  "description": "Brief description of the workout focus and benefits",
+  "name": "Název tréninku",
+  "description": "Stručný popis zaměření tréninku a jeho přínosů",
   "exercises": [
     {
-      "name": "Exercise Name",
-      "description": "Brief description of the exercise and proper form",
+      "name": "Název cviku",
+      "description": "Stručný popis cviku a správné techniky",
       "category": "strength|cardio|flexibility",
       "muscleGroups": ["chest", "back", "legs", "core", "arms", "shoulders"],
       "equipment": ["dumbbells", "resistance bands", "bodyweight"],
@@ -52,140 +50,157 @@ CRITICAL: You must respond with ONLY valid JSON in this exact format. No additio
   ]
 }
 
-For strength exercises, use sets and reps. For cardio/flexibility, use duration in seconds.
-CRITICAL: Use ONLY these exact difficulty values with CAPITAL letters: "BEGINNER", "INTERMEDIATE", "ADVANCED".
-Do NOT use lowercase or any other variations.
-For weight field, use ONLY numbers (e.g., 5.0, 10.0, 20.0) or null. Do NOT use strings like "light", "medium", "heavy".
-Ensure exercises are safe and appropriate for the experience level.`;
+DŮLEŽITÉ: VŠECHNY NÁZVY CVIKŮ MUSÍ BÝT V ČEŠTINĚ. Použij POUZE české názvy cviků:
 
-      const completion = await openaiClient.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a professional fitness trainer. You MUST respond with ONLY valid JSON in the exact format requested. Do not include any additional text, explanations, or markdown formatting outside the JSON object."
-          },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.5, // Lower temperature for more consistent output
-        max_tokens: 1000,
-      });
+SILOVÉ CVIKY:
+- Dřepy (místo Squat)
+- Výpady (místo Lunge)
+- Mrtvý tah (místo Deadlift)
+- Bench press (místo Bench Press)
+- Kliky (místo Push-ups)
+- Shyby (místo Pull-ups)
+- Tlaky ramen (místo Shoulder Press)
+- Přítahy v předklonu (místo Bent-over Rows)
+- Tricepsové kliky (místo Tricep Dips)
+- Výpady s činkami (místo Dumbbell Lunge)
 
-      const content = completion.choices[0]?.message?.content;
-      if (!content) {
-        console.error(`Attempt ${attempt}: No content received from OpenAI`);
-        continue;
+KARDIO CVIKY:
+- Skákání přes švihadlo (místo Jump Rope)
+- Burpee (místo Burpee)
+- Skákací dřepy (místo Jump Squats)
+- Mountain climbers (místo Mountain Climbers)
+- Skákání na místě (místo Jumping Jacks)
+
+CORE CVIKY:
+- Plank (místo Plank)
+- Prkno na boku (místo Side Plank)
+- Ruské twisty (místo Russian Twists)
+- Crunchy (místo Crunches)
+- Nůžky (místo Scissors)
+
+NEPOUŽÍVEJ žádné anglické názvy cviků! VŠECHNY názvy musí být v češtině.
+
+Pro silové cviky použij série a opakování. Pro kardio/flexibilitu použij dobu trvání v sekundách.
+KRITICKÉ: Použij POUZE tyto přesné hodnoty obtížnosti s VELKÝMI písmeny: "BEGINNER", "INTERMEDIATE", "ADVANCED".
+NEPOUŽÍVEJ malá písmena ani žádné jiné variace.
+Pro pole weight použij POUZE čísla (např. 5.0, 10.0, 20.0) nebo null. NEPOUŽÍVEJ řetězce jako "light", "medium", "heavy".
+Zajisti, že cviky jsou bezpečné a vhodné pro úroveň zkušeností.`;
+
+    const completion = await openaiClient.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+                {
+        role: "system",
+        content: "Jsi profesionální fitness trenér. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. KRITICKÉ: VŠECHNY NÁZVY CVIKŮ MUSÍ BÝT V ČEŠTINĚ. Použij POUZE české názvy: Dřepy, Výpady, Mrtvý tah, Bench press, Kliky, Shyby, Tlaky ramen, Přítahy v předklonu, Tricepsové kliky, Plank, Burpee, Skákání přes švihadlo. NIKDY nepoužívej anglické názvy jako Push-ups, Pull-ups, Squat, Deadlift, Shoulder Press, atd."
+      },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.5, // Lower temperature for more consistent output
+      max_tokens: 1000,
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
+      console.error(`No content received from OpenAI`);
+      throw new Error(`No content received from OpenAI`);
+    }
+
+    console.log(`Raw AI response:`, content);
+
+    // Try to extract JSON from the response
+    let jsonContent = content.trim();
+
+    // Remove any markdown formatting
+    jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+
+    // Find JSON object in the response
+    const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonContent = jsonMatch[0];
+    }
+
+    console.log(`Extracted JSON:`, jsonContent);
+
+    try {
+      const workout = JSON.parse(jsonContent);
+
+      // Validate the workout structure
+      if (!workout.name || !workout.description || !Array.isArray(workout.exercises)) {
+        throw new Error(`Invalid workout structure from AI. Expected: name, description, and exercises array. Got: ${JSON.stringify(workout)}`);
       }
 
-      console.log(`Attempt ${attempt}: Raw AI response:`, content);
-
-      // Try to extract JSON from the response
-      let jsonContent = content.trim();
-
-      // Remove any markdown formatting
-      jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
-
-      // Find JSON object in the response
-      const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        jsonContent = jsonMatch[0];
+      if (workout.exercises.length === 0) {
+        throw new Error(`AI returned empty exercises array for workout. Expected at least 4-6 exercises.`);
       }
 
-      console.log(`Attempt ${attempt}: Extracted JSON:`, jsonContent);
-
-      try {
-        const workout = JSON.parse(jsonContent);
-
-        // Validate the workout structure
-        if (!workout.name || !workout.description || !Array.isArray(workout.exercises)) {
-          throw new Error(`Invalid workout structure from AI. Expected: name, description, and exercises array. Got: ${JSON.stringify(workout)}`);
+      // Validate difficulty values in exercises
+      const validatedExercises = workout.exercises.map((exercise: any) => {
+        if (!exercise.name || !exercise.description || !exercise.category) {
+          throw new Error(`Invalid exercise structure. Expected: name, description, category. Got: ${JSON.stringify(exercise)}`);
         }
 
-        if (workout.exercises.length === 0) {
-          throw new Error(`AI returned empty exercises array for workout. Expected at least 4-6 exercises.`);
-        }
-
-        // Validate difficulty values in exercises
-        const validatedExercises = workout.exercises.map((exercise: any) => {
-          if (!exercise.name || !exercise.description || !exercise.category) {
-            throw new Error(`Invalid exercise structure. Expected: name, description, category. Got: ${JSON.stringify(exercise)}`);
-          }
-
-          if (exercise.difficulty) {
-            const difficultyUpper = exercise.difficulty.toUpperCase();
-            if (difficultyUpper === 'BEGINNER' || difficultyUpper === 'INTERMEDIATE' || difficultyUpper === 'ADVANCED') {
-              exercise.difficulty = difficultyUpper;
-            } else {
-              throw new Error(`Invalid difficulty value: "${exercise.difficulty}" for exercise "${exercise.name}". Expected: BEGINNER, INTERMEDIATE, or ADVANCED.`);
-            }
+        if (exercise.difficulty) {
+          const difficultyUpper = exercise.difficulty.toUpperCase();
+          if (difficultyUpper === 'BEGINNER' || difficultyUpper === 'INTERMEDIATE' || difficultyUpper === 'ADVANCED') {
+            exercise.difficulty = difficultyUpper;
           } else {
-            throw new Error(`Missing difficulty value for exercise "${exercise.name}". AI must provide difficulty for all exercises.`);
+            throw new Error(`Invalid difficulty value: "${exercise.difficulty}" for exercise "${exercise.name}". Expected: BEGINNER, INTERMEDIATE, or ADVANCED.`);
           }
+        } else {
+          throw new Error(`Missing difficulty value for exercise "${exercise.name}". AI must provide difficulty for all exercises.`);
+        }
 
-          // Validate and convert weight to number or null
-          if (exercise.weight !== null && exercise.weight !== undefined) {
-            if (typeof exercise.weight === 'string') {
-              // Convert string weight descriptions to numbers
-              const weightLower = exercise.weight.toLowerCase();
-              if (weightLower === 'light' || weightLower === 'lightweight') {
-                exercise.weight = 5.0; // 5kg/10lbs
-              } else if (weightLower === 'medium' || weightLower === 'moderate') {
-                exercise.weight = 10.0; // 10kg/20lbs
-              } else if (weightLower === 'heavy' || weightLower === 'heavyweight') {
-                exercise.weight = 20.0; // 20kg/40lbs
+        // Validate and convert weight to number or null
+        if (exercise.weight !== null && exercise.weight !== undefined) {
+          if (typeof exercise.weight === 'string') {
+            // Convert string weight descriptions to numbers
+            const weightLower = exercise.weight.toLowerCase();
+            if (weightLower === 'light' || weightLower === 'lightweight') {
+              exercise.weight = 5.0; // 5kg/10lbs
+            } else if (weightLower === 'medium' || weightLower === 'moderate') {
+              exercise.weight = 10.0; // 10kg/20lbs
+            } else if (weightLower === 'heavy' || weightLower === 'heavyweight') {
+              exercise.weight = 20.0; // 20kg/40lbs
+            } else {
+              // Try to parse as number
+              const parsedWeight = parseFloat(exercise.weight);
+              if (isNaN(parsedWeight)) {
+                console.warn(`Invalid weight value "${exercise.weight}" for exercise "${exercise.name}". Setting to null.`);
+                exercise.weight = null;
               } else {
-                // Try to parse as number
-                const parsedWeight = parseFloat(exercise.weight);
-                if (isNaN(parsedWeight)) {
-                  console.warn(`Invalid weight value "${exercise.weight}" for exercise "${exercise.name}". Setting to null.`);
-                  exercise.weight = null;
-                } else {
-                  exercise.weight = parsedWeight;
-                }
+                exercise.weight = parsedWeight;
               }
-            } else if (typeof exercise.weight === 'number') {
-              // Weight is already a number, keep it
-            } else {
-              console.warn(`Invalid weight type for exercise "${exercise.name}". Setting to null.`);
-              exercise.weight = null;
             }
+          } else if (typeof exercise.weight === 'number') {
+            // Weight is already a number, keep it
           } else {
+            console.warn(`Invalid weight type for exercise "${exercise.name}". Setting to null.`);
             exercise.weight = null;
           }
-
-          return exercise;
-        });
-
-        console.log(`Attempt ${attempt}: Successfully generated workout: ${workout.name}`);
-        return {
-          name: workout.name,
-          description: workout.description,
-          exercises: validatedExercises
-        };
-      } catch (jsonError) {
-        console.error(`Attempt ${attempt}: JSON parsing error:`, jsonError);
-        console.error(`Attempt ${attempt}: Raw AI response:`, content);
-
-        if (attempt === 3) {
-          // On final attempt, throw the error
-          throw new Error(`Failed to parse JSON after 3 attempts for ${dayOfWeek}. Last error: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}. Raw response: ${content.substring(0, 200)}...`);
+        } else {
+          exercise.weight = null;
         }
-      }
-    } catch (error) {
-      console.error(`Attempt ${attempt}: Error generating workout with OpenAI:`, error);
 
-      if (attempt === 3) {
-        // On final attempt, throw the error
-        throw new Error(`Failed to generate workout for ${dayOfWeek} after 3 attempts. Last error: ${error instanceof Error ? error.message : String(error)}`);
-      }
+        return exercise;
+      });
 
-      // Wait a bit before retrying
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      console.log(`Successfully generated workout: ${workout.name}`);
+      return {
+        name: workout.name,
+        description: workout.description,
+        exercises: validatedExercises
+      };
+    } catch (jsonError) {
+      console.error(`JSON parsing error:`, jsonError);
+      console.error(`Raw AI response:`, content);
+
+      throw new Error(`Failed to parse JSON after 3 attempts for ${dayOfWeek}. Last error: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}. Raw response: ${content.substring(0, 200)}...`);
     }
-  }
+  } catch (error) {
+    console.error(`Error generating workout with OpenAI:`, error);
 
-  // This should never be reached, but just in case
-  throw new Error(`Failed to generate workout for ${dayOfWeek} after all attempts.`);
+    throw new Error(`Failed to generate workout for ${dayOfWeek} after 3 attempts. Last error: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 async function generateMealWithAI(day: number, mealType: string, fitnessGoal: string, dietaryRestrictions: string[], preferredCuisines: string[], cookingSkill: string, calories: number, protein: number, carbs: number, fat: number): Promise<{name: string, description: string, calories: number, protein: number, carbs: number, fat: number, instructions: string, ingredients: any[]}> {
@@ -193,51 +208,49 @@ async function generateMealWithAI(day: number, mealType: string, fitnessGoal: st
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  // Retry logic - try up to 3 times
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      console.log(`Attempt ${attempt} to generate meal for ${mealType}...`);
+  try {
+    console.log(`Generating meal for ${mealType}...`);
 
-      const prompt = `Generate a meal for ${mealType.toLowerCase()} with these requirements:
-- Fitness Goal: ${fitnessGoal}
-- Dietary Restrictions: ${dietaryRestrictions.join(', ') || 'none'}
-- Preferred Cuisines: ${preferredCuisines.join(', ')}
-- Cooking Skill: ${cookingSkill}
-- Target Nutrition: ${calories} calories, ${protein}g protein, ${carbs}g carbs, ${fat}g fat
+    const prompt = `Vygeneruj jídlo pro ${mealType.toLowerCase()} s těmito požadavky:
+- Fitness cíl: ${fitnessGoal}
+- Stravovací omezení: ${dietaryRestrictions.join(', ') || 'žádná'}
+- Preferované kuchyně: ${preferredCuisines.join(', ')}
+- Kuchařské dovednosti: ${cookingSkill}
+- Cílová výživa: ${calories} kalorií, ${protein}g bílkovin, ${carbs}g sacharidů, ${fat}g tuků
 
-Create a delicious, nutritious meal that:
-- Supports the fitness goal (weight loss = lower calories, muscle gain = higher protein, etc.)
-- Respects dietary restrictions
-- Uses preferred cuisines when possible
-- Is appropriate for the cooking skill level
-- Meets the target nutrition goals
-- Is practical and achievable
+Vytvoř chutné, výživné jídlo, které:
+- Podporuje fitness cíl (hubnutí = méně kalorií, nabírání svalů = více bílkovin, atd.)
+- Respektuje stravovací omezení
+- Používá preferované kuchyně, když je to možné
+- Je vhodné pro úroveň kuchařských dovedností
+- Splňuje cílové výživové hodnoty
+- Je praktické a proveditelné
 
-CRITICAL: You must respond with ONLY valid JSON in this exact format. No additional text, no explanations, no markdown formatting:
+KRITICKÉ: Musíš odpovědět POUZE platným JSON v tomto přesném formátu. Žádný další text, žádná vysvětlení, žádné markdown formátování:
 
 {
-  "name": "Creative Meal Name",
-  "description": "Brief description of the meal and its benefits",
+  "name": "Kreativní název jídla",
+  "description": "Stručný popis jídla a jeho přínosů",
   "calories": ${calories},
   "protein": ${protein},
   "carbs": ${carbs},
   "fat": ${fat},
-  "instructions": "1. Step one\\n2. Step two\\n3. Step three\\n4. Step four\\n5. Step five",
+  "instructions": "1. Krok první\\n2. Krok druhý\\n3. Krok třetí\\n4. Krok čtvrtý\\n5. Krok pátý",
   "ingredients": [
-    {"name": "Ingredient Name", "amount": "1", "unit": "cup"},
-    {"name": "Another Ingredient", "amount": "2", "unit": "tbsp"}
+    {"name": "Název ingredience", "amount": "200", "unit": "g"},
+    {"name": "Další ingredience", "amount": "30", "unit": "ml"}
   ]
 }
 
-Include 4-8 ingredients with realistic amounts and clear, step-by-step instructions.`;
+Zahrň 4-8 ingrediencí s realistickými množstvími v evropských jednotkách (gramy, mililitry, kusy) a jasné, krok za krokem instrukce. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - žádné cups, tablespoons, ounces atd.`;
 
-      const completion = await openaiClient.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a professional nutritionist and chef. You MUST respond with ONLY valid JSON in the exact format requested. Do not include any additional text, explanations, or markdown formatting outside the JSON object."
-          },
+    const completion = await openaiClient.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+                  {
+          role: "system",
+          content: "Jsi profesionální výživový poradce a kuchař. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - gramy, mililitry, kusy, žádné cups, tablespoons, ounces."
+        },
           { role: "user", content: prompt }
         ],
         temperature: 0.5, // Lower temperature for more consistent output
@@ -246,11 +259,11 @@ Include 4-8 ingredients with realistic amounts and clear, step-by-step instructi
 
       const content = completion.choices[0]?.message?.content;
       if (!content) {
-        console.error(`Attempt ${attempt}: No content received from OpenAI`);
-        continue;
+        console.error(`No content received from OpenAI`);
+        throw new Error(`No content received from OpenAI`);
       }
 
-      console.log(`Attempt ${attempt}: Raw AI response:`, content);
+      console.log(`Raw AI response:`, content);
 
       // Try to extract JSON from the response
       let jsonContent = content.trim();
@@ -264,7 +277,7 @@ Include 4-8 ingredients with realistic amounts and clear, step-by-step instructi
         jsonContent = jsonMatch[0];
       }
 
-      console.log(`Attempt ${attempt}: Extracted JSON:`, jsonContent);
+      console.log(`Extracted JSON:`, jsonContent);
 
       try {
         const meal = JSON.parse(jsonContent);
@@ -285,7 +298,7 @@ Include 4-8 ingredients with realistic amounts and clear, step-by-step instructi
           }
         });
 
-        console.log(`Attempt ${attempt}: Successfully generated meal: ${meal.name}`);
+        console.log(`Successfully generated meal: ${meal.name}`);
         return {
           name: meal.name,
           description: meal.description,
@@ -297,36 +310,24 @@ Include 4-8 ingredients with realistic amounts and clear, step-by-step instructi
           ingredients: meal.ingredients
         };
       } catch (jsonError) {
-        console.error(`Attempt ${attempt}: JSON parsing error:`, jsonError);
-        console.error(`Attempt ${attempt}: Raw AI response:`, content);
+        console.error(`JSON parsing error:`, jsonError);
+        console.error(`Raw AI response:`, content);
 
-        if (attempt === 3) {
-          // On final attempt, throw the error
-          throw new Error(`Failed to parse JSON after 3 attempts for ${mealType}. Last error: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}. Raw response: ${content.substring(0, 200)}...`);
-        }
+        throw new Error(`Failed to parse JSON after 3 attempts for ${mealType}. Last error: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}. Raw response: ${content.substring(0, 200)}...`);
       }
     } catch (error) {
-      console.error(`Attempt ${attempt}: Error generating meal with OpenAI:`, error);
+      console.error(`Error generating meal with OpenAI:`, error);
 
-      if (attempt === 3) {
-        // On final attempt, throw the error
-        throw new Error(`Failed to generate meal for ${mealType} after 3 attempts. Last error: ${error instanceof Error ? error.message : String(error)}`);
-      }
-
-      // Wait a bit before retrying
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      throw new Error(`Failed to generate meal for ${mealType} after 3 attempts. Last error: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
-
-  // This should never be reached, but just in case
-  throw new Error(`Failed to generate meal for ${mealType} after all attempts.`);
-}
 
 type GenerateFitnessPlanEvent = {
   name: "generate-fitness-plan/run";
   data: {
     assessmentData: any;
     userId: string;
+    workoutPlanId: string;
   };
 };
 
@@ -335,10 +336,11 @@ export const generateFitnessPlanFunction = inngest.createFunction(
   { event: "generate-fitness-plan/run" },
   async ({ event, step }: { event: GenerateFitnessPlanEvent, step: any }) => {
     const prisma = new PrismaClient();
-    const { assessmentData, userId } = event.data;
+    const { assessmentData, userId, workoutPlanId } = event.data;
 
     console.log("Starting fitness plan generation for user:", userId);
     console.log("Assessment data:", assessmentData);
+    console.log("Using existing workout plan ID:", workoutPlanId);
 
     try {
 
@@ -358,65 +360,39 @@ export const generateFitnessPlanFunction = inngest.createFunction(
         }
       });
 
-      // Create or update fitness profile
-      const fitnessProfile = await step.run("create-fitness-profile", async () => {
-        const profile = await prisma.fitnessProfile.upsert({
+      // Get the existing fitness profile and workout plan
+      const fitnessProfile = await step.run("get-fitness-profile", async () => {
+        const profile = await prisma.fitnessProfile.findUnique({
           where: { userId },
-          update: {
-            age: parseInt(assessmentData.age),
-            gender: assessmentData.gender,
-            height: parseFloat(assessmentData.height),
-            weight: parseFloat(assessmentData.weight),
-            targetWeight: assessmentData.targetWeight ? parseFloat(assessmentData.targetWeight) : null,
-            fitnessGoal: assessmentData.fitnessGoal,
-            activityLevel: assessmentData.activityLevel,
-            experienceLevel: assessmentData.experienceLevel,
-            hasInjuries: assessmentData.hasInjuries,
-            injuries: assessmentData.injuries || null,
-            medicalConditions: assessmentData.medicalConditions || null,
-            availableDays: JSON.stringify(assessmentData.availableDays),
-            workoutDuration: parseInt(assessmentData.workoutDuration),
-            preferredExercises: assessmentData.preferredExercises || null,
-            equipment: JSON.stringify(assessmentData.equipment),
-            mealPlanningEnabled: assessmentData.mealPlanningEnabled,
-            dietaryRestrictions: assessmentData.dietaryRestrictions,
-            allergies: assessmentData.allergies,
-            budgetPerWeek: assessmentData.budgetPerWeek ? parseFloat(assessmentData.budgetPerWeek) : null,
-            mealPrepTime: assessmentData.mealPrepTime ? parseInt(assessmentData.mealPrepTime) : null,
-            preferredCuisines: assessmentData.preferredCuisines,
-            cookingSkill: assessmentData.cookingSkill,
-          },
-          create: {
-            userId,
-            age: parseInt(assessmentData.age),
-            gender: assessmentData.gender,
-            height: parseFloat(assessmentData.height),
-            weight: parseFloat(assessmentData.weight),
-            targetWeight: assessmentData.targetWeight ? parseFloat(assessmentData.targetWeight) : null,
-            fitnessGoal: assessmentData.fitnessGoal,
-            activityLevel: assessmentData.activityLevel,
-            experienceLevel: assessmentData.experienceLevel,
-            hasInjuries: assessmentData.hasInjuries,
-            injuries: assessmentData.injuries || null,
-            medicalConditions: assessmentData.medicalConditions || null,
-            availableDays: JSON.stringify(assessmentData.availableDays),
-            workoutDuration: parseInt(assessmentData.workoutDuration),
-            preferredExercises: assessmentData.preferredExercises || null,
-            equipment: JSON.stringify(assessmentData.equipment),
-            mealPlanningEnabled: assessmentData.mealPlanningEnabled,
-            dietaryRestrictions: assessmentData.dietaryRestrictions,
-            allergies: assessmentData.allergies,
-            budgetPerWeek: assessmentData.budgetPerWeek ? parseFloat(assessmentData.budgetPerWeek) : null,
-            mealPrepTime: assessmentData.mealPrepTime ? parseInt(assessmentData.mealPrepTime) : null,
-            preferredCuisines: assessmentData.preferredCuisines,
-            cookingSkill: assessmentData.cookingSkill,
-          },
+          include: {
+            currentPlan: true
+          }
         });
+
+        if (!profile) {
+          throw new Error("Fitness profile not found");
+        }
+
+        console.log("Found fitness profile:", profile.id);
         return profile;
       });
 
-      // Generate workout plan using AI
-      const planData = await step.run("generate-workout-plan", async () => {
+      // Get the existing workout plan
+      const workoutPlan = await step.run("get-workout-plan", async () => {
+        const plan = await prisma.workoutPlan.findUnique({
+          where: { id: workoutPlanId }
+        });
+
+        if (!plan) {
+          throw new Error("Workout plan not found");
+        }
+
+        console.log("Using existing workout plan:", plan.id);
+        return plan;
+      });
+
+      // Generate workout plan details using AI
+      const planData = await step.run("generate-workout-plan-details", async () => {
         // Use direct OpenAI call instead of createAgent to avoid nested step tooling
         const openaiClient = new OpenAI({
           apiKey: process.env.OPENAI_API_KEY,
@@ -463,42 +439,6 @@ export const generateFitnessPlanFunction = inngest.createFunction(
           difficulty: assessmentData.experienceLevel,
           planContent,
         };
-      });
-
-      // Create workout plan in database
-      const workoutPlan = await step.run("create-workout-plan", async () => {
-        // First, deactivate any existing active plans for this profile
-        await prisma.workoutPlan.updateMany({
-          where: {
-            fitnessProfileId: fitnessProfile.id,
-            isActive: true
-          },
-          data: {
-            isActive: false,
-            activeProfileId: null
-          },
-        });
-
-        // Create the new plan and set it as active
-        const plan = await prisma.workoutPlan.create({
-          data: {
-            name: planData.name,
-            description: planData.description,
-            duration: planData.duration,
-            difficulty: planData.difficulty,
-            fitnessProfileId: fitnessProfile.id,
-            isActive: true,
-            activeProfileId: fitnessProfile.id,
-          },
-        });
-
-        // Update the fitness profile to point to the new current plan
-        await prisma.fitnessProfile.update({
-          where: { id: fitnessProfile.id },
-          data: { currentPlan: { connect: { id: plan.id } } }
-        });
-
-        return plan;
       });
 
       // Generate workouts for each week using AI (optimized to reduce API calls)
@@ -701,7 +641,7 @@ export const generateFitnessPlanFunction = inngest.createFunction(
                   mealPlanId: mealPlan.id,
                   recipes: {
                     create: {
-                      name: `Day ${day} - ${template.name} Recipe`,
+                      name: `Day ${day} - ${template.name}`,
                       description: template.description,
                       instructions: template.instructions,
                       ingredients: JSON.stringify(template.ingredients),
@@ -872,32 +812,32 @@ export const generateShoppingListFunction = inngest.createFunction(
           apiKey: process.env.OPENAI_API_KEY,
         });
 
-        const prompt = `Create a realistic and well-organized shopping list for Week ${weekNumber}. Here are the raw ingredients needed:
+        const prompt = `Vytvoř realistický a dobře organizovaný nákupní seznam pro týden ${weekNumber}. Zde jsou potřebné surové ingredience:
 
-${allIngredients.map(ing => `- ${ing.amount} ${ing.unit} ${ing.name} (used in ${ing.count} recipes)`).join('\n')}
+${allIngredients.map(ing => `- ${ing.amount} ${ing.unit} ${ing.name} (použito v ${ing.count} receptech)`).join('\n')}
 
-IMPORTANT INSTRUCTIONS:
-1. DO NOT multiply quantities - use the exact amounts provided
-2. Convert to realistic grocery store quantities (e.g., if you need 7 cups of spinach, that's about 2-3 bags of spinach)
-3. For items like sauces, oils, and spices, use reasonable amounts (e.g., 1 bottle of soy sauce, not 21 cups)
-4. Group similar ingredients together
-5. Add any missing staples (salt, pepper, cooking oil if not listed)
+DŮLEŽITÉ INSTRUKCE:
+1. NENÁSOB množství - použij přesné poskytnuté množství
+2. Převeď na realistické množství v obchodě (např. pokud potřebuješ 700g špenátu, to je asi 2-3 balení špenátu)
+3. Pro položky jako omáčky, oleje a koření použij rozumné množství (např. 1 láhev sojové omáčky, ne 21 šálků)
+4. Seskup podobné ingredience dohromady
+5. Přidej chybějící základní potraviny (sůl, pepř, olej na vaření, pokud nejsou uvedeny)
 
-Please organize this into a clean shopping list with:
-1. Categories (Produce, Dairy, Meat, Pantry, etc.)
-2. Realistic quantities that you'd actually buy at the store
-3. Any additional staples needed
-4. Brief shopping tips
+Prosím, organizuj to do čistého nákupního seznamu s:
+1. Kategoriemi (Ovoce a zelenina, Mléčné výrobky, Maso, Spižírna, atd.)
+2. Realistickými množstvími, které bys skutečně koupil v obchodě
+3. Jakýmikoli dodatečnými základními potravinami
+4. Stručnými tipy pro nákup
 
-Format as a clean, organized list that's easy to follow at the grocery store.`;
+Formátuj jako čistý, organizovaný seznam, který je snadné sledovat v obchodě. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - gramy, mililitry, kusy, žádné cups, tablespoons, ounces.`;
 
         const completion = await openaiClient.chat.completions.create({
           model: "gpt-4o-mini",
           messages: [
-            {
-              role: "system",
-              content: "You are a helpful assistant that creates realistic and organized shopping lists. Always use realistic grocery store quantities - never suggest buying 21 cups of sauce or other unrealistic amounts. Convert measurements to practical shopping units (e.g., 1 bottle, 1 package, 2-3 bags)."
-            },
+                    {
+          role: "system",
+          content: "Jsi užitečný asistent, který vytváří realistické a organizované nákupní seznamy. Vždy používej realistické množství z obchodu - nikdy nenavrhuj kupovat 21 šálků omáčky nebo jiná nereálná množství. Převeď měření na praktické nákupní jednotky (např. 1 láhev, 1 balení, 2-3 sáčky). POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - gramy, mililitry, kusy, žádné cups, tablespoons, ounces."
+        },
             {
               role: "user",
               content: prompt
@@ -939,7 +879,6 @@ Format as a clean, organized list that's easy to follow at the grocery store.`;
         projectId: project.id,
         shoppingList: shoppingList,
         weekNumber,
-        shoppingList,
         message: `Shopping list generated for Week ${weekNumber}`,
       };
 

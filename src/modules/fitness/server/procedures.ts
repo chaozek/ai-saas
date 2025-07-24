@@ -49,12 +49,98 @@ export const fitnessRouter = createTRPCRouter({
         });
       }
 
-      // Trigger the Inngest function to generate the fitness plan
+      // Create or update fitness profile synchronously first
+      const fitnessProfile = await prisma.fitnessProfile.upsert({
+        where: { userId: ctx.auth.userId },
+        update: {
+          age: parseInt(input.age),
+          gender: input.gender,
+          height: parseFloat(input.height),
+          weight: parseFloat(input.weight),
+          targetWeight: input.targetWeight ? parseFloat(input.targetWeight) : null,
+          fitnessGoal: input.fitnessGoal,
+          activityLevel: input.activityLevel,
+          experienceLevel: input.experienceLevel,
+          hasInjuries: input.hasInjuries,
+          injuries: input.injuries || null,
+          medicalConditions: input.medicalConditions || null,
+          availableDays: JSON.stringify(input.availableDays),
+          workoutDuration: parseInt(input.workoutDuration),
+          preferredExercises: input.preferredExercises || null,
+          equipment: JSON.stringify(input.equipment),
+          mealPlanningEnabled: input.mealPlanningEnabled,
+          dietaryRestrictions: input.dietaryRestrictions,
+          allergies: input.allergies,
+          budgetPerWeek: input.budgetPerWeek ? parseFloat(input.budgetPerWeek) : null,
+          mealPrepTime: input.mealPrepTime ? parseInt(input.mealPrepTime) : null,
+          preferredCuisines: input.preferredCuisines,
+          cookingSkill: input.cookingSkill,
+        },
+        create: {
+          userId: ctx.auth.userId,
+          age: parseInt(input.age),
+          gender: input.gender,
+          height: parseFloat(input.height),
+          weight: parseFloat(input.weight),
+          targetWeight: input.targetWeight ? parseFloat(input.targetWeight) : null,
+          fitnessGoal: input.fitnessGoal,
+          activityLevel: input.activityLevel,
+          experienceLevel: input.experienceLevel,
+          hasInjuries: input.hasInjuries,
+          injuries: input.injuries || null,
+          medicalConditions: input.medicalConditions || null,
+          availableDays: JSON.stringify(input.availableDays),
+          workoutDuration: parseInt(input.workoutDuration),
+          preferredExercises: input.preferredExercises || null,
+          equipment: JSON.stringify(input.equipment),
+          mealPlanningEnabled: input.mealPlanningEnabled,
+          dietaryRestrictions: input.dietaryRestrictions,
+          allergies: input.allergies,
+          budgetPerWeek: input.budgetPerWeek ? parseFloat(input.budgetPerWeek) : null,
+          mealPrepTime: input.mealPrepTime ? parseInt(input.mealPrepTime) : null,
+          preferredCuisines: input.preferredCuisines,
+          cookingSkill: input.cookingSkill,
+        },
+      });
+
+      // Deactivate any existing active plans for this profile first
+      await prisma.workoutPlan.updateMany({
+        where: {
+          fitnessProfileId: fitnessProfile.id,
+          isActive: true
+        },
+        data: {
+          isActive: false,
+          activeProfileId: null
+        },
+      });
+
+      // Create empty workout plan synchronously
+      const workoutPlan = await prisma.workoutPlan.create({
+        data: {
+          name: `${input.fitnessGoal.replace('_', ' ')} Plan`,
+          description: `Personalized ${input.fitnessGoal.toLowerCase().replace('_', ' ')} program designed for ${input.experienceLevel.toLowerCase()} level`,
+          duration: 8,
+          difficulty: input.experienceLevel,
+          fitnessProfileId: fitnessProfile.id,
+          isActive: true,
+          activeProfileId: fitnessProfile.id,
+        },
+      });
+
+      // Update the fitness profile to point to the new current plan
+      await prisma.fitnessProfile.update({
+        where: { id: fitnessProfile.id },
+        data: { currentPlan: { connect: { id: workoutPlan.id } } }
+      });
+
+      // Trigger the Inngest function to generate the fitness plan details
       const result = await inngest.send({
         name: "generate-fitness-plan/run",
         data: {
           assessmentData: input,
           userId: ctx.auth.userId,
+          workoutPlanId: workoutPlan.id, // Pass the plan ID to avoid recreating it
         },
       });
 
@@ -62,102 +148,7 @@ export const fitnessRouter = createTRPCRouter({
         success: true,
         message: "Fitness plan generation started",
         eventId: result.ids[0],
-      };
-    }),
-
-  debugPlans: protectedProcedure
-    .query(async ({ ctx }) => {
-      const profile = await prisma.fitnessProfile.findUnique({
-        where: { userId: ctx.auth.userId },
-        include: {
-          currentPlan: {
-            include: {
-              workouts: {
-                include: {
-                  exercises: true,
-                },
-              },
-            },
-          },
-          workoutPlans: {
-            include: {
-              workouts: {
-                include: {
-                  exercises: true,
-                },
-              },
-            },
-          },
-          currentMealPlan: {
-            include: {
-              meals: {
-                include: {
-                  recipes: true,
-                },
-              },
-            },
-          },
-          mealPlans: {
-            include: {
-              meals: {
-                include: {
-                  recipes: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      return {
-        profile,
-        planCount: profile?.workoutPlans.length || 0,
-        currentPlan: profile?.currentPlan,
-        workoutCount: profile?.currentPlan?.workouts.length || 0,
-        mealPlanCount: profile?.mealPlans.length || 0,
-        currentMealPlan: profile?.currentMealPlan,
-        mealCount: profile?.currentMealPlan?.meals.length || 0,
-        mealPlanningEnabled: profile?.mealPlanningEnabled,
-      };
-    }),
-
-  testGeneratePlan: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      // Create a test assessment data
-      const testAssessmentData = {
-        age: "25",
-        gender: "male",
-        height: "175",
-        weight: "70",
-        fitnessGoal: "GENERAL_FITNESS" as const,
-        activityLevel: "MODERATELY_ACTIVE" as const,
-        experienceLevel: "BEGINNER" as const,
-        hasInjuries: false,
-        availableDays: ["monday", "wednesday", "friday"],
-        workoutDuration: "45",
-        equipment: ["none"],
-        mealPlanningEnabled: true,
-        dietaryRestrictions: ["none"],
-        allergies: [],
-        budgetPerWeek: "100",
-        mealPrepTime: "30",
-        preferredCuisines: ["italian", "mexican"],
-        cookingSkill: "BEGINNER" as const,
-      };
-
-      // Trigger the Inngest function to generate the fitness plan
-      const result = await inngest.send({
-        name: "generate-fitness-plan/run",
-        data: {
-          assessmentData: testAssessmentData,
-          userId: ctx.auth.userId,
-        },
-      });
-
-      return {
-        success: true,
-        message: "Test fitness plan generation started",
-        eventId: result.ids[0],
+        planId: workoutPlan.id,
       };
     }),
 
@@ -182,31 +173,6 @@ export const fitnessRouter = createTRPCRouter({
         message: `Shopping list generation started for Week ${input.weekNumber}`,
         eventId: result.ids[0],
       };
-    }),
-
-  testMealPlanModels: protectedProcedure
-    .query(async ({ ctx }) => {
-      try {
-        // Test if meal plan models are accessible
-        const mealPlanCount = await prisma.mealPlan.count();
-        const mealCount = await prisma.meal.count();
-        const recipeCount = await prisma.recipe.count();
-
-        return {
-          success: true,
-          mealPlanCount,
-          mealCount,
-          recipeCount,
-          message: "Meal plan models are accessible"
-        };
-      } catch (error) {
-        console.error("Error testing meal plan models:", error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-          message: "Meal plan models are not accessible"
-        };
-      }
     }),
 
   getProfile: protectedProcedure
@@ -262,11 +228,11 @@ export const fitnessRouter = createTRPCRouter({
     }),
 
   getWorkout: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ workoutId: z.string() }))
     .query(async ({ ctx, input }) => {
       const workout = await prisma.workout.findFirst({
         where: {
-          id: input.id,
+          id: input.workoutId,
           workoutPlan: {
             fitnessProfile: {
               userId: ctx.auth.userId,
@@ -274,7 +240,11 @@ export const fitnessRouter = createTRPCRouter({
           },
         },
         include: {
-          exercises: true,
+          exercises: {
+            orderBy: {
+              createdAt: 'asc'
+            }
+          },
         },
       });
 
@@ -327,10 +297,6 @@ export const fitnessRouter = createTRPCRouter({
   getMealPlans: protectedProcedure
     .query(async ({ ctx }) => {
       try {
-        console.log("Fetching meal plans for user:", ctx.auth.userId);
-        console.log("Prisma client available:", !!prisma);
-        console.log("MealPlan model available:", !!prisma.mealPlan);
-
         const mealPlans = await prisma.mealPlan.findMany({
           where: {
             fitnessProfile: {
@@ -351,15 +317,9 @@ export const fitnessRouter = createTRPCRouter({
           orderBy: { createdAt: "desc" },
         });
 
-        console.log("Found meal plans:", mealPlans.length);
         return mealPlans;
       } catch (error) {
         console.error("Error fetching meal plans:", error);
-        console.error("Error details:", {
-          name: error instanceof Error ? error.name : "Unknown",
-          message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        });
         return [];
       }
     }),
@@ -394,77 +354,6 @@ export const fitnessRouter = createTRPCRouter({
       } catch (error) {
         console.error("Error fetching current meal plan:", error);
         return null;
-      }
-    }),
-
-
-
-  checkGenerationStatus: protectedProcedure
-    .query(async ({ ctx }) => {
-      try {
-        // Check if user has a fitness profile
-        const profile = await prisma.fitnessProfile.findUnique({
-          where: { userId: ctx.auth.userId },
-          include: {
-            currentPlan: {
-              include: {
-                workouts: {
-                  include: {
-                    exercises: true,
-                  },
-                },
-              },
-            },
-            currentMealPlan: {
-              include: {
-                meals: {
-                  include: {
-                    recipes: true,
-                  },
-                  orderBy: [
-                    { dayOfWeek: "asc" },
-                    { mealType: "asc" }
-                  ],
-                },
-              },
-            },
-          },
-        });
-
-        if (!profile) {
-          return {
-            hasProfile: false,
-            hasWorkoutPlan: false,
-            hasMealPlan: false,
-            workoutPlanComplete: false,
-            mealPlanComplete: false,
-            isGenerating: false,
-          };
-        }
-
-        const hasWorkoutPlan = !!profile.currentPlan;
-        const hasMealPlan = !!profile.currentMealPlan;
-        const workoutPlanComplete = hasWorkoutPlan && profile.currentPlan!.workouts.length > 0;
-        const mealPlanComplete = hasMealPlan && profile.currentMealPlan!.meals.length > 0;
-
-        return {
-          hasProfile: true,
-          hasWorkoutPlan,
-          hasMealPlan,
-          workoutPlanComplete,
-          mealPlanComplete,
-          isGenerating: !workoutPlanComplete || (profile.mealPlanningEnabled && !mealPlanComplete),
-        };
-      } catch (error) {
-        console.error("Error checking generation status:", error);
-        return {
-          hasProfile: false,
-          hasWorkoutPlan: false,
-          hasMealPlan: false,
-          workoutPlanComplete: false,
-          mealPlanComplete: false,
-          isGenerating: false,
-        };
       }
     }),
 
