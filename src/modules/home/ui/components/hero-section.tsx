@@ -25,10 +25,18 @@ export function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" className="text-lg px-8 py-6">
-              Začněte zdarma
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <div className="relative group">
+              {/* Glowing background effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-green-600 via-emerald-500 to-blue-600 rounded-xl blur-lg opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+              {/* Button with enhanced styling */}
+              <Button
+                size="lg"
+                className="relative text-lg px-8 py-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0"
+              >
+                Začněte zdarma
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+              </Button>
+            </div>
             <Button size="lg" variant="outline" className="text-lg px-8 py-6">
               <Play className="mr-2 h-5 w-5" />
               Zobrazit demo

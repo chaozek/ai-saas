@@ -5,6 +5,8 @@ export { TestimonialsSection } from "./testimonials-section";
 export { EducationalContentSection } from "./educational-content-section";
 export { MobileAppSection } from "./mobile-app-section";
 export { FinalCTASection } from "./final-cta-section";
+export { FAQSection } from "./faq-section";
+export { Footer } from "./footer";
 export { FitnessFeatures } from "./fitness-features";
 export { FitnessAssessmentForm } from "./fitness-assessment-form";
 export { Navbar } from "./navbar";

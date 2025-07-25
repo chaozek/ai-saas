@@ -1,6 +1,7 @@
 export interface WorkoutPlan {
   name: string;
   description: string | null;
+  planContent?: string | null; // AI generated detailed plan content
   duration: number; // weeks
   difficulty: string;
   workouts: Workout[];

@@ -15,6 +15,7 @@ import {
   DashboardHeader,
   StatsOverview,
   PlanOverview,
+  PlanDetails,
   WorkoutsTab,
   MealsTab,
   ProgressTab,
@@ -184,6 +185,9 @@ export default function DashboardPage() {
 
         {/* Plan Overview */}
         <PlanOverview workoutPlan={workoutPlan} />
+
+        {/* Plan Details */}
+        <PlanDetails workoutPlan={workoutPlan} />
 
         {/* Main Content */}
         <Tabs defaultValue="workouts" className="space-y-6">

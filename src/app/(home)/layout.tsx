@@ -1,4 +1,5 @@
 import { Navbar } from "@/modules/home/ui/components/navbar"
+import { Footer } from "@/modules/home/ui/components/footer"
 
 const Layout = ({children}: {children: React.ReactNode}) => {
     return (
@@ -38,6 +39,8 @@ const Layout = ({children}: {children: React.ReactNode}) => {
             <div className="flex-1 flex flex-col px-4 pb-4 relative z-10">
                 {children}
             </div>
+
+            <Footer />
         </main>
     )
 }

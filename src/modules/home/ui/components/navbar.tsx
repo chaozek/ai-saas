@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import Link from "next/link"
 import { Logo } from "@/components/ui/logo"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { Dumbbell, BarChart3, Calendar, Target } from "lucide-react"
 
 export const Navbar = () => {
@@ -39,6 +40,7 @@ export const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-4">
+               <ThemeToggle />
                <SignedIn>
                     <Button variant="outline" size="sm" asChild>
                          <Link href="/dashboard">Můj Plán</Link>

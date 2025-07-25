@@ -151,7 +151,7 @@ export const FitnessAssessmentForm = () => {
     nextStep: storeNextStep,
     prevStep: storePrevStep,
   } = useFitnessAssessmentStore();
-console.log(currentStep, "AA")
+
   const generatePlan = useMutation(trpc.fitness.generatePlan.mutationOptions({
     onSuccess: async (data) => {
       toast.success("Generování fitness plánu zahájeno! Přesměrování na řídicí panel...");
@@ -200,11 +200,6 @@ console.log(currentStep, "AA")
     }
   }, [user, pendingSubmission, setPendingSubmission, handleSubmit]);
 
-  // Only reset when form is successfully submitted
-  // Don't reset on user sign out to preserve form progress
-
-
-
   const steps = [
     {
       title: "Osobní údaje",
@@ -247,18 +242,19 @@ console.log(currentStep, "AA")
 
     const success = storeNextStep();
     if (success) {
+      // Enhanced trainer animation sequence
       setTrainerAnimation(true);
+
+      // Create a sequence of animations
       setTimeout(() => {
         setTrainerAnimation(false);
-      }, 300);
+      }, 800);
     }
   };
 
   const prevStep = () => {
     storePrevStep();
   };
-
-
 
   const renderStep = () => {
     switch (currentStep) {
@@ -644,19 +640,71 @@ console.log(currentStep, "AA")
     );
   }
 
-    return (
+  return (
     <div className="relative">
-                        {/* Trainer image positioned absolutely at the top right */}
-      <div className="absolute -top-32 right-0 z-0">
-        <img
-          src="/trainer.png"
-          alt="Fitness Trainer"
-          className={`w-32 h-32 object-contain transition-all duration-300 ${
-            trainerAnimation
-              ? 'scale-110 rotate-6 translate-x-2 translate-y-2'
-              : 'scale-100 rotate-0 translate-x-0 translate-y-0'
-          }`}
-        />
+      {/* Enhanced Trainer Animation Container */}
+      <div className="absolute -top-20 -right-8 z-0">
+        {/* Floating background elements */}
+        <div className="absolute inset-0">
+          {/* Animated circles */}
+          <div className="absolute top-4 right-4 w-4 h-4 bg-green-400 rounded-full animate-ping opacity-75"></div>
+          <div className="absolute top-8 right-12 w-3 h-3 bg-blue-400 rounded-full animate-ping opacity-75" style={{ animationDelay: '0.5s' }}></div>
+          <div className="absolute top-2 right-20 w-2 h-2 bg-emerald-400 rounded-full animate-ping opacity-75" style={{ animationDelay: '1s' }}></div>
+
+          {/* Floating particles */}
+          <div className="absolute top-6 right-6 w-1 h-1 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="absolute top-12 right-16 w-1 h-1 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.7s' }}></div>
+          <div className="absolute top-8 right-24 w-1 h-1 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '1.2s' }}></div>
+        </div>
+
+        {/* Main trainer image with enhanced animations */}
+        <div className="relative">
+          {/* Glow effect behind trainer */}
+          <div className={`absolute inset-0 bg-gradient-to-r from-green-400/30 to-blue-400/30 rounded-full blur-xl transition-all duration-500 ${
+            trainerAnimation ? 'scale-150 opacity-80' : 'scale-100 opacity-40'
+          }`}></div>
+
+          {/* Trainer image with multiple animation states */}
+          <img
+            src="/trainer.png"
+            alt="Fitness Trainer"
+            className={`w-32 h-32 object-contain transition-all duration-700 ease-out ${
+              trainerAnimation
+                ? 'scale-125 rotate-12 translate-x-4 translate-y-4 drop-shadow-2xl'
+                : 'scale-100 rotate-0 translate-x-0 translate-y-0 drop-shadow-lg'
+            } ${
+              // Continuous floating animation
+              'animate-float'
+            }`}
+            style={{
+              filter: trainerAnimation ? 'brightness(1.2) contrast(1.1)' : 'brightness(1) contrast(1)',
+            }}
+          />
+
+          {/* Success sparkles when animation triggers */}
+          {trainerAnimation && (
+            <>
+              <div className="absolute -top-2 -right-2 w-3 h-3 bg-yellow-400 rounded-full animate-ping"></div>
+              <div className="absolute -bottom-2 -left-2 w-2 h-2 bg-green-400 rounded-full animate-ping" style={{ animationDelay: '0.3s' }}></div>
+              <div className="absolute top-1/2 -right-4 w-2 h-2 bg-blue-400 rounded-full animate-ping" style={{ animationDelay: '0.6s' }}></div>
+            </>
+          )}
+        </div>
+
+        {/* Motivational text bubble */}
+        <div className={`absolute -top-16 -right-4 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 shadow-lg border transition-all duration-500 ${
+          trainerAnimation ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2'
+        }`}>
+          <div className="text-xs font-medium text-green-600 dark:text-green-400">
+            {currentStep === 0 && "Skvěle! 🎯"}
+            {currentStep === 1 && "Výborný cíl! 💪"}
+            {currentStep === 2 && "Perfektní! 🏃‍♂️"}
+            {currentStep === 3 && "Důležité info! 🏥"}
+            {currentStep === 4 && "Skvělý plán! 📅"}
+            {currentStep === 5 && "Téměř hotovo! 🍎"}
+          </div>
+          <div className="absolute -bottom-1 left-4 w-2 h-2 bg-white dark:bg-slate-800 transform rotate-45 border-l border-b border-gray-200 dark:border-gray-700"></div>
+        </div>
       </div>
 
       <Card className="w-full relative z-10">
@@ -670,46 +718,61 @@ console.log(currentStep, "AA")
           </div>
           <Progress value={((currentStep + 1) / steps.length) * 100} className="mt-4" />
         </CardHeader>
-      <CardContent className="space-y-6">
-        {renderStep()}
+        <CardContent className="space-y-6">
+          {renderStep()}
 
-        <div className="flex justify-between pt-4">
-          <Button
-            variant="outline"
-            onClick={prevStep}
-            disabled={currentStep === 0}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Předchozí
-          </Button>
-
-          {currentStep === steps.length - 1 ? (
+          <div className="flex justify-between pt-4">
             <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="min-w-[120px]"
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === 0}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Vytvoření plánu...
-                </>
-              ) : (
-                <>
-                  Generovat plán
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Předchozí
             </Button>
-          ) : (
-            <Button onClick={nextStep}>
-              Další
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          )}
-        </div>
-      </CardContent>
+
+            {currentStep === steps.length - 1 ? (
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="min-w-[120px]"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Vytvoření plánu...
+                  </>
+                ) : (
+                  <>
+                    Generovat plán
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button onClick={nextStep}>
+                Další
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
+          </div>
+        </CardContent>
       </Card>
+
+      {/* Add custom CSS for floating animation */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-8px);
+          }
+        }
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 };

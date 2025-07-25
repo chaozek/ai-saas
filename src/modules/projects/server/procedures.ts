@@ -5,6 +5,7 @@ import { z } from "zod";
 import { generateSlug } from "random-word-slugs";
 import { TRPCError } from "@trpc/server";
 import { consumeCredits } from "@/lib/usage";
+import { ensureUserExists } from "@/lib/user-utils";
 
 export const projectsRouter = createTRPCRouter({
   getOne: protectedProcedure.input(z.object({
@@ -55,6 +56,9 @@ export const projectsRouter = createTRPCRouter({
                message: "You do not have enough credits",
           });
      }
+     // Ensure user exists in database first
+     await ensureUserExists(ctx.auth.userId);
+
      const createdProject = await prisma.project.create({
       data: {
         userId: ctx.auth.userId,

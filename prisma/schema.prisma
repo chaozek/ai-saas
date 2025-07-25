@@ -89,6 +89,7 @@ model WorkoutPlan {
   updatedAt        DateTime        @updatedAt
   name             String
   description      String?
+  planContent      String?         // AI generated detailed plan content
   duration         Int
   difficulty       ExperienceLevel
   isActive         Boolean         @default(false)

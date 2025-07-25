@@ -6,6 +6,7 @@ import {
   EducationalContentSection,
   MobileAppSection,
   FinalCTASection,
+  FAQSection,
   FitnessFeatures
 } from "@/modules/home/ui/components";
 
@@ -18,6 +19,7 @@ export default function Page() {
       <TestimonialsSection />
       <FitnessFeatures />
       <EducationalContentSection />
+      <FAQSection />
       <MobileAppSection />
       <FinalCTASection />
     </div>

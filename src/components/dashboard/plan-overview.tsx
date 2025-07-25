@@ -10,6 +10,15 @@ interface PlanOverviewProps {
 }
 
 export function PlanOverview({ workoutPlan }: PlanOverviewProps) {
+  const getCzechDifficulty = (difficulty: string) => {
+    switch (difficulty) {
+      case 'BEGINNER': return 'Začátečník';
+      case 'INTERMEDIATE': return 'Střední';
+      case 'ADVANCED': return 'Pokročilý';
+      default: return difficulty;
+    }
+  };
+
   return (
     <Card className="border-2 border-border">
       <CardHeader>
@@ -22,7 +31,7 @@ export function PlanOverview({ workoutPlan }: PlanOverviewProps) {
             <CardDescription className="text-base">{workoutPlan.description}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-sm">{workoutPlan.difficulty}</Badge>
+            <Badge variant="secondary" className="text-sm">{getCzechDifficulty(workoutPlan.difficulty)}</Badge>
             <Badge variant="outline" className="text-sm">{workoutPlan.duration} týdnů</Badge>
           </div>
         </div>

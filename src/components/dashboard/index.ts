@@ -5,6 +5,7 @@ export * from './types';
 export { DashboardHeader } from './dashboard-header';
 export { StatsOverview } from './stats-overview';
 export { PlanOverview } from './plan-overview';
+export { PlanDetails } from './plan-details';
 
 // Workout components
 export { WorkoutCard } from './workout-card';

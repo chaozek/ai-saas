@@ -4,6 +4,7 @@ import { protectedProcedure, createTRPCRouter } from "@/trcp/init";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { consumeCredits } from "@/lib/usage";
+import { ensureUserExists } from "@/lib/user-utils";
 
 const assessmentDataSchema = z.object({
   age: z.string(),
@@ -48,6 +49,9 @@ export const fitnessRouter = createTRPCRouter({
           message: "You do not have enough credits",
         });
       }
+
+      // Ensure user exists in database first
+      const user = await ensureUserExists(ctx.auth.userId);
 
       // Create or update fitness profile synchronously first
       const fitnessProfile = await prisma.fitnessProfile.upsert({
@@ -115,11 +119,33 @@ export const fitnessRouter = createTRPCRouter({
         },
       });
 
+      // Generate Czech plan name based on fitness goal
+      const getCzechPlanName = (fitnessGoal: string) => {
+        switch (fitnessGoal) {
+          case 'WEIGHT_LOSS': return 'Plán na hubnutí';
+          case 'MUSCLE_GAIN': return 'Plán na nabírání svalů';
+          case 'ENDURANCE': return 'Plán na vytrvalost';
+          case 'STRENGTH': return 'Plán na sílu';
+          case 'FLEXIBILITY': return 'Plán na flexibilitu';
+          case 'GENERAL_FITNESS': return 'Obecný fitness plán';
+          default: return 'Personalizovaný fitness plán';
+        }
+      };
+
+      const getCzechExperienceLevel = (level: string) => {
+        switch (level) {
+          case 'BEGINNER': return 'začátečník';
+          case 'INTERMEDIATE': return 'střední';
+          case 'ADVANCED': return 'pokročilý';
+          default: return 'začátečník';
+        }
+      };
+
       // Create empty workout plan synchronously
       const workoutPlan = await prisma.workoutPlan.create({
         data: {
-          name: `${input.fitnessGoal.replace('_', ' ')} Plan`,
-          description: `Personalized ${input.fitnessGoal.toLowerCase().replace('_', ' ')} program designed for ${input.experienceLevel.toLowerCase()} level`,
+          name: getCzechPlanName(input.fitnessGoal),
+          description: `Personalizovaný ${getCzechPlanName(input.fitnessGoal).toLowerCase()} navržený pro ${getCzechExperienceLevel(input.experienceLevel)} úroveň`,
           duration: 8,
           difficulty: input.experienceLevel,
           fitnessProfileId: fitnessProfile.id,
@@ -392,5 +418,116 @@ export const fitnessRouter = createTRPCRouter({
         console.error("Error fetching shopping list:", error);
         return null;
       }
+    }),
+
+  generateMealPlanOnly: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      try {
+        await consumeCredits();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "You do not have enough credits",
+        });
+      }
+
+      // Get the existing fitness profile
+      const fitnessProfile = await prisma.fitnessProfile.findUnique({
+        where: { userId: ctx.auth.userId },
+      });
+
+      if (!fitnessProfile) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Fitness profile not found. Please complete your fitness assessment first.",
+        });
+      }
+
+      if (!fitnessProfile.mealPlanningEnabled) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Meal planning is not enabled in your fitness profile.",
+        });
+      }
+
+      // Trigger the Inngest function to generate only the meal plan
+      const result = await inngest.send({
+        name: "generate-meal-plan-only/run",
+        data: {
+          userId: ctx.auth.userId,
+          fitnessProfileId: fitnessProfile.id,
+        },
+      });
+
+      return {
+        success: true,
+        message: "Meal plan generation started",
+        eventId: result.ids[0],
+      };
+    }),
+
+  enableMealPlanningAndGenerate: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      try {
+        await consumeCredits();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "You do not have enough credits",
+        });
+      }
+
+      // Get the existing fitness profile
+      const fitnessProfile = await prisma.fitnessProfile.findUnique({
+        where: { userId: ctx.auth.userId },
+      });
+
+      if (!fitnessProfile) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Fitness profile not found. Please complete your fitness assessment first.",
+        });
+      }
+
+      // Enable meal planning and set default values if not already set
+      const updatedProfile = await prisma.fitnessProfile.update({
+        where: { id: fitnessProfile.id },
+        data: {
+          mealPlanningEnabled: true,
+          dietaryRestrictions: fitnessProfile.dietaryRestrictions.length > 0 ? fitnessProfile.dietaryRestrictions : ["healthy"],
+          allergies: fitnessProfile.allergies.length > 0 ? fitnessProfile.allergies : [],
+          budgetPerWeek: fitnessProfile.budgetPerWeek || 100,
+          mealPrepTime: fitnessProfile.mealPrepTime || 30,
+          preferredCuisines: fitnessProfile.preferredCuisines.length > 0 ? fitnessProfile.preferredCuisines : ["czech", "mediterranean"],
+          cookingSkill: fitnessProfile.cookingSkill || "BEGINNER",
+        },
+      });
+
+      // Trigger the Inngest function to generate the meal plan
+      const result = await inngest.send({
+        name: "generate-meal-plan-only/run",
+        data: {
+          userId: ctx.auth.userId,
+          fitnessProfileId: updatedProfile.id,
+        },
+      });
+
+      return {
+        success: true,
+        message: "Meal planning enabled and meal plan generation started",
+        eventId: result.ids[0],
+      };
     }),
 });
