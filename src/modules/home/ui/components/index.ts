@@ -1,0 +1,13 @@
+export { HeroSection } from "./hero-section";
+export { AwardsSection } from "./awards-section";
+export { MainFeaturesSection } from "./main-features-section";
+export { TestimonialsSection } from "./testimonials-section";
+export { EducationalContentSection } from "./educational-content-section";
+export { MobileAppSection } from "./mobile-app-section";
+export { FinalCTASection } from "./final-cta-section";
+export { FitnessFeatures } from "./fitness-features";
+export { FitnessAssessmentForm } from "./fitness-assessment-form";
+export { Navbar } from "./navbar";
+export { ProjectForm } from "./project-form";
+export { Usage } from "./usage";
+export { ProjectsList } from "./projects-list";

@@ -1,3 +1,5 @@
+"use client";
+
 import { Form, FormField } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";

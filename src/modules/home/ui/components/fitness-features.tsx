@@ -62,62 +62,66 @@ const features = [
   }
 ];
 
-export const FitnessFeatures = () => {
+export function FitnessFeatures() {
   return (
-    <div className="space-y-8">
-      <div className="text-center space-y-4">
-        <h2 className="text-3xl font-bold">Proč si vybrat našeho AI fitness trenéra?</h2>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Zažijte budoucnost fitness s personalizovaným AI koučováním, které se přizpůsobuje vašim potřebám a pomáhá vám dosáhnout vašich cílů rychleji.
-        </p>
-      </div>
+    <section className="py-20 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="space-y-8">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl font-bold">Proč si vybrat našeho AI fitness trenéra?</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Zažijte budoucnost fitness s personalizovaným AI koučováním, které se přizpůsobuje vašim potřebám a pomáhá vám dosáhnout vašich cílů rychleji.
+            </p>
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {features.map((feature, index) => (
-          <Card key={index} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="p-2 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg group-hover:from-green-200 group-hover:to-blue-200 transition-colors">
-                  {feature.icon}
-                </div>
-                <Badge variant="secondary" className="text-xs">
-                  {feature.badge}
-                </Badge>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => (
+              <Card key={index} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg group-hover:from-green-200 group-hover:to-blue-200 dark:group-hover:from-green-800/30 dark:group-hover:to-blue-800/30 transition-colors">
+                      {feature.icon}
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {feature.badge}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    {feature.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/50 dark:to-blue-950/50 rounded-2xl p-8 text-center space-y-4">
+            <h3 className="text-2xl font-bold text-green-800 dark:text-green-200">
+              Připraveni transformovat vaši fitness cestu?
+            </h3>
+            <p className="text-green-700 dark:text-green-300 max-w-2xl mx-auto">
+              Připojte se k tisícům uživatelů, kteří již dosáhli svých fitness cílů s naším AI-powered koučovacím systémem.
+              Začněte svou personalizovanou fitness cestu ještě dnes!
+            </p>
+            <div className="flex items-center justify-center gap-4 text-sm text-green-600 dark:text-green-400">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>5minutové hodnocení</span>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <CardTitle className="text-lg">{feature.title}</CardTitle>
-              <CardDescription className="text-sm leading-relaxed">
-                {feature.description}
-              </CardDescription>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-8 text-center space-y-4">
-        <h3 className="text-2xl font-bold text-green-800">
-          Připraveni transformovat vaši fitness cestu?
-        </h3>
-        <p className="text-green-700 max-w-2xl mx-auto">
-          Připojte se k tisícům uživatelů, kteří již dosáhli svých fitness cílů s naším AI-powered koučovacím systémem.
-          Začněte svou personalizovanou fitness cestu ještě dnes!
-        </p>
-        <div className="flex items-center justify-center gap-4 text-sm text-green-600">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>5minutové hodnocení</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Okamžité vytvoření plánu</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Začít zdarma</span>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Okamžité vytvoření plánu</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Začít zdarma</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
-};
+}

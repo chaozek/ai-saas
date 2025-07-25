@@ -1,14 +1,67 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { TRPCReactProvider } from "@/trcp/client";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const madera = localFont({
+  src: [
+    {
+      path: "../fonts/fonnts.com-Madera_W01_Thin.ttf",
+      weight: "100",
+      style: "normal",
+    },
+    {
+      path: "../fonts/fonnts.com-Madera_Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/fonnts.com-Madera_W04_Medium_Italic.ttf",
+      weight: "500",
+      style: "italic",
+    },
+    {
+      path: "../fonts/fonnts.com-Madera_W04_Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../fonts/fonnts.com-Madera_W01_Bold.ttf",
+      weight: "800",
+      style: "normal",
+    },
+  ],
+  variable: "--font-madera",
+});
+
+const tuskerGrotesk = localFont({
+  src: [
+    {
+      path: "../fonts/TuskerGrotesk-3500Medium.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../fonts/TuskerGrotesk-3600Semibold.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../fonts/TuskerGrotesk-3700Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../fonts/TuskerGrotesk-3800Super.woff2",
+      weight: "800",
+      style: "normal",
+    },
+  ],
+  variable: "--font-tusker-grotesk",
 });
 
 const geistMono = Geist_Mono({
@@ -38,7 +91,7 @@ export default function RootLayout({
 
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        className={`${madera.variable} ${tuskerGrotesk.variable} ${geistMono.variable} antialiased`}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
