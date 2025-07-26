@@ -385,19 +385,60 @@ export const regenerateMealFunction = inngest.createFunction(
         console.log("Replacing meals in database...");
 
         // Generate ONE new meal data for all meals with the same recipe
+        // Add randomization to ensure different recipes
+        const randomDay = Math.floor(Math.random() * 30) + 1; // Random day 1-30
+        const shuffledCuisines = [...preferredCuisines].sort(() => Math.random() - 0.5); // Shuffle cuisines
+
+        // Get the current recipe name to avoid generating the same recipe
+        const getRecipeName = (mealName: string) => {
+          const match = mealName.match(/^Day \d+ - (.+)$/);
+          return match ? match[1] : mealName;
+        };
+        const currentRecipeName = getRecipeName(mealToReplace.name);
+
+        // Calculate target nutrition for this meal type based on daily requirements
+        let targetCalories, targetProtein, targetCarbs, targetFat;
+
+        switch (mealToReplace.mealType) {
+          case 'BREAKFAST':
+            targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.25); // 25% of daily calories
+            targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.25);
+            targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.25);
+            targetFat = Math.round(nutritionRequirements.fatPerDay * 0.25);
+            break;
+          case 'LUNCH':
+            targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.40); // 40% of daily calories
+            targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.40);
+            targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.40);
+            targetFat = Math.round(nutritionRequirements.fatPerDay * 0.40);
+            break;
+          case 'DINNER':
+            targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.35); // 35% of daily calories
+            targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.35);
+            targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.35);
+            targetFat = Math.round(nutritionRequirements.fatPerDay * 0.35);
+            break;
+          default:
+            targetCalories = Math.round(nutritionRequirements.caloriesPerDay / 3);
+            targetProtein = Math.round(nutritionRequirements.proteinPerDay / 3);
+            targetCarbs = Math.round(nutritionRequirements.carbsPerDay / 3);
+            targetFat = Math.round(nutritionRequirements.fatPerDay / 3);
+        }
+
         const newMealData = await generateMealWithAI(
-          mealToReplace.dayOfWeek,
+          randomDay, // Use random day instead of mealToReplace.dayOfWeek
           mealToReplace.mealType,
           fitnessProfile.fitnessGoal || 'GENERAL_FITNESS',
           dietaryRestrictions,
-          preferredCuisines,
+          shuffledCuisines, // Use shuffled cuisines
           cookingSkill,
-          nutritionRequirements.caloriesPerDay / 3, // Divide daily calories by 3 meals
-          nutritionRequirements.proteinPerDay / 3,
-          nutritionRequirements.carbsPerDay / 3,
-          nutritionRequirements.fatPerDay / 3,
+          targetCalories, // Use calculated targets for this meal type
+          targetProtein,
+          targetCarbs,
+          targetFat,
           fitnessProfile.budgetPerWeek || 100,
-          mealPrepTime
+          mealPrepTime,
+          currentRecipeName // Pass current recipe name to avoid generating the same recipe
         );
 
         for (const meal of mealsToReplace as any[]) {
@@ -435,7 +476,7 @@ export const regenerateMealFunction = inngest.createFunction(
               servings: 1,
               difficulty: cookingSkill,
               cuisine: preferredCuisines[0] || 'general',
-              tags: ['regenerated'],
+              tags: dietaryRestrictions.length > 0 ? dietaryRestrictions : ["healthy", "balanced"],
               mealId: (meal as any).id,
             }
           });

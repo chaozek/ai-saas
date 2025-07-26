@@ -185,11 +185,6 @@ export function MealCard({
           <div className="space-y-3">
             {meal.recipes?.map((recipe: Recipe) => (
               <div key={recipe.id} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <ChefHat className="w-3 h-3 text-primary" />
-                  <p className="text-xs font-medium">{recipe.name}</p>
-                </div>
-
                 {/* Ingredients */}
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-primary">Suroviny:</p>

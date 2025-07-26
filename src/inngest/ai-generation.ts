@@ -542,7 +542,7 @@ export async function generateWorkoutWithAI(
    }
 
 
-   export async function generateMealWithAI(day: number, mealType: string, fitnessGoal: string, dietaryRestrictions: string[], preferredCuisines: string[], cookingSkill: string, calories: number, protein: number, carbs: number, fat: number, budgetPerWeek: number, dailyPrepTime: number): Promise<{name: string, description: string, calories: number, protein: number, carbs: number, fat: number, instructions: string, ingredients: any[], prepTime: number, cookTime: number}> {
+   export async function generateMealWithAI(day: number, mealType: string, fitnessGoal: string, dietaryRestrictions: string[], preferredCuisines: string[], cookingSkill: string, calories: number, protein: number, carbs: number, fat: number, budgetPerWeek: number, dailyPrepTime: number, avoidRecipeName?: string): Promise<{name: string, description: string, calories: number, protein: number, carbs: number, fat: number, instructions: string, ingredients: any[], prepTime: number, cookTime: number}> {
      const openaiClient = new OpenAI({
        apiKey: process.env.OPENAI_API_KEY,
      });
@@ -598,6 +598,7 @@ export async function generateWorkoutWithAI(
    - Maximální rozpočet na jídlo: ${maxMealBudget.toFixed(0)} Kč
    - ${mealTypeGuidance}
    - ${nutritionGuidance}
+   ${avoidRecipeName ? `- KRITICKÉ: NEGENERUJ recept "${avoidRecipeName}" - vytvoř úplně jiný recept!` : ''}
 
    Vytvoř chutné, výživné jídlo, které:
    - Podporuje fitness cíl (hubnutí = méně kalorií, nabírání svalů = více bílkovin, atd.)
@@ -628,19 +629,61 @@ export async function generateWorkoutWithAI(
      ]
    }
 
-   Zahrň 4-8 ingrediencí s realistickými množstvími v evropských jednotkách (gramy, mililitry, kusy) a odhadovanými náklady v Kč. Použij levné, dostupné ingredience, které respektují rozpočet. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - žádné cups, tablespoons, ounces atd.`;
+   Zahrň 4-8 ingrediencí s realistickými množstvími v evropských jednotkách (gramy, mililitry, kusy) a odhadovanými náklady v Kč. Použij levné, dostupné ingredience, které respektují rozpočet. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - žádné cups, tablespoons, ounces atd.
 
-       const completion = await openaiClient.chat.completions.create({
-         model: "gpt-4o-mini",
-         messages: [
-                     {
-             role: "system",
-             content: "Jsi profesionální výživový poradce a kuchař. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - gramy, mililitry, kusy, žádné cups, tablespoons, ounces. KRITICKÉ: VŽDY respektuj časové omezení, rozpočet a správné rozložení kalorií během dne. Snídaně = 25%, Oběd = 40%, Večeře = 35% denních kalorií. Večeře musí být lehčí než oběd. Používej levné, dostupné ingredience a jednoduché recepty, které se dají připravit v daném čase."
-           },
-             { role: "user", content: prompt }
-           ],
-           temperature: 0.5, // Lower temperature for more consistent output
-           max_tokens: 1000,
+            ${!useNaturalValues ? `KRITICKÉ: Musíš PŘESNĚ spočítat živiny z porcí surovin a upravit porce tak, aby celkový součet živin PŘESNĚ odpovídal cílovým hodnotám!
+
+   CÍLOVÉ HODNOTY: ${calories} kalorií, ${protein}g bílkovin, ${carbs}g sacharidů, ${fat}g tuků
+
+   POVINNÝ POSTUP:
+   1. Vyber suroviny pro recept
+   2. Spočti živiny každé suroviny: množství × živiny na 100g ÷ 100
+   3. Sečti všechny živiny
+   4. Pokud součet ≠ cíl → UPRAV porce surovin
+   5. Opakuj kroky 2-4 až dosáhneš PŘESNÝCH cílových hodnot
+
+   KRITICKÉ PRAVIDLA PRO NÁZEV JÍDLA:
+   - Pokud je v názvu "proteinový" → MUSÍŠ zahrnout proteinový prášek nebo vysokoproteinové suroviny
+   - Pokud je v názvu "s tvarohem" → MUSÍŠ zahrnout tvaroh
+   - Pokud je v názvu "s avokádem" → MUSÍŠ zahrnout avokádo
+   - Pokud je v názvu "s ovocem" → MUSÍŠ zahrnout ovoce
+   - Název jídla musí odpovídat surovinám!
+
+   REÁLNÉ ŽIVINY SUROVIN (používej tyto hodnoty):
+   - Ovesné vločky: 389 kcal/100g, 13.5g bílkovin/100g, 66g sacharidů/100g, 6.9g tuků/100g
+   - Nízkotučný jogurt: 59 kcal/100g, 10g bílkovin/100g, 3.6g sacharidů/100g, 0.4g tuků/100g
+   - Banán: 89 kcal/100g, 1.1g bílkovin/100g, 23g sacharidů/100g, 0.3g tuků/100g
+   - Jahody: 32 kcal/100g, 0.7g bílkovin/100g, 8g sacharidů/100g, 0.3g tuků/100g
+   - Med: 304 kcal/100g, 0.3g bílkovin/100g, 82g sacharidů/100g, 0g tuků/100g
+   - Kuřecí prsa: 165 kcal/100g, 31g bílkovin/100g, 0g sacharidů/100g, 3.6g tuků/100g
+   - Tvaroh: 98 kcal/100g, 11g bílkovin/100g, 3.4g sacharidů/100g, 4.3g tuků/100g
+   - Vejce: 155 kcal/100g, 13g bílkovin/100g, 1.1g sacharidů/100g, 11g tuků/100g
+   - Olivový olej: 884 kcal/100g, 0g bílkovin/100g, 0g sacharidů/100g, 100g tuků/100g
+   - Proteinový prášek: 375 kcal/100g, 80g bílkovin/100g, 8g sacharidů/100g, 3g tuků/100g
+   - Avokádo: 160 kcal/100g, 2g bílkovin/100g, 9g sacharidů/100g, 15g tuků/100g
+
+   PŘÍKLAD PRO "PROTEINOVÝ SMOOTHIE" s cílem ${calories} kcal, ${protein}g bílkovin:
+   - Proteinový prášek: 30g × 375/100 = 112.5 kcal, 30g × 80/100 = 24g bílkovin
+   - Banán: 100g × 89/100 = 89 kcal, 100g × 1.1/100 = 1.1g bílkovin
+   - Jogurt: 150g × 59/100 = 88.5 kcal, 150g × 10/100 = 15g bílkovin
+   - Celkem: 290 kcal, 40.1g bílkovin
+   - Cíl: ${calories} kcal, ${protein}g bílkovin
+   - ROZDÍL: ${calories - 290} kcal, ${protein - 40.1}g bílkovin
+   - AKCE: Zvětši porce surovin!
+
+   KRITICKÉ: NIKDY neodhaduj živiny - vždy je počítej z porcí surovin!` : ''}`;
+
+                const completion = await openaiClient.chat.completions.create({
+           model: "gpt-4o-mini",
+           messages: [
+                       {
+               role: "system",
+               content: "Jsi profesionální výživový poradce a kuchař. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - gramy, mililitry, kusy, žádné cups, tablespoons, ounces. KRITICKÉ: VŽDY respektuj časové omezení, rozpočet a správné rozložení kalorií během dne. Snídaně = 25%, Oběd = 40%, Večeře = 35% denních kalorií. Večeře musí být lehčí než oběd. Používej levné, dostupné ingredience a jednoduché recepty, které se dají připravit v daném čase. KDYŽ JSOU ZADÁNY CÍLOVÉ ŽIVINY: Musíš SKUTEČNĚ POČÍTAT živiny z porcí surovin a upravit porce tak, aby celkový součet živin PŘESNĚ odpovídal cílovým hodnotám. Používej reálné živiny surovin a správně počítej: množství v gramech × živiny na 100g ÷ 100. KRITICKÉ: Součet živin všech surovin musí být PŘESNĚ roven cílovým hodnotám - ne méně, ne více! NIKDY neodhaduj živiny - vždy je počítej z porcí surovin! KRITICKÉ: Název jídla musí odpovídat surovinám - pokud je v názvu proteinové, musí obsahovat dostatek bílkovin. Všechny suroviny z názvu musí být v ingrediencích!"
+             },
+               { role: "user", content: prompt }
+             ],
+           temperature: 0.3, // Lower temperature for more consistent and precise output
+           max_tokens: 2000, // More tokens for detailed calculations and precise responses
          });
 
          const content = completion.choices[0]?.message?.content;
@@ -711,8 +754,8 @@ export async function generateWorkoutWithAI(
      }
 
 
-     export // Helper function to generate personalized nutrition requirements using AI
-     async function generateNutritionRequirementsWithAI(
+     // Helper function to generate personalized nutrition requirements using AI
+     export async function generateNutritionRequirementsWithAI(
        age: string,
        gender: string,
        height: string,
