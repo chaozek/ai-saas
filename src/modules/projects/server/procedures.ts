@@ -31,6 +31,14 @@ export const projectsRouter = createTRPCRouter({
                where: {
                     userId: ctx.auth.userId,
                },
+               include: {
+                    messages: {
+                         orderBy: {
+                              createdAt: "desc",
+                         },
+                         take: 1, // Pouze poslední zpráva pro kontrolu chyb
+                    },
+               },
                orderBy: {
                     createdAt: "desc",
                },

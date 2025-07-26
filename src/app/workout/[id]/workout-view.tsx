@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { YouTubeButton } from "@/components/ui/youtube-button";
 import {
   Play,
   Pause,
@@ -36,7 +37,7 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
   });
 
   useEffect(() => {
-    if (workout && completedExercises.size === workout.exercises.length) {
+    if (workout && completedExercises.size === workout.workoutExercises.length) {
       // All exercises completed
       setIsActive(false);
     }
@@ -51,25 +52,25 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
     setCompletedExercises(prev => new Set([...prev, exerciseId]));
 
     // Move to next exercise
-    if (workout && currentExercise < workout.exercises.length - 1) {
+    if (workout && currentExercise < workout.workoutExercises.length - 1) {
       setCurrentExercise(currentExercise + 1);
     }
   };
 
   const skipExercise = () => {
-    if (workout && currentExercise < workout.exercises.length - 1) {
+    if (workout && currentExercise < workout.workoutExercises.length - 1) {
       setCurrentExercise(currentExercise + 1);
     }
   };
 
   const getCurrentExercise = () => {
-    if (!workout || !workout.exercises[currentExercise]) return null;
-    return workout.exercises[currentExercise];
+    if (!workout || !workout.workoutExercises[currentExercise]) return null;
+    return workout.workoutExercises[currentExercise];
   };
 
   const getProgress = () => {
     if (!workout) return 0;
-    return (completedExercises.size / workout.exercises.length) * 100;
+    return (completedExercises.size / workout.workoutExercises.length) * 100;
   };
 
   if (isLoading) {
@@ -97,7 +98,7 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
   }
 
   const currentExerciseData = getCurrentExercise();
-  const isWorkoutCompleted = completedExercises.size === workout.exercises.length;
+  const isWorkoutCompleted = completedExercises.size === workout.workoutExercises.length;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -124,7 +125,7 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
               </div>
               <Progress value={getProgress()} className="h-2" />
               <p className="text-xs text-muted-foreground">
-                {completedExercises.size} z {workout.exercises.length} cvičení dokončeno
+                {completedExercises.size} z {workout.workoutExercises.length} cvičení dokončeno
               </p>
             </div>
           </CardContent>
@@ -136,14 +137,14 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-primary" />
-                Aktuální cvičení: {currentExerciseData.name}
+                Aktuální cvičení: {currentExerciseData.exercise.name}
               </CardTitle>
               <CardDescription>
-                {currentExercise + 1} z {workout.exercises.length}
+                {currentExercise + 1} z {workout.workoutExercises.length}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-muted-foreground">{currentExerciseData.description}</p>
+              <p className="text-muted-foreground">{currentExerciseData.exercise.description}</p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {currentExerciseData.sets && (
@@ -176,7 +177,7 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
                 <Button
                   size="lg"
                   className="flex-1"
-                  onClick={() => completeExercise(currentExerciseData.id)}
+                  onClick={() => completeExercise(currentExerciseData.exercise.id)}
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Dokončit
@@ -185,6 +186,11 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
                   <SkipForward className="w-4 h-4 mr-2" />
                   Přeskočit
                 </Button>
+                <YouTubeButton
+                  exerciseName={currentExerciseData.exercise.name}
+                  youtubeUrl={currentExerciseData.exercise.youtubeUrl}
+                  size="lg"
+                />
               </div>
             </CardContent>
           </Card>
@@ -195,16 +201,16 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
           <CardHeader>
             <CardTitle>Všechna cvičení</CardTitle>
             <CardDescription>
-              {workout.exercises.length} cvičení • {workout.duration} minut
+              {workout.workoutExercises.length} cvičení • {workout.duration} minut
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {workout.exercises.map((exercise: any, index: number) => (
+              {workout.workoutExercises.map((workoutExercise: any, index: number) => (
                 <div
-                  key={exercise.id}
+                  key={workoutExercise.exercise.id}
                   className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
-                    completedExercises.has(exercise.id)
+                    completedExercises.has(workoutExercise.exercise.id)
                       ? 'bg-green-50 border-green-200'
                       : index === currentExercise && isActive
                       ? 'bg-blue-50 border-blue-200'
@@ -213,40 +219,47 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      completedExercises.has(exercise.id)
+                      completedExercises.has(workoutExercise.exercise.id)
                         ? 'bg-green-500 text-white'
                         : index === currentExercise && isActive
                         ? 'bg-blue-500 text-white'
                         : 'bg-gray-200 text-gray-600'
                     }`}>
-                      {completedExercises.has(exercise.id) ? (
+                      {completedExercises.has(workoutExercise.exercise.id) ? (
                         <CheckCircle className="w-4 h-4" />
                       ) : (
                         index + 1
                       )}
                     </div>
                     <div>
-                      <h3 className="font-medium">{exercise.name}</h3>
-                      <p className="text-sm text-gray-600">{exercise.description}</p>
+                      <h3 className="font-medium">{workoutExercise.exercise.name}</h3>
+                      <p className="text-sm text-gray-600">{workoutExercise.exercise.description}</p>
                       <div className="flex items-center gap-4 mt-1">
-                        {exercise.sets && (
-                          <span className="text-xs text-gray-500">{exercise.sets} série</span>
+                        {workoutExercise.sets && (
+                          <span className="text-xs text-gray-500">{workoutExercise.sets} série</span>
                         )}
-                        {exercise.reps && (
-                          <span className="text-xs text-gray-500">{exercise.reps} opakování</span>
+                        {workoutExercise.reps && (
+                          <span className="text-xs text-gray-500">{workoutExercise.reps} opakování</span>
                         )}
-                        {exercise.duration && (
-                          <span className="text-xs text-gray-500">{exercise.duration}s</span>
+                        {workoutExercise.duration && (
+                          <span className="text-xs text-gray-500">{workoutExercise.duration}s</span>
                         )}
-                        {exercise.restTime && (
-                          <span className="text-xs text-gray-500">{exercise.restTime}s odpočinek</span>
+                        {workoutExercise.restTime && (
+                          <span className="text-xs text-gray-500">{workoutExercise.restTime}s odpočinek</span>
                         )}
                       </div>
                     </div>
                   </div>
-                  <Badge variant={completedExercises.has(exercise.id) ? "default" : "secondary"}>
-                    {exercise.category}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={completedExercises.has(workoutExercise.exercise.id) ? "default" : "secondary"}>
+                      {workoutExercise.exercise.category}
+                    </Badge>
+                    <YouTubeButton
+                      exerciseName={workoutExercise.exercise.name}
+                      youtubeUrl={workoutExercise.exercise.youtubeUrl}
+                      size="sm"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -268,7 +281,7 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
                 <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-green-800 mb-2">Trénink dokončen!</h3>
                 <p className="text-green-700 mb-4">
-                  Výborně! Dokončili jste všechna {workout.exercises.length} cvičení.
+                  Výborně! Dokončili jste všechna {workout.workoutExercises.length} cvičení.
                 </p>
                 <Button onClick={() => router.push('/dashboard')}>
                   Zpět na řídicí panel

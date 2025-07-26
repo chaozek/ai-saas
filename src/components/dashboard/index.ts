@@ -6,6 +6,7 @@ export { DashboardHeader } from './dashboard-header';
 export { StatsOverview } from './stats-overview';
 export { PlanOverview } from './plan-overview';
 export { PlanDetails } from './plan-details';
+export { UserInfo } from './user-info';
 
 // Workout components
 export { WorkoutCard } from './workout-card';

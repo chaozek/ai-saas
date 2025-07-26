@@ -30,20 +30,9 @@ export function WorkoutCard({ workout }: WorkoutCardProps) {
         <p className="text-sm text-muted-foreground">{workout.description}</p>
 
         <div className="space-y-2">
-          <p className="text-sm font-medium">Cvičení:</p>
-          <div className="space-y-1">
-            {workout.exercises?.slice(0, 3).map((exercise) => (
-              <div key={exercise.id} className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-primary rounded-full"></div>
-                <span>{exercise.name}</span>
-              </div>
-            ))}
-            {workout.exercises?.length > 3 && (
-              <p className="text-xs text-muted-foreground">
-                +{workout.exercises.length - 3} dalších cvičení
-              </p>
-            )}
-          </div>
+          <p className="text-sm font-medium">
+            {workout.workoutExercises?.length ?? 0} cviků
+          </p>
         </div>
 
         <div className="flex gap-2">

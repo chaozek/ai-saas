@@ -16,6 +16,7 @@ import {
   StatsOverview,
   PlanOverview,
   PlanDetails,
+  UserInfo,
   WorkoutsTab,
   MealsTab,
   ProgressTab,
@@ -69,9 +70,25 @@ export default function DashboardPage() {
   });
 
   const error = profileError || plansError;
+
+  // Debug logging
+  if (profileError) {
+    console.error('Profile error:', profileError);
+  }
+  if (plansError) {
+    console.error('Plans error:', plansError);
+  }
   // Use currentPlan from profile - this should always be the most recent active plan
   const workoutPlan = fitnessProfile?.currentPlan;
   const mealPlan = currentMealPlan || mealPlans?.[0];
+
+  // Debug logging for data structure
+  if (fitnessProfile) {
+    console.log('Fitness profile loaded:', {
+      hasCurrentPlan: !!fitnessProfile.currentPlan,
+      currentPlanWorkouts: fitnessProfile.currentPlan?.workouts?.length || 0
+    });
+  }
 
   // Simple refresh: if plan exists but has no workouts, keep refreshing
   useEffect(() => {
@@ -145,6 +162,27 @@ export default function DashboardPage() {
     return <UnauthorizedState />;
   }
 
+  // Handle other errors (including 500 errors)
+  if (error) {
+    console.error('Dashboard error:', error);
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-bold text-destructive">Chyba při načítání dat</h2>
+          <p className="text-muted-foreground">
+            {error.message || 'Nastala neočekávaná chyba. Prosím, zkuste obnovit stránku.'}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Obnovit stránku
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Show loading only if we don't have any data yet
   if (profileLoading && !fitnessProfile) {
     return <LoadingState />;
@@ -174,6 +212,9 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Header */}
         <DashboardHeader userName={user?.firstName} />
+
+        {/* User Info */}
+        <UserInfo fitnessProfile={fitnessProfile} />
 
         {/* Stats Overview */}
         <StatsOverview

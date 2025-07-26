@@ -1,7 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button";
-import { Settings, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useClerk } from "@clerk/nextjs";
 
 interface DashboardHeaderProps {
@@ -18,10 +19,7 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
         </p>
       </div>
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm">
-          <Settings className="w-4 h-4 mr-2" />
-          Nastavení
-        </Button>
+        <ThemeToggle />
         <Button size="sm">
           <Plus className="w-4 h-4 mr-2" />
           Nový plán

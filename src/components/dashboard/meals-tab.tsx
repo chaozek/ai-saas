@@ -30,6 +30,7 @@ export function MealsTab({
   const [expandedWeeks, setExpandedWeeks] = useState<Set<number>>(new Set());
   const [generatingList, setGeneratingList] = useState<{[weekNumber: number]: boolean}>({});
   const [generatingMealPlan, setGeneratingMealPlan] = useState(false);
+  const [regeneratingMeals, setRegeneratingMeals] = useState<Set<string>>(new Set());
   const [shoppingListModalOpen, setShoppingListModalOpen] = useState(false);
   const [selectedWeekNumber, setSelectedWeekNumber] = useState<number | null>(null);
   const [shoppingListContent, setShoppingListContent] = useState<string>('');
@@ -46,11 +47,35 @@ export function MealsTab({
       queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
       queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
 
-      // Start polling for updates
-      const interval = setInterval(() => {
-        queryClient.invalidateQueries(trpc.fitness.getProfile.queryOptions());
-        queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
-        queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
+      // Start polling for updates and errors
+      const interval = setInterval(async () => {
+        try {
+          // Check for error projects using TRPC
+          const projects = await queryClient.fetchQuery(trpc.projects.getmany.queryOptions());
+
+          // Check for error messages
+          const errorProject = projects?.find((p: any) =>
+            p.name?.includes('Error') &&
+            p.messages?.some((m: any) => m.type === 'ERROR')
+          );
+
+          if (errorProject) {
+            const errorMessage = errorProject.messages.find((m: any) => m.type === 'ERROR')?.content;
+            if (errorMessage) {
+              toast.error(errorMessage);
+              clearInterval(interval);
+              setGeneratingMealPlan(false);
+              return;
+            }
+          }
+
+          // Check for successful completion
+          queryClient.invalidateQueries(trpc.fitness.getProfile.queryOptions());
+          queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
+          queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
+        } catch (error) {
+          console.error("Error polling for updates:", error);
+        }
       }, 3000); // Check every 3 seconds
 
       // Stop polling after 2 minutes
@@ -59,7 +84,7 @@ export function MealsTab({
       }, 120000);
     },
     onError: (error: any) => {
-      toast.error("Nepodařilo se povolit jídelní plánování. Zkuste to prosím znovu.");
+      toast.error(error.message || "Nepodařilo se povolit jídelní plánování. Zkuste to prosím znovu.");
       setGeneratingMealPlan(false);
       console.error("Meal planning enable error:", error);
     }
@@ -74,10 +99,34 @@ export function MealsTab({
       queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
       queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
 
-      // Start polling for updates
-      const interval = setInterval(() => {
-        queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
-        queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
+      // Start polling for updates and errors
+      const interval = setInterval(async () => {
+        try {
+          // Check for error projects using TRPC
+          const projects = await queryClient.fetchQuery(trpc.projects.getmany.queryOptions());
+
+          // Check for error messages
+          const errorProject = projects?.find((p: any) =>
+            p.name?.includes('Error') &&
+            p.messages?.some((m: any) => m.type === 'ERROR')
+          );
+
+          if (errorProject) {
+            const errorMessage = errorProject.messages.find((m: any) => m.type === 'ERROR')?.content;
+            if (errorMessage) {
+              toast.error(errorMessage);
+              clearInterval(interval);
+              setGeneratingMealPlan(false);
+              return;
+            }
+          }
+
+          // Check for successful completion
+          queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
+          queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
+        } catch (error) {
+          console.error("Error polling for updates:", error);
+        }
       }, 3000); // Check every 3 seconds
 
       // Stop polling after 2 minutes
@@ -86,9 +135,70 @@ export function MealsTab({
       }, 120000);
     },
     onError: (error: any) => {
-      toast.error("Nepodařilo se vygenerovat jídelní plán. Zkuste to prosím znovu.");
+      // Zobraz konkrétní chybovou zprávu
+      const errorMessage = error.message || "Nepodařilo se vygenerovat jídelní plán. Zkuste to prosím znovu.";
+      toast.error(errorMessage);
       setGeneratingMealPlan(false);
       console.error("Meal plan generation error:", error);
+    }
+  }));
+
+  const regenerateMeal = useMutation(trpc.fitness.regenerateMeal.mutationOptions({
+    onSuccess: (data) => {
+      // Show that regeneration started
+      toast.info("Regenerování jídla začalo...");
+      console.log("Meal regeneration started for meal:", data.mealId);
+
+      // Store original meal data for comparison
+      const originalMeal = mealPlan?.meals?.find((meal: any) => meal.id === data.mealId);
+      const originalName = originalMeal?.name;
+
+      // Start polling for completion
+      const pollInterval = setInterval(async () => {
+        try {
+          // Get fresh data to check if meal was updated
+          const freshData = await queryClient.fetchQuery(trpc.fitness.getCurrentMealPlan.queryOptions());
+
+          if (freshData) {
+            // Check if the meal was actually regenerated (has new name)
+            const updatedMeal = freshData.meals?.find((meal: any) => meal.id === data.mealId);
+
+            console.log("Polling check:", {
+              mealId: data.mealId,
+              originalName,
+              currentName: updatedMeal?.name,
+              hasChanged: updatedMeal && updatedMeal.name !== originalName
+            });
+
+            if (updatedMeal && updatedMeal.name !== originalName) {
+              // Meal was successfully regenerated
+              clearInterval(pollInterval);
+              toast.success("Jídlo úspěšně regenerováno!");
+              setRegeneratingMeals(new Set());
+
+              // Final refresh
+              queryClient.invalidateQueries(trpc.fitness.getProfile.queryOptions());
+              queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
+              queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
+            }
+          }
+        } catch (error) {
+          console.error("Error polling for meal regeneration:", error);
+        }
+      }, 3000); // Check every 3 seconds
+
+      // Stop polling after 2 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        setRegeneratingMeals(new Set());
+        toast.error("Regenerování jídla trvalo příliš dlouho. Zkuste to prosím znovu.");
+      }, 120000);
+    },
+    onError: (error: any) => {
+      toast.error("Nepodařilo se regenerovat jídlo. Zkuste to prosím znovu.");
+      // Clear all regenerating meals on error
+      setRegeneratingMeals(new Set());
+      console.error("Meal regeneration error:", error);
     }
   }));
 
@@ -168,6 +278,11 @@ export function MealsTab({
     } else {
       generateMealPlanOnly.mutate();
     }
+  };
+
+  const handleRegenerateMeal = (mealId: string) => {
+    setRegeneratingMeals(prev => new Set(prev).add(mealId));
+    regenerateMeal.mutate({ mealId });
   };
 
   if (!fitnessProfile?.mealPlanningEnabled) {
@@ -324,6 +439,8 @@ export function MealsTab({
               onFetchShoppingList={handleFetchShoppingList}
               expandedMeals={expandedMeals}
               onToggleMealExpansion={toggleMealExpansion}
+              onRegenerateMeal={handleRegenerateMeal}
+              regeneratingMeals={regeneratingMeals}
             />
           );
         })}

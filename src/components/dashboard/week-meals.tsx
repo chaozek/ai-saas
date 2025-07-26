@@ -21,6 +21,8 @@ interface WeekMealsProps {
   onFetchShoppingList: (weekNumber: number) => void;
   expandedMeals: Set<string>;
   onToggleMealExpansion: (mealId: string) => void;
+  onRegenerateMeal?: (mealId: string) => void;
+  regeneratingMeals?: Set<string>;
 }
 
 export function WeekMeals({
@@ -34,7 +36,9 @@ export function WeekMeals({
   onGenerateShoppingList,
   onFetchShoppingList,
   expandedMeals,
-  onToggleMealExpansion
+  onToggleMealExpansion,
+  onRegenerateMeal,
+  regeneratingMeals
 }: WeekMealsProps) {
   const isExpanded = expandedWeeks.has(weekNumber);
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
@@ -175,6 +179,8 @@ export function WeekMeals({
                                 mealType="BREAKFAST"
                                 isExpanded={expandedMeals.has(breakfast.id)}
                                 onToggleExpansion={() => onToggleMealExpansion(breakfast.id)}
+                                onRegenerateMeal={onRegenerateMeal}
+                                isRegenerating={regeneratingMeals?.has(breakfast.id)}
                               />
                             )}
 
@@ -185,6 +191,8 @@ export function WeekMeals({
                                 mealType="LUNCH"
                                 isExpanded={expandedMeals.has(lunch.id)}
                                 onToggleExpansion={() => onToggleMealExpansion(lunch.id)}
+                                onRegenerateMeal={onRegenerateMeal}
+                                isRegenerating={regeneratingMeals?.has(lunch.id)}
                               />
                             )}
 
@@ -195,6 +203,8 @@ export function WeekMeals({
                                 mealType="DINNER"
                                 isExpanded={expandedMeals.has(dinner.id)}
                                 onToggleExpansion={() => onToggleMealExpansion(dinner.id)}
+                                onRegenerateMeal={onRegenerateMeal}
+                                isRegenerating={regeneratingMeals?.has(dinner.id)}
                               />
                             )}
                           </div>

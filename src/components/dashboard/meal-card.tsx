@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChefHat, ChevronDown } from "lucide-react";
+import { ChefHat, ChevronDown, RefreshCw } from "lucide-react";
 import { Meal, Recipe } from "./types";
 
 interface MealCardProps {
@@ -12,9 +12,32 @@ interface MealCardProps {
   mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER';
   isExpanded: boolean;
   onToggleExpansion: () => void;
+  onRegenerateMeal?: (mealId: string) => void;
+  isRegenerating?: boolean;
 }
 
-export function MealCard({ meal, mealType, isExpanded, onToggleExpansion }: MealCardProps) {
+export function MealCard({
+  meal,
+  mealType,
+  isExpanded,
+  onToggleExpansion,
+  onRegenerateMeal,
+  isRegenerating = false
+}: MealCardProps) {
+  // Debug logging for meal nutrition data
+  console.log(`MealCard render for ${mealType}:`, {
+    id: meal.id,
+    name: meal.name,
+    calories: meal.calories,
+    protein: meal.protein,
+    carbs: meal.carbs,
+    fat: meal.fat,
+    caloriesType: typeof meal.calories,
+    proteinType: typeof meal.protein,
+    carbsType: typeof meal.carbs,
+    fatType: typeof meal.fat
+  });
+
   const getMealTypeLabel = (type: string) => {
     switch (type) {
       case 'BREAKFAST': return 'SNÍDANĚ';
@@ -76,14 +99,38 @@ export function MealCard({ meal, mealType, isExpanded, onToggleExpansion }: Meal
     );
   };
 
+  const handleRegenerate = () => {
+    if (onRegenerateMeal) {
+      onRegenerateMeal(meal.id);
+    }
+  };
+
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggleExpansion}>
       <div className="group hover:bg-muted/50 transition-colors rounded-lg p-3 border border-border">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
-            <h5 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
-              {meal.name}
-            </h5>
+            <div className="flex items-center gap-2">
+              <h5 className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                {meal.name}
+              </h5>
+              {onRegenerateMeal && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRegenerate}
+                  disabled={isRegenerating}
+                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Přegenerovat jídlo"
+                >
+                  {isRegenerating ? (
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3 w-3" />
+                  )}
+                </Button>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
               {getTotalTime()} min
             </p>

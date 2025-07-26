@@ -14,22 +14,32 @@ export interface Workout {
   dayOfWeek: number;
   weekNumber: number;
   duration: number;
-  exercises: Exercise[];
+  workoutExercises: WorkoutExercise[];
   completed?: boolean;
 }
 
-export interface Exercise {
+export interface WorkoutExercise {
   id: string;
-  name: string;
-  description: string | null;
-  category: string;
+  workoutId: string;
+  exerciseId: string;
   sets?: number | null;
   reps?: number | null;
   duration?: number | null;
   restTime?: number | null;
   weight?: number | null;
+  exercise: Exercise;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Exercise {
+  id: string;
+  name: string;
+  englishName?: string | null;
+  description: string | null;
+  category: string;
   equipment?: string[];
-  workoutId?: string;
+  youtubeUrl?: string | null; // YouTube video URL for exercise demonstration
   createdAt?: Date;
   updatedAt?: Date;
   difficulty?: string;

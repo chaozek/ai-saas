@@ -49,38 +49,38 @@ model User {
 }
 
 model FitnessProfile {
-  id                 String           @id @default(uuid())
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  age                Int?
-  gender             String?
-  height             Float?
-  weight             Float?
-  targetWeight       Float?
-  fitnessGoal        FitnessGoal?
-  activityLevel      ActivityLevel?
-  experienceLevel    ExperienceLevel?
-  hasInjuries        Boolean          @default(false)
-  injuries           String?
-  medicalConditions  String?
-  availableDays      String?
-  workoutDuration    Int?
-  preferredExercises String?
-  equipment          String?
-  mealPlanningEnabled Boolean         @default(false)
-  dietaryRestrictions String[]        @default([])
-  allergies          String[]         @default([])
-  budgetPerWeek      Float?
-  mealPrepTime       Int?
-  preferredCuisines  String[]         @default([])
-  cookingSkill       ExperienceLevel?
-  userId             String           @unique
-  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  progressLogs       ProgressLog[]
-  currentPlan        WorkoutPlan?     @relation("CurrentPlan")
-  workoutPlans       WorkoutPlan[]    @relation("AllPlans")
-  currentMealPlan    MealPlan?        @relation("CurrentMealPlan")
-  mealPlans          MealPlan[]       @relation("AllMealPlans")
+  id                  String           @id @default(uuid())
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  age                 Int?
+  gender              String?
+  height              Float?
+  weight              Float?
+  targetWeight        Float?
+  fitnessGoal         FitnessGoal?
+  activityLevel       ActivityLevel?
+  experienceLevel     ExperienceLevel?
+  hasInjuries         Boolean          @default(false)
+  injuries            String?
+  medicalConditions   String?
+  availableDays       String?
+  workoutDuration     Int?
+  preferredExercises  String?
+  equipment           String?
+  mealPlanningEnabled Boolean          @default(false)
+  dietaryRestrictions String[]         @default([])
+  allergies           String[]         @default([])
+  budgetPerWeek       Float?
+  mealPrepTime        Int?
+  preferredCuisines   String[]         @default([])
+  cookingSkill        ExperienceLevel?
+  userId              String           @unique
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentMealPlan     MealPlan?        @relation("CurrentMealPlan")
+  mealPlans           MealPlan[]       @relation("AllMealPlans")
+  progressLogs        ProgressLog[]
+  currentPlan         WorkoutPlan?     @relation("CurrentPlan")
+  workoutPlans        WorkoutPlan[]    @relation("AllPlans")
 }
 
 model WorkoutPlan {
@@ -89,7 +89,7 @@ model WorkoutPlan {
   updatedAt        DateTime        @updatedAt
   name             String
   description      String?
-  planContent      String?         // AI generated detailed plan content
+  planContent      String?
   duration         Int
   difficulty       ExperienceLevel
   isActive         Boolean         @default(false)
@@ -110,7 +110,7 @@ model Workout {
   weekNumber    Int
   duration      Int
   workoutPlanId String
-  exercises     Exercise[]
+  workoutExercises WorkoutExercise[]
   workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
 }
 
@@ -119,18 +119,31 @@ model Exercise {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   name         String
+  englishName  String?         // English name for YouTube searches
   description  String?
   category     String
   muscleGroups String[]
   equipment    String[]
   difficulty   ExperienceLevel
+  youtubeUrl   String?
+  workoutExercises WorkoutExercise[]
+}
+
+model WorkoutExercise {
+  id           String    @id @default(uuid())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  workoutId    String
+  exerciseId   String
   sets         Int?
   reps         Int?
   duration     Int?
   restTime     Int?
   weight       Float?
-  workoutId    String
-  workout      Workout         @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  workout      Workout   @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise     Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutId, exerciseId])
 }
 
 model ProgressLog {
@@ -153,7 +166,7 @@ model MealPlan {
   updatedAt        DateTime        @updatedAt
   name             String
   description      String?
-  duration         Int             // days
+  duration         Int
   caloriesPerDay   Int?
   proteinPerDay    Float?
   carbsPerDay      Float?
@@ -168,9 +181,9 @@ model MealPlan {
 }
 
 model Meal {
-  id          String      @id @default(uuid())
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   name        String
   description String?
   mealType    MealType
@@ -180,31 +193,31 @@ model Meal {
   protein     Float?
   carbs       Float?
   fat         Float?
-  prepTime    Int?        // minutes
-  cookTime    Int?        // minutes
+  prepTime    Int?
+  cookTime    Int?
   servings    Int?
   mealPlanId  String
+  mealPlan    MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
   recipes     Recipe[]
-  mealPlan    MealPlan    @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
 }
 
 model Recipe {
-  id          String      @id @default(uuid())
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  name        String
-  description String?
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  name         String
+  description  String?
   instructions String
-  ingredients String      // JSON array of ingredients
-  nutrition   String?     // JSON nutrition info
-  prepTime    Int?        // minutes
-  cookTime    Int?        // minutes
-  servings    Int?
-  difficulty  String?
-  cuisine     String?
-  tags        String[]    // e.g., ["vegetarian", "high-protein", "quick"]
-  mealId      String
-  meal        Meal        @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  ingredients  String
+  nutrition    String?
+  prepTime     Int?
+  cookTime     Int?
+  servings     Int?
+  difficulty   String?
+  cuisine      String?
+  tags         String[]
+  mealId       String
+  meal         Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
 }
 
 model Usage {

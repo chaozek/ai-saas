@@ -225,7 +225,11 @@ export const fitnessRouter = createTRPCRouter({
             include: {
               workouts: {
                 include: {
-                  exercises: true,
+                  workoutExercises: {
+                    include: {
+                      exercise: true,
+                    },
+                  },
                 },
               },
             },
@@ -258,7 +262,11 @@ export const fitnessRouter = createTRPCRouter({
         include: {
           workouts: {
             include: {
-              exercises: true,
+              workoutExercises: {
+                include: {
+                  exercise: true,
+                },
+              },
             },
           },
         },
@@ -281,7 +289,10 @@ export const fitnessRouter = createTRPCRouter({
           },
         },
         include: {
-          exercises: {
+          workoutExercises: {
+            include: {
+              exercise: true,
+            },
             orderBy: {
               createdAt: 'asc'
             }
@@ -473,6 +484,20 @@ export const fitnessRouter = createTRPCRouter({
         });
       }
 
+      // Kontrola povinných údajů před spuštěním Inngest funkce
+      const missingFields = [];
+      if (!fitnessProfile.age || fitnessProfile.age <= 0) missingFields.push('věk');
+      if (!fitnessProfile.gender || fitnessProfile.gender.trim() === '') missingFields.push('pohlaví');
+      if (!fitnessProfile.height || fitnessProfile.height <= 0) missingFields.push('výška');
+      if (!fitnessProfile.weight || fitnessProfile.weight <= 0) missingFields.push('váha');
+
+      if (missingFields.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Nelze vygenerovat jídelní plán - chybí povinné údaje: ${missingFields.join(', ')}. Prosím, vyplňte fitness assessment znovu s kompletními údaji.`,
+        });
+      }
+
       // Trigger the Inngest function to generate only the meal plan
       const result = await inngest.send({
         name: "generate-meal-plan-only/run",
@@ -532,6 +557,20 @@ export const fitnessRouter = createTRPCRouter({
         },
       });
 
+      // Kontrola povinných údajů před spuštěním Inngest funkce
+      const missingFields = [];
+      if (!updatedProfile.age || updatedProfile.age <= 0) missingFields.push('věk');
+      if (!updatedProfile.gender || updatedProfile.gender.trim() === '') missingFields.push('pohlaví');
+      if (!updatedProfile.height || updatedProfile.height <= 0) missingFields.push('výška');
+      if (!updatedProfile.weight || updatedProfile.weight <= 0) missingFields.push('váha');
+
+      if (missingFields.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Nelze vygenerovat jídelní plán - chybí povinné údaje: ${missingFields.join(', ')}. Prosím, vyplňte fitness assessment znovu s kompletními údaji.`,
+        });
+      }
+
       // Trigger the Inngest function to generate the meal plan
       const result = await inngest.send({
         name: "generate-meal-plan-only/run",
@@ -545,6 +584,93 @@ export const fitnessRouter = createTRPCRouter({
         success: true,
         message: "Meal planning enabled and meal plan generation started",
         eventId: result.ids[0],
+      };
+    }),
+
+  regenerateMeal: protectedProcedure
+    .input(z.object({
+      mealId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await consumeCredits();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "You do not have enough credits",
+        });
+      }
+
+      // Get the existing fitness profile
+      const fitnessProfile = await prisma.fitnessProfile.findUnique({
+        where: { userId: ctx.auth.userId },
+        include: {
+          currentMealPlan: {
+            include: {
+              meals: true,
+            },
+          },
+        },
+      });
+
+      if (!fitnessProfile) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Fitness profile not found. Please complete your fitness assessment first.",
+        });
+      }
+
+      if (!fitnessProfile.mealPlanningEnabled) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Meal planning is not enabled in your fitness profile.",
+        });
+      }
+
+      if (!fitnessProfile.currentMealPlan) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No active meal plan found.",
+        });
+      }
+
+      // Find the meal to regenerate
+      const mealToRegenerate = fitnessProfile.currentMealPlan.meals.find(
+        meal => meal.id === input.mealId
+      );
+
+      if (!mealToRegenerate) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Meal not found in current meal plan.",
+        });
+      }
+
+      // Trigger the Inngest function to regenerate the specific meal
+      const result = await inngest.send({
+        name: "regenerate-meal/run",
+        data: {
+          userId: ctx.auth.userId,
+          fitnessProfileId: fitnessProfile.id,
+          mealPlanId: fitnessProfile.currentMealPlan.id,
+          mealId: input.mealId,
+          mealType: mealToRegenerate.mealType,
+          dayOfWeek: mealToRegenerate.dayOfWeek,
+          weekNumber: mealToRegenerate.weekNumber,
+        },
+      });
+
+      return {
+        success: true,
+        message: "Meal regeneration started",
+        eventId: result.ids[0],
+        mealId: input.mealId, // Return mealId for tracking
       };
     }),
 
