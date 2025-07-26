@@ -153,27 +153,33 @@ export function MealsTab({
       const originalMeal = mealPlan?.meals?.find((meal: any) => meal.id === data.mealId);
       const originalName = originalMeal?.name;
 
+      // Find all meals with the same name to check for changes
+      const mealsWithSameName = mealPlan?.meals?.filter((meal: any) => meal.name === originalName) || [];
+      const originalMealIds = mealsWithSameName.map((meal: any) => meal.id);
+
       // Start polling for completion
       const pollInterval = setInterval(async () => {
         try {
-          // Get fresh data to check if meal was updated
+          // Get fresh data to check if meals were updated
           const freshData = await queryClient.fetchQuery(trpc.fitness.getCurrentMealPlan.queryOptions());
 
           if (freshData) {
-            // Check if the meal was actually regenerated (has new name)
-            const updatedMeal = freshData.meals?.find((meal: any) => meal.id === data.mealId);
+            // Check if any of the meals with the same name were actually regenerated (have new names)
+            const updatedMeals = freshData.meals?.filter((meal: any) => originalMealIds.includes(meal.id));
+            const hasChanged = updatedMeals?.some((meal: any) => meal.name !== originalName);
 
             console.log("Polling check:", {
               mealId: data.mealId,
               originalName,
-              currentName: updatedMeal?.name,
-              hasChanged: updatedMeal && updatedMeal.name !== originalName
+              originalMealIds,
+              currentNames: updatedMeals?.map((meal: any) => meal.name),
+              hasChanged
             });
 
-            if (updatedMeal && updatedMeal.name !== originalName) {
-              // Meal was successfully regenerated
+            if (hasChanged) {
+              // Meals were successfully regenerated
               clearInterval(pollInterval);
-              toast.success("Jídlo úspěšně regenerováno!");
+              toast.success("Jídla úspěšně regenerována!");
               setRegeneratingMeals(new Set());
 
               // Final refresh
@@ -281,7 +287,33 @@ export function MealsTab({
   };
 
   const handleRegenerateMeal = (mealId: string) => {
-    setRegeneratingMeals(prev => new Set(prev).add(mealId));
+    if (!mealPlan?.meals) return;
+    // Najdi kliknuté jídlo
+    const clickedMeal = mealPlan.meals.find((meal) => meal.id === mealId);
+    if (!clickedMeal) return;
+
+    // Extract recipe name from meal name (remove "Day X - " prefix)
+    const getRecipeName = (mealName: string) => {
+      const match = mealName.match(/^Day \d+ - (.+)$/);
+      return match ? match[1] : mealName;
+    };
+
+    const clickedMealRecipeName = getRecipeName(clickedMeal.name);
+
+    // Najdi všechna jídla se stejnou recepturou (bez "Day X - " prefixu)
+    const mealsWithSameRecipe = mealPlan.meals.filter((meal) => {
+      const mealRecipeName = getRecipeName(meal.name);
+      return mealRecipeName === clickedMealRecipeName;
+    });
+
+    // Nastav všechna jídla se stejnou recepturou jako regenerující se
+    setRegeneratingMeals(prev => {
+      const newSet = new Set(prev);
+      mealsWithSameRecipe.forEach(meal => newSet.add(meal.id));
+      return newSet;
+    });
+
+    // Spusť mutaci pouze pro jedno jídlo (stačí jedno, backend nahradí všechny)
     regenerateMeal.mutate({ mealId });
   };
 

@@ -347,9 +347,17 @@ export const regenerateMealFunction = inngest.createFunction(
       }
 
       // Find all meals with the same name across all weeks
-      const mealsToReplace = mealPlan.meals.filter((meal: any) =>
-        meal.name === mealToReplace.name && meal.mealType === mealToReplace.mealType
-      );
+      // Extract recipe name from meal name (remove "Day X - " prefix)
+      const getRecipeName = (mealName: string) => {
+        const match = mealName.match(/^Day \d+ - (.+)$/);
+        return match ? match[1] : mealName;
+      };
+
+      const clickedMealRecipeName = getRecipeName(mealToReplace.name);
+      const mealsToReplace = mealPlan.meals.filter((meal: any) => {
+        const mealRecipeName = getRecipeName(meal.name);
+        return mealRecipeName === clickedMealRecipeName;
+      });
 
       console.log(`Found ${mealsToReplace.length} meals to replace with name: "${mealToReplace.name}"`);
 
@@ -376,51 +384,54 @@ export const regenerateMealFunction = inngest.createFunction(
       await step.run("replace-meals", async () => {
         console.log("Replacing meals in database...");
 
-        for (const meal of mealsToReplace as any[]) {
-          // Generate unique meal for each occurrence
-          const uniqueMealData = await generateMealWithAI(
-            meal.dayOfWeek,
-            meal.mealType,
-            fitnessProfile.fitnessGoal || 'GENERAL_FITNESS',
-            dietaryRestrictions,
-            preferredCuisines,
-            cookingSkill,
-            nutritionRequirements.caloriesPerDay / 3, // Divide daily calories by 3 meals
-            nutritionRequirements.proteinPerDay / 3,
-            nutritionRequirements.carbsPerDay / 3,
-            nutritionRequirements.fatPerDay / 3,
-            fitnessProfile.budgetPerWeek || 100,
-            mealPrepTime
-          );
+        // Generate ONE new meal data for all meals with the same recipe
+        const newMealData = await generateMealWithAI(
+          mealToReplace.dayOfWeek,
+          mealToReplace.mealType,
+          fitnessProfile.fitnessGoal || 'GENERAL_FITNESS',
+          dietaryRestrictions,
+          preferredCuisines,
+          cookingSkill,
+          nutritionRequirements.caloriesPerDay / 3, // Divide daily calories by 3 meals
+          nutritionRequirements.proteinPerDay / 3,
+          nutritionRequirements.carbsPerDay / 3,
+          nutritionRequirements.fatPerDay / 3,
+          fitnessProfile.budgetPerWeek || 100,
+          mealPrepTime
+        );
 
+        for (const meal of mealsToReplace as any[]) {
           // Delete existing recipes for this meal
           await prisma.recipe.deleteMany({
             where: { mealId: (meal as any).id }
           });
 
-          // Update the meal with new data
+          // Create unique name for each meal by adding day number
+          const uniqueMealName = `Day ${meal.dayOfWeek} - ${newMealData.name}`;
+
+          // Update the meal with new data (same recipe for all meals)
           await prisma.meal.update({
             where: { id: (meal as any).id },
             data: {
-              name: uniqueMealData.name,
-              description: uniqueMealData.description,
-              calories: uniqueMealData.calories,
-              protein: uniqueMealData.protein,
-              carbs: uniqueMealData.carbs,
-              fat: uniqueMealData.fat,
-              prepTime: uniqueMealData.prepTime,
-              cookTime: uniqueMealData.cookTime,
+              name: uniqueMealName,
+              description: newMealData.description,
+              calories: newMealData.calories,
+              protein: newMealData.protein,
+              carbs: newMealData.carbs,
+              fat: newMealData.fat,
+              prepTime: newMealData.prepTime,
+              cookTime: newMealData.cookTime,
             }
           });
 
-          // Create new recipe for the meal
+          // Create new recipe for the meal (same recipe for all meals)
           await prisma.recipe.create({
             data: {
-              name: uniqueMealData.name,
-              ingredients: JSON.stringify(uniqueMealData.ingredients),
-              instructions: uniqueMealData.instructions,
-              prepTime: uniqueMealData.prepTime,
-              cookTime: uniqueMealData.cookTime,
+              name: uniqueMealName,
+              ingredients: JSON.stringify(newMealData.ingredients),
+              instructions: newMealData.instructions,
+              prepTime: newMealData.prepTime,
+              cookTime: newMealData.cookTime,
               servings: 1,
               difficulty: cookingSkill,
               cuisine: preferredCuisines[0] || 'general',
@@ -429,10 +440,10 @@ export const regenerateMealFunction = inngest.createFunction(
             }
           });
 
-          console.log(`Replaced meal ${(meal as any).id} with: ${uniqueMealData.name}`);
+          console.log(`Replaced meal ${(meal as any).id} with: ${uniqueMealName}`);
         }
 
-        console.log(`Successfully replaced ${mealsToReplace.length} meals`);
+        console.log(`Successfully replaced ${mealsToReplace.length} meals with the same new recipe: ${newMealData.name}`);
       });
 
       console.log("Meal regeneration completed successfully");

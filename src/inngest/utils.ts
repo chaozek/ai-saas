@@ -266,16 +266,16 @@ export function calculateNutritionTargets({
   let proteinPerKg = 1.6;
   if (fitnessGoal?.toUpperCase() === 'WEIGHT_LOSS' || fitnessGoal?.toUpperCase() === 'HUBNUTÍ') proteinPerKg = 1.8;
   if (fitnessGoal?.toUpperCase() === 'MUSCLE_GAIN' || fitnessGoal?.toUpperCase() === 'NABÍRÁNÍ') proteinPerKg = 2.0;
-  const proteinPerDay = Math.round(weight * proteinPerKg * 10) / 10;
+  const proteinPerDay = parseFloat((weight * proteinPerKg).toFixed(2));
 
   // Tuky: 25% z kalorií, 1g tuku = 9 kcal
-  const fatPerDay = Math.round((calories * 0.25) / 9 * 10) / 10;
+  const fatPerDay = parseFloat(((calories * 0.25) / 9).toFixed(2));
 
   // Sacharidy: zbytek kalorií
   const proteinCals = proteinPerDay * 4;
   const fatCals = fatPerDay * 9;
   const carbsCals = calories - proteinCals - fatCals;
-  const carbsPerDay = Math.round((carbsCals / 4) * 10) / 10;
+  const carbsPerDay = parseFloat((carbsCals / 4).toFixed(2));
 
   return {
     caloriesPerDay: calories,

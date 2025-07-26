@@ -64,7 +64,10 @@ export function MealCard({
     return prepTime + cookTime;
   };
 
-  const getNutritionValue = (value: number | null) => value || 0;
+  const getNutritionValue = (value: number | null) => {
+    const numValue = value || 0;
+    return Number(numValue.toFixed(1));
+  };
 
   const renderIngredients = (recipe: Recipe) => {
     try {
