@@ -57,6 +57,25 @@ export function MealCard({ meal, mealType, isExpanded, onToggleExpansion }: Meal
     }
   };
 
+    const renderInstructions = (instructions: string) => {
+    // Split instructions by numbered steps (e.g., "1. ", "2. ", etc.)
+    const steps = instructions.split(/(?=\d+\.)/).filter(step => step.trim());
+
+    if (steps.length === 0) {
+      return <p className="text-xs text-muted-foreground">{instructions}</p>;
+    }
+
+    return (
+      <ol className="list-decimal list-inside space-y-1">
+        {steps.map((step, index) => (
+          <li key={index} className="text-xs text-muted-foreground">
+            {step.trim().replace(/^\d+\.\s*/, '')}
+          </li>
+        ))}
+      </ol>
+    );
+  };
+
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggleExpansion}>
       <div className="group hover:bg-muted/50 transition-colors rounded-lg p-3 border border-border">
@@ -85,7 +104,7 @@ export function MealCard({ meal, mealType, isExpanded, onToggleExpansion }: Meal
         <div className="flex gap-2 mb-3">
           <div className="flex-1 text-center p-2 rounded bg-red-50 dark:bg-red-950/20">
             <div className="text-xs font-bold text-red-600 dark:text-red-400">{getNutritionValue(meal.calories)}</div>
-            <div className="text-xs text-muted-foreground">kal</div>
+            <div className="text-xs text-muted-foreground">Kal</div>
           </div>
           <div className="flex-1 text-center p-2 rounded bg-blue-50 dark:bg-blue-950/20">
             <div className="text-xs font-bold text-blue-600 dark:text-blue-400">{getNutritionValue(meal.protein)}g</div>
@@ -93,7 +112,11 @@ export function MealCard({ meal, mealType, isExpanded, onToggleExpansion }: Meal
           </div>
           <div className="flex-1 text-center p-2 rounded bg-green-50 dark:bg-green-950/20">
             <div className="text-xs font-bold text-green-600 dark:text-green-400">{getNutritionValue(meal.carbs)}g</div>
-            <div className="text-xs text-muted-foreground">C</div>
+            <div className="text-xs text-muted-foreground">K</div>
+          </div>
+          <div className="flex-1 text-center p-2 rounded bg-yellow-50 dark:bg-yellow-950/20">
+            <div className="text-xs font-bold text-yellow-600 dark:text-yellow-400">{getNutritionValue(meal.fat)}g</div>
+            <div className="text-xs text-muted-foreground">T</div>
           </div>
         </div>
 
@@ -129,7 +152,7 @@ export function MealCard({ meal, mealType, isExpanded, onToggleExpansion }: Meal
                 {recipe.instructions && (
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-primary">Pokyny:</p>
-                    <p className="text-xs text-muted-foreground">{recipe.instructions}</p>
+                    {renderInstructions(recipe.instructions)}
                   </div>
                 )}
 

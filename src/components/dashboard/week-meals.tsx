@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ShoppingCart, ChevronDown } from "lucide-react";
+import { ShoppingCart, ChevronDown, Calendar } from "lucide-react";
 import { MealCard } from "./meal-card";
 import { Meal } from "./types";
 
@@ -37,6 +37,7 @@ export function WeekMeals({
   onToggleMealExpansion
 }: WeekMealsProps) {
   const isExpanded = expandedWeeks.has(weekNumber);
+  const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
 
   // Group meals by day
   const mealsByDay: { [day: number]: Meal[] } = {};
@@ -46,6 +47,25 @@ export function WeekMeals({
     }
     mealsByDay[meal.dayOfWeek].push(meal);
   });
+
+  const toggleDayExpansion = (day: number) => {
+    setExpandedDays(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(day)) {
+        newSet.delete(day);
+      } else {
+        newSet.add(day);
+      }
+      return newSet;
+    });
+  };
+
+  const getDayName = (day: number) => {
+    const dayNames = ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota'];
+    const date = new Date();
+    date.setDate(date.getDate() + (day - 1)); // Adjust based on your starting day
+    return dayNames[date.getDay()];
+  };
 
   return (
     <Collapsible open={isExpanded} onOpenChange={() => onToggleWeekExpansion(weekNumber)}>
@@ -107,52 +127,80 @@ export function WeekMeals({
         </CardHeader>
         <CollapsibleContent>
           <CardContent className="pt-0">
-            <div className="space-y-4">
-              {/* Group meals by day and display in 3-column layout */}
+            <div className="space-y-3">
+              {/* Each day in its own dropdown */}
               {Object.keys(mealsByDay)
                 .map(Number)
                 .sort((a, b) => a - b)
                 .map(day => {
                   const dayMeals = mealsByDay[day];
+                  const isDayExpanded = expandedDays.has(day);
                   const breakfast = dayMeals.find((m) => m.mealType === 'BREAKFAST');
                   const lunch = dayMeals.find((m) => m.mealType === 'LUNCH');
                   const dinner = dayMeals.find((m) => m.mealType === 'DINNER');
 
                   return (
-                    <div key={day} className="space-y-2">
-                      <h4 className="text-sm font-semibold text-primary">Den {day}</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {/* Breakfast */}
-                        {breakfast && (
-                          <MealCard
-                            meal={breakfast}
-                            mealType="BREAKFAST"
-                            isExpanded={expandedMeals.has(breakfast.id)}
-                            onToggleExpansion={() => onToggleMealExpansion(breakfast.id)}
-                          />
-                        )}
+                    <Collapsible
+                      key={day}
+                      open={isDayExpanded}
+                      onOpenChange={() => toggleDayExpansion(day)}
+                      className="border rounded-lg"
+                    >
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-between p-4 h-auto hover:bg-muted/50"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Calendar className="w-4 h-4 text-primary" />
+                            <div className="text-left">
+                              <div className="font-semibold">Den {day}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {breakfast ? 'Snídaně' : ''}
+                                {lunch ? (breakfast ? ', ' : '') + 'Oběd' : ''}
+                                {dinner ? ((breakfast || lunch) ? ', ' : '') + 'Večeře' : ''}
+                              </div>
+                            </div>
+                          </div>
+                          <ChevronDown className={`h-4 w-4 transition-transform ${isDayExpanded ? 'rotate-180' : ''}`} />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="px-4 pb-4 pt-4 space-y-3">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {/* Breakfast */}
+                            {breakfast && (
+                              <MealCard
+                                meal={breakfast}
+                                mealType="BREAKFAST"
+                                isExpanded={expandedMeals.has(breakfast.id)}
+                                onToggleExpansion={() => onToggleMealExpansion(breakfast.id)}
+                              />
+                            )}
 
-                        {/* Lunch */}
-                        {lunch && (
-                          <MealCard
-                            meal={lunch}
-                            mealType="LUNCH"
-                            isExpanded={expandedMeals.has(lunch.id)}
-                            onToggleExpansion={() => onToggleMealExpansion(lunch.id)}
-                          />
-                        )}
+                            {/* Lunch */}
+                            {lunch && (
+                              <MealCard
+                                meal={lunch}
+                                mealType="LUNCH"
+                                isExpanded={expandedMeals.has(lunch.id)}
+                                onToggleExpansion={() => onToggleMealExpansion(lunch.id)}
+                              />
+                            )}
 
-                        {/* Dinner */}
-                        {dinner && (
-                          <MealCard
-                            meal={dinner}
-                            mealType="DINNER"
-                            isExpanded={expandedMeals.has(dinner.id)}
-                            onToggleExpansion={() => onToggleMealExpansion(dinner.id)}
-                          />
-                        )}
-                      </div>
-                    </div>
+                            {/* Dinner */}
+                            {dinner && (
+                              <MealCard
+                                meal={dinner}
+                                mealType="DINNER"
+                                isExpanded={expandedMeals.has(dinner.id)}
+                                onToggleExpansion={() => onToggleMealExpansion(dinner.id)}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
                   );
                 })}
             </div>

@@ -32,7 +32,9 @@ async function generateWorkoutWithAI(
   try {
     console.log(`Generating workout for ${dayOfWeek}...`);
 
-    const prompt = `Vygeneruj trénink pro ${dayOfWeek} na základě těchto parametrů:
+    const prompt = `Vygeneruj PROFESIONÁLNÍ trénink pro ${dayOfWeek} na základě těchto parametrů:
+
+KRITICKÉ: MUSÍŠ STRICTNĚ respektovat fitness cíl "${fitnessGoal}" a generovat cviky, které jsou SPECIFICKY pro tento cíl. NEPOUŽÍVEJ generické cviky, které neodpovídají cíli!
 
 OSOBNÍ INFORMACE:
 - Věk: ${age} let
@@ -55,6 +57,8 @@ ZDRAVOTNÍ STAV:
 - Má zranění: ${hasInjuries ? 'ANO' : 'NE'}
 - Zranění: ${injuries || 'žádná'}
 - Zdravotní stav: ${medicalConditions || 'žádný'}
+
+KRITICKÉ: Pokud uživatel NEMÁ žádná zranění nebo zdravotní omezení, POUŽÍVEJ POUZE PROFESIONÁLNÍ CVIKY odpovídající jeho fitness cíli a dostupnému vybavení. NEPOUŽÍVEJ alternativní cviky pro omezení, pokud nejsou potřeba!
 
 KRITICKÉ PRAVIDLA PRO ZDRAVOTNÍ OMEZENÍ:
 1. Pokud má uživatel zranění nebo zdravotní omezení, MUSÍŠ je striktně respektovat
@@ -91,13 +95,61 @@ Vytvoř progresivní trénink, který STRICTNĚ respektuje VŠECHNY parametry:
 - Zohledni pohlaví při výběru cviků a intenzity
 - Zohledni aktuální a cílovou váhu pro správnou intenzitu
 
-2. FITNESS CÍLE:
-- Hubnutí: zaměření na kardio a spalování kalorií
-- Svalová hmota: zaměření na silové cviky s progresí
-- Endurance: zaměření na vytrvalost a kardio
-- Síla: zaměření na těžké silové cviky
-- Flexibilita: zaměření na strečink a mobilitu
-- Obecná fitness: vyvážený mix všech typů
+2. FITNESS CÍLE - PROFESIONÁLNÍ PŘÍSTUP:
+
+- WEIGHT_LOSS (Hubnutí):
+  * KRITICKÉ: Kombinace silových cviků a KARDIO aktivit
+  * KARDIO: Běh na pásu, jízda na kole, eliptical, rowing, stair climber, HIIT
+  * SILOVÉ: Compound cviky s vyššími opakováními (12-20)
+  * Supersety a circuit training pro maximální spalování kalorií
+  * Kratší přestávky (30-60s) pro udržení vysoké srdeční frekvence
+  * Celkový trénink: 60-70% kardio, 30-40% silové cviky
+  * Pokud má gym access: stroje na kardio + silové stroje
+  * Pokud má home equipment: jumping jacks, burpees, mountain climbers, high knees
+
+- MUSCLE_GAIN (Nabírání svalů):
+  * Používej těžké silové cviky s progresivním přetížením
+  * 4-6 cviků na hlavní svalové skupiny
+  * 3-4 série, 8-12 opakování pro hypertrofii
+  * Krátké přestávky (60-90s) pro metabolický stres
+  * Compound cviky (bench press, dřepy, mrtvý tah, shyby)
+  * Izolované cviky pro detailní rozvoj svalů
+  * Pokud má plný přístup do gymu, použij stroje, činky, tyče
+  * Minimální kardio (5-10 min warm-up)
+
+- STRENGTH (Síla):
+  * Těžké compound cviky s maximálním zatížením
+  * 3-5 série, 1-5 opakování pro maximální sílu
+  * Dlouhé přestávky (3-5 minut) pro kompletní regeneraci
+  * Progresivní přetížení s těžkými váhami
+  * Zaměření na: dřepy, mrtvý tah, bench press, shyby, tlaky ramen
+  * Pokud má gym access: barbell cviky, power rack, těžké stroje
+  * Minimální kardio (5-10 min warm-up)
+
+- ENDURANCE (Vytrvalost):
+  * Circuit training, AMRAP, EMOM, Tabata protokoly
+  * Funkční cviky s vlastní váhou a lehkými činkami
+  * Kratší přestávky (15-45s) pro budování vytrvalosti
+  * Více opakování (15-30) s nižší váhou
+  * Kombinace silových a kardio cviků v rychlém tempu
+  * Pokud má gym access: rowing, cycling, running intervals
+  * Pokud má home equipment: burpees, mountain climbers, jumping jacks
+
+- FLEXIBILITY (Flexibilita):
+  * Mobilita cviky, dynamický strečink, jóga pozice
+  * Dlouhé výdrže (30-60s) v pozicích
+  * Pilates cviky pro core strength a flexibilitu
+  * Foam rolling a self-myofascial release
+  * Pokud má gym access: jóga studio, foam rollers, mobility tools
+  * Pokud má home equipment: jóga podložka, foam roller, odporové pásy
+
+- GENERAL_FITNESS (Obecná fitness):
+  * Vyvážený mix silových, kardio a flexibility cviků
+  * 40% silové cviky, 40% kardio, 20% flexibility
+  * Střední intenzita s postupným zvyšováním
+  * Různorodé cviky pro celkové zdraví a kondici
+  * Pokud má gym access: mix strojů, kardio a mobility
+  * Pokud má home equipment: bodyweight cviky, kardio, strečink
 
 3. ÚROVEŇ AKTIVITY A ZKUŠENOSTÍ:
 - Sedentární: velmi lehké cviky, postupný nárůst
@@ -110,9 +162,24 @@ Vytvoř progresivní trénink, který STRICTNĚ respektuje VŠECHNY parametry:
 - Pokud uživatel uvedl preferované cviky, ZAŘAĎ je do tréninku
 - Přizpůsob trénink jejich preferencím
 
-5. TECHNICKÉ PARAMETRY:
-- Používej POUZE dostupné vybavení
-- Dodržuj přesnou dobu trvání tréninku
+5. TECHNICKÉ PARAMETRY - DOSTUPNÉ VYBAVENÍ:
+- POUŽÍVEJ POUZE dostupné vybavení: ${availableEquipment.join(', ')}
+- Pokud má "gym_access" nebo "plný přístup do gymu":
+  * KARDIO STROJE: běhací pás, rotoped, eliptical, rowing, stair climber, spinning bike
+  * SILOVÉ STROJE: leg press, chest press, lat pulldown, shoulder press, leg extension, leg curl
+  * VOLNÉ VÁHY: činky (dumbbells), tyče (barbells), kettlebelly
+  * FUNKČNÍ: TRX, battle ropes, plyometric box
+- Pokud má "home_equipment" nebo "domácí vybavení":
+  * KARDIO: jumping jacks, burpees, mountain climbers, high knees, jumping rope
+  * SILOVÉ: činky, odporové pásy, kettlebelly, pull-up bar
+  * BODYWEIGHT: kliky, dřepy, výpady, plank, dips
+- Pokud má "dumbbells", "resistance_bands", "kettlebell":
+  * Kombinace volných vah a odporových pásů
+  * Funkční cviky s dostupným vybavením
+- Pokud má "none" nebo "žádné vybavení":
+  * POUZE bodyweight cviky: kliky, dřepy, výpady, plank, burpees
+  * KARDIO: jumping jacks, mountain climbers, high knees, jumping rope
+- Dodržuj přesnou dobu trvání tréninku: ${workoutDuration} minut
 - Obsahuje 4-6 cviků s řádnou progresí
 
 6. ZDRAVOTNÍ OMEZENÍ:
@@ -143,17 +210,41 @@ KRITICKÉ: Musíš odpovědět POUZE platným JSON v tomto přesném formátu. �
 
 DŮLEŽITÉ: VŠECHNY NÁZVY CVIKŮ MUSÍ BÝT V ČEŠTINĚ. Použij POUZE české názvy cviků:
 
-SILOVÉ CVIKY (pouze pokud nejsou vyloučeny zdravotním stavem):
-- Dřepy (místo Squat) - POUZE pokud nemá problémy s koleny nebo nohama
-- Výpady (místo Lunge) - POUZE pokud nemá problémy s koleny nebo nohama
-- Mrtvý tah (místo Deadlift) - POUZE pokud nemá problémy se zády
-- Bench press (místo Bench Press) - POUZE pokud nemá problémy s rameny
-- Kliky (místo Push-ups) - POUZE pokud nemá problémy s rameny nebo zády
-- Shyby (místo Pull-ups) - POUZE pokud nemá problémy s rameny
-- Tlaky ramen (místo Shoulder Press) - POUZE pokud nemá problémy s rameny
-- Přítahy v předklonu (místo Bent-over Rows) - POUZE pokud nemá problémy se zády
-- Tricepsové kliky (místo Tricep Dips) - POUZE pokud nemá problémy s rameny
-- Výpady s činkami (místo Dumbbell Lunge) - POUZE pokud nemá problémy s koleny nebo nohama
+PROFESIONÁLNÍ CVIKY - SMĚRNICE:
+
+POUŽÍVEJ JAKÉKOLI PROFESIONÁLNÍ CVIKY, které odpovídají:
+1. FITNESS CÍLI uživatele
+2. DOSTUPNÉMU VYBAVENÍ
+3. ÚROVNI ZKUŠENOSTÍ
+4. ČASOVÉMU LIMITU
+
+PŘÍKLADY PROFESIONÁLNÍCH CVIKŮ PODLE FITNESS CÍLE:
+
+WEIGHT_LOSS - KARDIO A SPALOVÁNÍ:
+- KARDIO: Běh na pásu, jízda na kole, eliptical, rowing, stair climber, HIIT, jumping jacks, burpees
+- SILOVÉ: Compound cviky s vyššími opakováními (bench press, dřepy, shyby, výpady)
+
+MUSCLE_GAIN - SILOVÉ CVIKY:
+- COMPOUND: Dřepy, mrtvý tah, bench press, shyby, tlaky ramen, přítahy, clean & jerk
+- IZOLOVANÉ: Bicepsové curl, tricepsové extenze, leg press, lat pulldown, chest press, shoulder press
+
+STRENGTH - MAXIMÁLNÍ SÍLA:
+- TĚŽKÉ COMPOUND: Dřepy, mrtvý tah, bench press, shyby, tlaky ramen, power clean
+- POMOCNÉ: Good mornings, Romanian deadlifts, pause squats
+
+ENDURANCE - VYTRVALOST:
+- FUNKČNÍ: Výpady, kliky, dips, burpee, mountain climbers, kettlebell swings
+- KARDIO: Rowing intervals, cycling sprints, running intervals
+
+FLEXIBILITY - MOBILITA:
+- MOBILITA: Dynamic stretching, foam rolling, yoga poses, mobility drills
+- PILATES: Core exercises, flexibility work, balance training
+
+GENERAL_FITNESS - VYVÁŽENÝ MIX:
+- Kombinace všech typů cviků podle dostupného vybavení
+- Postupné zvyšování intenzity a složitosti
+
+DŮLEŽITÉ: Vyber cviky na základě parametrů uživatele, ne na základě předem daného seznamu!
 
 KARDIO CVIKY (pouze pokud nejsou vyloučeny zdravotním stavem):
 - Skákání přes švihadlo (místo Jump Rope) - POUZE pokud nemá problémy s nohama nebo kardiovaskulárními problémy
@@ -215,10 +306,10 @@ Zajisti, že cviky jsou bezpečné a vhodné pro úroveň zkušeností a ZDRAVOT
           const completion = await openaiClient.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
-                  {
-        role: "system",
-        content: "Jsi profesionální fitness trenér se specializací na adaptivní fitness. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. KRITICKÉ: VŠECHNY NÁZVY CVIKŮ MUSÍ BÝT V ČEŠTINĚ. Použij POUZE české názvy: Dřepy, Výpady, Mrtvý tah, Bench press, Kliky, Shyby, Tlaky ramen, Přítahy v předklonu, Tricepsové kliky, Plank, Burpee, Skákání přes švihadlo, Bicepsové curl, Tricepsové extenze, Rotace trupu, Stlačování míče, Rotace ramen. NIKDY nepoužívej anglické názvy jako Push-ups, Pull-ups, Squat, Deadlift, Shoulder Press, atd. NEJDŮLEŽITĚJŠÍ: MUSÍŠ STRICTNĚ respektovat VŠECHNY parametry uživatele - věk, pohlaví, váhu, fitness cíle, úroveň aktivity, preferované cviky, dostupné vybavení, časový limit a ZDRAVOTNÍ OMEZENÍ. Pokud má uživatel zranění nebo zdravotní problémy, NIKDY nedoporučuj cviky, které by mohly zhoršit jejich stav. PRO UŽIVATELE NA VOZÍKU: NIKDY nedoporučuj cviky na nohy, chůzi, běh, skákání, dřepy, výpady nebo jakékoliv cviky vyžadující použití nohou. Používej pouze cviky na ruce, ramena, hrudník a záda v sedící pozici. PREFEROVANÉ CVIKY: Pokud uživatel uvedl preferované cviky, ZAŘAĎ je do tréninku."
-      },
+                          {
+          role: "system",
+          content: "Jsi PROFESIONÁLNÍ fitness trenér s certifikací a zkušenostmi v posilovně. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. KRITICKÉ: VŠECHNY NÁZVY CVIKŮ MUSÍ BÝT V ČEŠTINĚ. NEJDŮLEŽITĚJŠÍ: STRICTNĚ respektuj fitness cíl uživatele a generuj cviky SPECIFICKY pro tento cíl. WEIGHT_LOSS = kardio + silové cviky s vyššími opakováními, MUSCLE_GAIN = těžké silové cviky, STRENGTH = maximální síla s těžkými váhami, ENDURANCE = vytrvalostní cviky, FLEXIBILITY = mobilita a strečink, GENERAL_FITNESS = vyvážený mix. Vyber cviky na základě parametrů uživatele (fitness cíl, vybavení, zkušenosti), ne na základě předem daného seznamu. Pokud uživatel NEMÁ zdravotní omezení, POUŽÍVEJ PROFESIONÁLNÍ CVIKY odpovídající jeho cíli. MÁŠ VOLNOST ve výběru cviků, ale MUSÍŠ respektovat parametry uživatele. Pokud má uživatel zranění, NIKDY nedoporučuj cviky, které by mohly zhoršit jejich stav."
+        },
         { role: "user", content: prompt }
       ],
       temperature: 0.5, // Lower temperature for more consistent output
@@ -329,7 +420,7 @@ Zajisti, že cviky jsou bezpečné a vhodné pro úroveň zkušeností a ZDRAVOT
   }
 }
 
-async function generateMealWithAI(day: number, mealType: string, fitnessGoal: string, dietaryRestrictions: string[], preferredCuisines: string[], cookingSkill: string, calories: number, protein: number, carbs: number, fat: number): Promise<{name: string, description: string, calories: number, protein: number, carbs: number, fat: number, instructions: string, ingredients: any[]}> {
+async function generateMealWithAI(day: number, mealType: string, fitnessGoal: string, dietaryRestrictions: string[], preferredCuisines: string[], cookingSkill: string, calories: number, protein: number, carbs: number, fat: number, budgetPerWeek: number, dailyPrepTime: number): Promise<{name: string, description: string, calories: number, protein: number, carbs: number, fat: number, instructions: string, ingredients: any[], prepTime: number, cookTime: number}> {
   const openaiClient = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -337,19 +428,64 @@ async function generateMealWithAI(day: number, mealType: string, fitnessGoal: st
   try {
     console.log(`Generating meal for ${mealType}...`);
 
+    // Determine if we should generate natural nutrition values or use provided targets
+    const useNaturalValues = calories === 0 && protein === 0 && carbs === 0 && fat === 0;
+
+    let nutritionGuidance = '';
+    if (useNaturalValues) {
+      nutritionGuidance = `Vytvoř jídlo s přirozenými a realistickými výživovými hodnotami vhodnými pro ${mealType.toLowerCase()}. Použij standardní porce a přirozené poměry živin.`;
+    } else {
+      nutritionGuidance = `Cílová výživa: ${calories} kalorií, ${protein}g bílkovin, ${carbs}g sacharidů, ${fat}g tuků`;
+    }
+
+    // Calculate time constraints for this meal type
+    const maxTotalTimePerMeal = Math.floor(dailyPrepTime / 3); // Divide daily time by 3 meals
+    const maxCookTimePerMeal = Math.floor(maxTotalTimePerMeal * 0.7); // 70% of total time for cooking
+    const maxPrepTimePerMeal = Math.floor(maxTotalTimePerMeal * 0.3); // 30% of total time for prep
+
+    // Calculate budget constraints
+    const dailyBudget = budgetPerWeek / 7;
+    const maxMealBudget = dailyBudget / 3; // Divide daily budget by 3 meals
+
+    // Calculate calorie distribution based on meal type
+    let caloriePercentage = 0.33; // Default equal distribution
+    let mealTypeGuidance = '';
+
+    switch (mealType) {
+      case 'BREAKFAST':
+        caloriePercentage = 0.25; // 25% of daily calories
+        mealTypeGuidance = 'SNÍDANĚ (25% denních kalorií): Lehké, výživné jídlo na start dne. Zaměř se na komplexní sacharidy a bílkoviny.';
+        break;
+      case 'LUNCH':
+        caloriePercentage = 0.40; // 40% of daily calories
+        mealTypeGuidance = 'OBĚD (40% denních kalorií): Hlavní jídlo dne s vyváženým poměrem všech živin.';
+        break;
+      case 'DINNER':
+        caloriePercentage = 0.35; // 35% of daily calories
+        mealTypeGuidance = 'VEČEŘE (35% denních kalorií): Lehčí jídlo než oběd, zaměř se na bílkoviny a zeleninu. Vyhni se těžkým jídlům a velkým porcím.';
+        break;
+    }
+
     const prompt = `Vygeneruj jídlo pro ${mealType.toLowerCase()} s těmito požadavky:
 - Fitness cíl: ${fitnessGoal}
 - Stravovací omezení: ${dietaryRestrictions.join(', ') || 'žádná'}
 - Preferované kuchyně: ${preferredCuisines.join(', ')}
 - Kuchařské dovednosti: ${cookingSkill}
-- Cílová výživa: ${calories} kalorií, ${protein}g bílkovin, ${carbs}g sacharidů, ${fat}g tuků
+- Maximální čas na přípravu: ${maxPrepTimePerMeal} minut
+- Maximální čas na vaření: ${maxCookTimePerMeal} minut
+- Maximální rozpočet na jídlo: ${maxMealBudget.toFixed(0)} Kč
+- ${mealTypeGuidance}
+- ${nutritionGuidance}
 
 Vytvoř chutné, výživné jídlo, které:
 - Podporuje fitness cíl (hubnutí = méně kalorií, nabírání svalů = více bílkovin, atd.)
 - Respektuje stravovací omezení
 - Používá preferované kuchyně, když je to možné
 - Je vhodné pro úroveň kuchařských dovedností
-- Splňuje cílové výživové hodnoty
+- Respektuje časové omezení (max ${maxPrepTimePerMeal} min příprava + ${maxCookTimePerMeal} min vaření)
+- Respektuje rozpočet (max ${maxMealBudget.toFixed(0)} Kč na jídlo)
+- Respektuje správné rozložení kalorií během dne (${mealType} = ${(caloriePercentage * 100).toFixed(0)}% denních kalorií)
+${useNaturalValues ? '- Má přirozené a realistické výživové hodnoty odpovídající typu jídla' : '- Splňuje cílové výživové hodnoty'}
 - Je praktické a proveditelné
 
 KRITICKÉ: Musíš odpovědět POUZE platným JSON v tomto přesném formátu. Žádný další text, žádná vysvětlení, žádné markdown formátování:
@@ -357,25 +493,27 @@ KRITICKÉ: Musíš odpovědět POUZE platným JSON v tomto přesném formátu. �
 {
   "name": "Kreativní název jídla",
   "description": "Stručný popis jídla a jeho přínosů",
-  "calories": ${calories},
-  "protein": ${protein},
-  "carbs": ${carbs},
-  "fat": ${fat},
+  "calories": ${useNaturalValues ? 'realistické množství pro ' + mealType.toLowerCase() : calories},
+  "protein": ${useNaturalValues ? 'realistické množství pro ' + mealType.toLowerCase() : protein},
+  "carbs": ${useNaturalValues ? 'realistické množství pro ' + mealType.toLowerCase() : carbs},
+  "fat": ${useNaturalValues ? 'realistické množství pro ' + mealType.toLowerCase() : fat},
+  "prepTime": ${maxPrepTimePerMeal},
+  "cookTime": ${maxCookTimePerMeal},
   "instructions": "1. Krok první\\n2. Krok druhý\\n3. Krok třetí\\n4. Krok čtvrtý\\n5. Krok pátý",
   "ingredients": [
-    {"name": "Název ingredience", "amount": "200", "unit": "g"},
-    {"name": "Další ingredience", "amount": "30", "unit": "ml"}
+    {"name": "Název ingredience", "amount": "200", "unit": "g", "estimatedCost": "50"},
+    {"name": "Další ingredience", "amount": "30", "unit": "ml", "estimatedCost": "20"}
   ]
 }
 
-Zahrň 4-8 ingrediencí s realistickými množstvími v evropských jednotkách (gramy, mililitry, kusy) a jasné, krok za krokem instrukce. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - žádné cups, tablespoons, ounces atd.`;
+Zahrň 4-8 ingrediencí s realistickými množstvími v evropských jednotkách (gramy, mililitry, kusy) a odhadovanými náklady v Kč. Použij levné, dostupné ingredience, které respektují rozpočet. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - žádné cups, tablespoons, ounces atd.`;
 
     const completion = await openaiClient.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
                   {
           role: "system",
-          content: "Jsi profesionální výživový poradce a kuchař. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - gramy, mililitry, kusy, žádné cups, tablespoons, ounces."
+          content: "Jsi profesionální výživový poradce a kuchař. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - gramy, mililitry, kusy, žádné cups, tablespoons, ounces. KRITICKÉ: VŽDY respektuj časové omezení, rozpočet a správné rozložení kalorií během dne. Snídaně = 25%, Oběd = 40%, Večeře = 35% denních kalorií. Večeře musí být lehčí než oběd. Používej levné, dostupné ingredience a jednoduché recepty, které se dají připravit v daném čase."
         },
           { role: "user", content: prompt }
         ],
@@ -433,7 +571,9 @@ Zahrň 4-8 ingrediencí s realistickými množstvími v evropských jednotkách 
           carbs: meal.carbs,
           fat: meal.fat,
           instructions: meal.instructions,
-          ingredients: meal.ingredients
+          ingredients: meal.ingredients,
+          prepTime: meal.prepTime || maxPrepTimePerMeal,
+          cookTime: meal.cookTime || maxCookTimePerMeal
         };
       } catch (jsonError) {
         console.error(`JSON parsing error:`, jsonError);
@@ -447,6 +587,168 @@ Zahrň 4-8 ingrediencí s realistickými množstvími v evropských jednotkách 
       throw new Error(`Failed to generate meal for ${mealType} after 3 attempts. Last error: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
+
+// Helper function to generate personalized nutrition requirements using AI
+async function generateNutritionRequirementsWithAI(
+  age: string,
+  gender: string,
+  height: string,
+  weight: string,
+  targetWeight: string,
+  fitnessGoal: string,
+  activityLevel: string,
+  experienceLevel: string,
+  hasInjuries: boolean,
+  injuries: string,
+  medicalConditions: string
+): Promise<{caloriesPerDay: number, proteinPerDay: number, carbsPerDay: number, fatPerDay: number}> {
+  const openaiClient = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  try {
+    console.log(`Generating personalized nutrition requirements...`);
+
+    const prompt = `Vypočítej personalizované denní potřeby živin na základě těchto parametrů:
+
+OSOBNÍ INFORMACE:
+- Věk: ${age} let
+- Pohlaví: ${gender}
+- Výška: ${height} cm
+- Aktuální váha: ${weight} kg
+- Cílová váha: ${targetWeight || 'není specifikována'} kg
+
+FITNESS CÍLE A AKTIVITA:
+- Fitness cíl: ${fitnessGoal}
+- Úroveň aktivity: ${activityLevel}
+- Úroveň zkušeností: ${experienceLevel}
+
+ZDRAVOTNÍ STAV:
+- Má zranění: ${hasInjuries ? 'ANO' : 'NE'}
+- Zranění: ${injuries || 'žádná'}
+- Zdravotní stav: ${medicalConditions || 'žádný'}
+
+VYPOČÍTEJ přesné denní potřeby živin pomocí vědeckých vzorců:
+
+1. BAZÁLNÍ METABOLISMUS (BMR):
+- Pro muže: BMR = 88.362 + (13.397 × váha v kg) + (4.799 × výška v cm) - (5.677 × věk)
+- Pro ženy: BMR = 447.593 + (9.247 × váha v kg) + (3.098 × výška v cm) - (4.330 × věk)
+
+2. CELKOVÝ DENNÍ VÝDEJ ENERGIE (TDEE):
+- Sedentární: BMR × 1.2
+- Lehce aktivní: BMR × 1.375
+- Středně aktivní: BMR × 1.55
+- Velmi aktivní: BMR × 1.725
+- Extrémně aktivní: BMR × 1.9
+
+3. ÚPRAVA PODLE FITNESS CÍLE:
+- Hubnutí: TDEE - 300 až 500 kalorií (mírný deficit)
+- Nabírání svalů: TDEE + 200 až 400 kalorií (mírný surplus)
+- Endurance: TDEE + 100 až 200 kalorií
+- Síla: TDEE + 150 až 300 kalorií
+- Flexibilita: TDEE (udržení váhy)
+- Obecná fitness: TDEE (udržení váhy)
+
+4. ROZDĚLENÍ MAKROŽIVIN:
+- Bílkoviny: 1.6-2.2g na kg tělesné váhy (vyšší pro nabírání svalů)
+- Tuky: 20-35% z celkových kalorií
+- Sacharidy: zbytek kalorií
+
+5. ÚPRAVY PRO ZDRAVOTNÍ STAV:
+- Pro diabetiky: nižší sacharidy, vyšší bílkoviny
+- Pro kardiovaskulární problémy: nižší tuky, vyšší bílkoviny
+- Pro těhotné: +300 kalorií, vyšší bílkoviny
+
+KRITICKÉ: Musíš odpovědět POUZE platným JSON v tomto přesném formátu. Žádný další text, žádná vysvětlení, žádné markdown formátování:
+
+{
+  "caloriesPerDay": 2000,
+  "proteinPerDay": 120.5,
+  "carbsPerDay": 200.0,
+  "fatPerDay": 66.7
+}
+
+Použij přesné výpočty a zaokrouhli na 1 desetinné místo pro bílkoviny, sacharidy a tuky. Kalorie zaokrouhli na celé číslo.`;
+
+    const completion = await openaiClient.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "Jsi profesionální výživový poradce a sportovní dietolog. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. Používej přesné vědecké vzorce pro výpočet BMR, TDEE a makroživin. Vždy zaokrouhli kalorie na celé číslo a makroživiny na 1 desetinné místo."
+        },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.3, // Low temperature for consistent calculations
+      max_tokens: 500,
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
+      console.error(`No content received from OpenAI`);
+      throw new Error(`No content received from OpenAI`);
+    }
+
+    console.log(`Raw AI nutrition response:`, content);
+
+    // Try to extract JSON from the response
+    let jsonContent = content.trim();
+
+    // Remove any markdown formatting
+    jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+
+    // Find JSON object in the response
+    const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonContent = jsonMatch[0];
+    }
+
+    console.log(`Extracted nutrition JSON:`, jsonContent);
+
+    try {
+      const nutrition = JSON.parse(jsonContent);
+
+      // Validate the nutrition structure
+      if (!nutrition.caloriesPerDay || !nutrition.proteinPerDay || !nutrition.carbsPerDay || !nutrition.fatPerDay) {
+        throw new Error(`Invalid nutrition structure from AI. Expected: caloriesPerDay, proteinPerDay, carbsPerDay, fatPerDay. Got: ${JSON.stringify(nutrition)}`);
+      }
+
+      // Validate reasonable ranges
+      if (nutrition.caloriesPerDay < 1200 || nutrition.caloriesPerDay > 5000) {
+        throw new Error(`Invalid calories value: ${nutrition.caloriesPerDay}. Expected between 1200-5000.`);
+      }
+
+      if (nutrition.proteinPerDay < 50 || nutrition.proteinPerDay > 300) {
+        throw new Error(`Invalid protein value: ${nutrition.proteinPerDay}. Expected between 50-300g.`);
+      }
+
+      if (nutrition.carbsPerDay < 50 || nutrition.carbsPerDay > 600) {
+        throw new Error(`Invalid carbs value: ${nutrition.carbsPerDay}. Expected between 50-600g.`);
+      }
+
+      if (nutrition.fatPerDay < 30 || nutrition.fatPerDay > 150) {
+        throw new Error(`Invalid fat value: ${nutrition.fatPerDay}. Expected between 30-150g.`);
+      }
+
+      console.log(`Successfully generated nutrition requirements:`, nutrition);
+      return {
+        caloriesPerDay: Math.round(nutrition.caloriesPerDay),
+        proteinPerDay: Math.round(nutrition.proteinPerDay * 10) / 10,
+        carbsPerDay: Math.round(nutrition.carbsPerDay * 10) / 10,
+        fatPerDay: Math.round(nutrition.fatPerDay * 10) / 10
+      };
+    } catch (jsonError) {
+      console.error(`JSON parsing error for nutrition:`, jsonError);
+      console.error(`Raw AI response:`, content);
+
+      throw new Error(`Failed to parse nutrition JSON. Last error: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}. Raw response: ${content.substring(0, 200)}...`);
+    }
+  } catch (error) {
+    console.error(`Error generating nutrition requirements with OpenAI:`, error);
+
+    throw new Error(`Failed to generate nutrition requirements. Last error: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 type GenerateFitnessPlanEvent = {
   name: "generate-fitness-plan/run";
@@ -706,6 +1008,19 @@ export const generateFitnessPlanFunction = inngest.createFunction(
         console.log(`Total workouts in database for plan ${workoutPlan.id}: ${workoutCount}`);
       });
 
+      // Calculate nutrition requirements using scientific formulas
+      const nutritionRequirements = await step.run("calculate-nutrition-requirements", async () => {
+        return calculateNutritionTargets({
+          age: parseInt(assessmentData.age),
+          gender: assessmentData.gender,
+          height: parseInt(assessmentData.height),
+          weight: parseFloat(assessmentData.weight),
+          targetWeight: assessmentData.targetWeight ? parseFloat(assessmentData.targetWeight) : undefined,
+          fitnessGoal: assessmentData.fitnessGoal,
+          activityLevel: assessmentData.activityLevel
+        });
+      });
+
       // Generate meal plan if enabled
       if (assessmentData.mealPlanningEnabled) {
         console.log("Meal planning is enabled, generating meal plan...");
@@ -730,10 +1045,10 @@ export const generateFitnessPlanFunction = inngest.createFunction(
               name: `${assessmentData.fitnessGoal.replace('_', ' ')} Monthly Meal Plan`,
               description: `Personalized ${assessmentData.fitnessGoal.toLowerCase().replace('_', ' ')} meal plan for 30 days`,
               duration: 30, // 30 days (entire month)
-              caloriesPerDay: assessmentData.fitnessGoal === 'WEIGHT_LOSS' ? 1800 : 2200,
-              proteinPerDay: assessmentData.fitnessGoal === 'MUSCLE_GAIN' ? 150 : 120,
-              carbsPerDay: assessmentData.fitnessGoal === 'WEIGHT_LOSS' ? 150 : 200,
-              fatPerDay: 60,
+              caloriesPerDay: nutritionRequirements.caloriesPerDay,
+              proteinPerDay: nutritionRequirements.proteinPerDay,
+              carbsPerDay: nutritionRequirements.carbsPerDay,
+              fatPerDay: nutritionRequirements.fatPerDay,
               budgetPerWeek: parseFloat(assessmentData.budgetPerWeek),
               isActive: true,
               activeProfileId: fitnessProfile.id,
@@ -750,22 +1065,8 @@ export const generateFitnessPlanFunction = inngest.createFunction(
 
           // Generate meal templates (only once per meal type)
           for (const mealType of mealTypes) {
-            // Calculate target nutrition based on fitness goal
-            let baseCalories = mealType === 'BREAKFAST' ? 500 : mealType === 'LUNCH' ? 700 : 600;
-            let baseProtein = mealType === 'BREAKFAST' ? 25 : mealType === 'LUNCH' ? 35 : 40;
-            let baseCarbs = mealType === 'BREAKFAST' ? 60 : mealType === 'LUNCH' ? 80 : 65;
-            let baseFat = mealType === 'BREAKFAST' ? 20 : mealType === 'LUNCH' ? 25 : 25;
-
-            // Adjust based on fitness goal
-            if (assessmentData.fitnessGoal === 'WEIGHT_LOSS') {
-              baseCalories = Math.floor(baseCalories * 0.8);
-              baseCarbs = Math.floor(baseCarbs * 0.8);
-            } else if (assessmentData.fitnessGoal === 'MUSCLE_GAIN') {
-              baseProtein = Math.floor(baseProtein * 1.2);
-              baseCalories = Math.floor(baseCalories * 1.1);
-            }
-
-            // Generate meal template using AI (only once per meal type)
+            // Generate meal template using AI with realistic nutrition values
+            // AI will create meals with natural nutrition ratios, then we'll adjust portions
             const aiMeal = await generateMealWithAI(
               1, // Use day 1 as template
               mealType,
@@ -773,14 +1074,52 @@ export const generateFitnessPlanFunction = inngest.createFunction(
               assessmentData.dietaryRestrictions,
               assessmentData.preferredCuisines,
               assessmentData.cookingSkill,
-              baseCalories,
-              baseProtein,
-              baseCarbs,
-              baseFat
+              0, // Let AI generate natural nutrition values
+              0, // Let AI generate natural nutrition values
+              0, // Let AI generate natural nutrition values
+              0, // Let AI generate natural nutrition values
+              assessmentData.budgetPerWeek,
+              parseInt(assessmentData.mealPrepTime)
             );
 
             mealTemplates[mealType] = aiMeal;
-            console.log(`Generated template for ${mealType}: ${aiMeal.name}`);
+            console.log(`Generated template for ${mealType}: ${aiMeal.name} (${aiMeal.calories} cal, ${aiMeal.protein}g protein, ${aiMeal.carbs}g carbs, ${aiMeal.fat}g fat)`);
+          }
+
+          // Calculate total daily nutrition from all meals
+          const totalDailyCalories = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.calories, 0);
+          const totalDailyProtein = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.protein, 0);
+          const totalDailyCarbs = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.carbs, 0);
+          const totalDailyFat = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.fat, 0);
+
+          console.log(`Total daily nutrition from meals: ${totalDailyCalories} cal, ${totalDailyProtein}g protein, ${totalDailyCarbs}g carbs, ${totalDailyFat}g fat`);
+          console.log(`Target daily nutrition: ${nutritionRequirements.caloriesPerDay} cal, ${nutritionRequirements.proteinPerDay}g protein, ${nutritionRequirements.carbsPerDay}g carbs, ${nutritionRequirements.fatPerDay}g fat`);
+
+          // Calculate overall portion multiplier to match daily targets
+          const overallCalorieMultiplier = nutritionRequirements.caloriesPerDay / totalDailyCalories;
+          const overallProteinMultiplier = nutritionRequirements.proteinPerDay / totalDailyProtein;
+          const overallCarbsMultiplier = nutritionRequirements.carbsPerDay / totalDailyCarbs;
+          const overallFatMultiplier = nutritionRequirements.fatPerDay / totalDailyFat;
+
+          console.log(`Overall multipliers: calories=${overallCalorieMultiplier.toFixed(2)}, protein=${overallProteinMultiplier.toFixed(2)}, carbs=${overallCarbsMultiplier.toFixed(2)}, fat=${overallFatMultiplier.toFixed(2)}`);
+
+          // Adjust all meals to match daily targets
+          for (const mealType of mealTypes) {
+            const meal = mealTemplates[mealType];
+
+            // Adjust nutrition values to match daily targets
+            meal.calories = Math.round(meal.calories * overallCalorieMultiplier);
+            meal.protein = Math.round(meal.protein * overallProteinMultiplier * 10) / 10;
+            meal.carbs = Math.round(meal.carbs * overallCarbsMultiplier * 10) / 10;
+            meal.fat = Math.round(meal.fat * overallFatMultiplier * 10) / 10;
+
+            // Adjust ingredient amounts based on calorie multiplier (most important for portion size)
+            meal.ingredients = meal.ingredients.map((ingredient: any) => ({
+              ...ingredient,
+              amount: (parseFloat(ingredient.amount) * overallCalorieMultiplier).toFixed(1)
+            }));
+
+            console.log(`Adjusted ${mealType}: ${meal.calories} cal, ${meal.protein}g protein, ${meal.carbs}g carbs, ${meal.fat}g fat`);
           }
 
                     // Create meals for each day using the templates
@@ -806,8 +1145,8 @@ export const generateFitnessPlanFunction = inngest.createFunction(
                   protein: template.protein,
                   carbs: template.carbs,
                   fat: template.fat,
-                  prepTime: parseInt(assessmentData.mealPrepTime),
-                  cookTime: 30,
+                  prepTime: template.prepTime,
+                  cookTime: template.cookTime,
                   servings: 1,
                   mealPlanId: mealPlan.id,
                   recipes: {
@@ -824,8 +1163,8 @@ export const generateFitnessPlanFunction = inngest.createFunction(
                         fiber: Math.floor(Math.random() * 8) + 3,
                         sugar: Math.floor(Math.random() * 15) + 5
                       }),
-                      prepTime: parseInt(assessmentData.mealPrepTime),
-                      cookTime: Math.floor(Math.random() * 20) + 20,
+                                          prepTime: template.prepTime,
+                    cookTime: template.cookTime,
                       servings: 1,
                       difficulty: assessmentData.cookingSkill,
                       cuisine: assessmentData.preferredCuisines[day % assessmentData.preferredCuisines.length] || "american",
@@ -951,6 +1290,19 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
         return profile;
       });
 
+      // Calculate nutrition requirements using scientific formulas
+      const nutritionRequirements = await step.run("calculate-nutrition-requirements", async () => {
+        return calculateNutritionTargets({
+          age: parseInt(fitnessProfile.age),
+          gender: fitnessProfile.gender,
+          height: parseInt(fitnessProfile.height),
+          weight: parseFloat(fitnessProfile.weight),
+          targetWeight: fitnessProfile.targetWeight ? parseFloat(fitnessProfile.targetWeight) : undefined,
+          fitnessGoal: fitnessProfile.fitnessGoal,
+          activityLevel: fitnessProfile.activityLevel
+        });
+      });
+
       // Generate meal plan
       await step.run("generate-meal-plan", async () => {
         console.log("Deactivating existing meal plans for profile:", fitnessProfile.id);
@@ -973,10 +1325,10 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
             name: `${fitnessProfile.fitnessGoal?.replace('_', ' ') || 'Personalized'} Monthly Meal Plan`,
             description: `Personalized ${fitnessProfile.fitnessGoal?.toLowerCase().replace('_', ' ') || 'fitness'} meal plan for 30 days`,
             duration: 30, // 30 days (entire month)
-            caloriesPerDay: fitnessProfile.fitnessGoal === 'WEIGHT_LOSS' ? 1800 : 2200,
-            proteinPerDay: fitnessProfile.fitnessGoal === 'MUSCLE_GAIN' ? 150 : 120,
-            carbsPerDay: fitnessProfile.fitnessGoal === 'WEIGHT_LOSS' ? 150 : 200,
-            fatPerDay: 60,
+            caloriesPerDay: nutritionRequirements.caloriesPerDay,
+            proteinPerDay: nutritionRequirements.proteinPerDay,
+            carbsPerDay: nutritionRequirements.carbsPerDay,
+            fatPerDay: nutritionRequirements.fatPerDay,
             budgetPerWeek: fitnessProfile.budgetPerWeek || 100,
             isActive: true,
             activeProfileId: fitnessProfile.id,
@@ -999,22 +1351,8 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
 
         // Generate meal templates (only once per meal type)
         for (const mealType of mealTypes) {
-          // Calculate target nutrition based on fitness goal
-          let baseCalories = mealType === 'BREAKFAST' ? 500 : mealType === 'LUNCH' ? 700 : 600;
-          let baseProtein = mealType === 'BREAKFAST' ? 25 : mealType === 'LUNCH' ? 35 : 40;
-          let baseCarbs = mealType === 'BREAKFAST' ? 60 : mealType === 'LUNCH' ? 80 : 65;
-          let baseFat = mealType === 'BREAKFAST' ? 20 : mealType === 'LUNCH' ? 25 : 25;
-
-          // Adjust based on fitness goal
-          if (fitnessProfile.fitnessGoal === 'WEIGHT_LOSS') {
-            baseCalories = Math.floor(baseCalories * 0.8);
-            baseCarbs = Math.floor(baseCarbs * 0.8);
-          } else if (fitnessProfile.fitnessGoal === 'MUSCLE_GAIN') {
-            baseProtein = Math.floor(baseProtein * 1.2);
-            baseCalories = Math.floor(baseCalories * 1.1);
-          }
-
-          // Generate meal template using AI (only once per meal type)
+          // Generate meal template using AI with realistic nutrition values
+          // AI will create meals with natural nutrition ratios, then we'll adjust portions
           const aiMeal = await generateMealWithAI(
             1, // Use day 1 as template
             mealType,
@@ -1022,14 +1360,52 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
             dietaryRestrictions,
             preferredCuisines,
             cookingSkill,
-            baseCalories,
-            baseProtein,
-            baseCarbs,
-            baseFat
+            0, // Let AI generate natural nutrition values
+            0, // Let AI generate natural nutrition values
+            0, // Let AI generate natural nutrition values
+            0, // Let AI generate natural nutrition values
+            fitnessProfile.budgetPerWeek || 100,
+            mealPrepTime
           );
 
           mealTemplates[mealType] = aiMeal;
-          console.log(`Generated template for ${mealType}: ${aiMeal.name}`);
+          console.log(`Generated template for ${mealType}: ${aiMeal.name} (${aiMeal.calories} cal, ${aiMeal.protein}g protein, ${aiMeal.carbs}g carbs, ${aiMeal.fat}g fat)`);
+        }
+
+        // Calculate total daily nutrition from all meals
+        const totalDailyCalories = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.calories, 0);
+        const totalDailyProtein = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.protein, 0);
+        const totalDailyCarbs = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.carbs, 0);
+        const totalDailyFat = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.fat, 0);
+
+        console.log(`Total daily nutrition from meals: ${totalDailyCalories} cal, ${totalDailyProtein}g protein, ${totalDailyCarbs}g carbs, ${totalDailyFat}g fat`);
+        console.log(`Target daily nutrition: ${nutritionRequirements.caloriesPerDay} cal, ${nutritionRequirements.proteinPerDay}g protein, ${nutritionRequirements.carbsPerDay}g carbs, ${nutritionRequirements.fatPerDay}g fat`);
+
+        // Calculate overall portion multiplier to match daily targets
+        const overallCalorieMultiplier = nutritionRequirements.caloriesPerDay / totalDailyCalories;
+        const overallProteinMultiplier = nutritionRequirements.proteinPerDay / totalDailyProtein;
+        const overallCarbsMultiplier = nutritionRequirements.carbsPerDay / totalDailyCarbs;
+        const overallFatMultiplier = nutritionRequirements.fatPerDay / totalDailyFat;
+
+        console.log(`Overall multipliers: calories=${overallCalorieMultiplier.toFixed(2)}, protein=${overallProteinMultiplier.toFixed(2)}, carbs=${overallCarbsMultiplier.toFixed(2)}, fat=${overallFatMultiplier.toFixed(2)}`);
+
+        // Adjust all meals to match daily targets
+        for (const mealType of mealTypes) {
+          const meal = mealTemplates[mealType];
+
+          // Adjust nutrition values to match daily targets
+          meal.calories = Math.round(meal.calories * overallCalorieMultiplier);
+          meal.protein = Math.round(meal.protein * overallProteinMultiplier * 10) / 10;
+          meal.carbs = Math.round(meal.carbs * overallCarbsMultiplier * 10) / 10;
+          meal.fat = Math.round(meal.fat * overallFatMultiplier * 10) / 10;
+
+          // Adjust ingredient amounts based on calorie multiplier (most important for portion size)
+          meal.ingredients = meal.ingredients.map((ingredient: any) => ({
+            ...ingredient,
+            amount: (parseFloat(ingredient.amount) * overallCalorieMultiplier).toFixed(1)
+          }));
+
+          console.log(`Adjusted ${mealType}: ${meal.calories} cal, ${meal.protein}g protein, ${meal.carbs}g carbs, ${meal.fat}g fat`);
         }
 
         // Create meals for each day using the templates
@@ -1055,8 +1431,8 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
                 protein: template.protein,
                 carbs: template.carbs,
                 fat: template.fat,
-                prepTime: mealPrepTime,
-                cookTime: 30,
+                prepTime: template.prepTime,
+                cookTime: template.cookTime,
                 servings: 1,
                 mealPlanId: mealPlan.id,
                 recipes: {
@@ -1073,8 +1449,8 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
                       fiber: Math.floor(Math.random() * 8) + 3,
                       sugar: Math.floor(Math.random() * 15) + 5
                     }),
-                    prepTime: mealPrepTime,
-                    cookTime: Math.floor(Math.random() * 20) + 20,
+                    prepTime: template.prepTime,
+                    cookTime: template.cookTime,
                     servings: 1,
                     difficulty: cookingSkill,
                     cuisine: preferredCuisines[day % preferredCuisines.length] || "american",
@@ -1251,11 +1627,11 @@ Formátuj jako čistý, organizovaný seznam, který je snadné sledovat v obcho
 
         const project = await prisma.project.create({
           data: {
-            name: `Week ${weekNumber} Shopping List - ${new Date().toLocaleDateString()}`,
+            name: `Nákupní seznam týden ${weekNumber} - ${new Date().toLocaleDateString()}`,
             userId: userId,
             messages: {
               create: {
-                content: `Here's your organized shopping list for Week ${weekNumber}:\n\n${shoppingList}`,
+                content: `Zde je váš organizovaný nákupní seznam pro týden ${weekNumber}:\n\n${shoppingList}`,
                 role: "ASSISTANT",
                 type: "PLAN_GENERATED",
               }
@@ -1283,3 +1659,105 @@ Formátuj jako čistý, organizovaný seznam, který je snadné sledovat v obcho
     }
   },
 );
+
+// Vědecký výpočet BMR, TDEE a denních nutričních cílů
+function calculateNutritionTargets({
+  age,
+  gender,
+  height,
+  weight,
+  targetWeight,
+  fitnessGoal,
+  activityLevel
+}: {
+  age: number,
+  gender: string,
+  height: number,
+  weight: number,
+  targetWeight?: number,
+  fitnessGoal: string,
+  activityLevel: string
+}): { caloriesPerDay: number, proteinPerDay: number, carbsPerDay: number, fatPerDay: number } {
+  // 1. BMR
+  let bmr: number;
+  if (gender.toLowerCase() === 'male' || gender.toLowerCase() === 'm' || gender.toLowerCase() === 'muž') {
+    bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+  } else {
+    bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+  }
+
+  // 2. Aktivita
+  let activityMultiplier = 1.2;
+  switch (activityLevel?.toLowerCase()) {
+    case 'sedentary':
+    case 'nízká':
+      activityMultiplier = 1.2; break;
+    case 'light':
+    case 'lehce aktivní':
+      activityMultiplier = 1.375; break;
+    case 'moderate':
+    case 'střední':
+      activityMultiplier = 1.55; break;
+    case 'active':
+    case 'velmi aktivní':
+      activityMultiplier = 1.725; break;
+    case 'very active':
+    case 'extrémně aktivní':
+      activityMultiplier = 1.9; break;
+  }
+  let tdee = bmr * activityMultiplier;
+
+  // 3. Úprava podle cíle
+  let calories = tdee;
+  switch (fitnessGoal?.toUpperCase()) {
+    case 'WEIGHT_LOSS':
+    case 'HUBNUTÍ':
+      calories = tdee - 400; // Deficit
+      break;
+    case 'MUSCLE_GAIN':
+    case 'NABÍRÁNÍ':
+      calories = tdee + 300; // Surplus
+      break;
+    case 'ENDURANCE':
+    case 'VYTRVALOST':
+      calories = tdee + 150;
+      break;
+    case 'STRENGTH':
+    case 'SÍLA':
+      calories = tdee + 200;
+      break;
+    case 'FLEXIBILITY':
+    case 'FLEXIBILITA':
+      calories = tdee;
+      break;
+    case 'GENERAL_FITNESS':
+    case 'OBECNÁ':
+    default:
+      calories = tdee;
+      break;
+  }
+  calories = Math.round(calories);
+
+  // 4. Makroživiny
+  // Bílkoviny: 1.8g/kg pro hubnutí, 2.0g/kg pro nabírání, 1.6g/kg pro ostatní
+  let proteinPerKg = 1.6;
+  if (fitnessGoal?.toUpperCase() === 'WEIGHT_LOSS' || fitnessGoal?.toUpperCase() === 'HUBNUTÍ') proteinPerKg = 1.8;
+  if (fitnessGoal?.toUpperCase() === 'MUSCLE_GAIN' || fitnessGoal?.toUpperCase() === 'NABÍRÁNÍ') proteinPerKg = 2.0;
+  const proteinPerDay = Math.round(weight * proteinPerKg * 10) / 10;
+
+  // Tuky: 25% z kalorií, 1g tuku = 9 kcal
+  const fatPerDay = Math.round((calories * 0.25) / 9 * 10) / 10;
+
+  // Sacharidy: zbytek kalorií
+  const proteinCals = proteinPerDay * 4;
+  const fatCals = fatPerDay * 9;
+  const carbsCals = calories - proteinCals - fatCals;
+  const carbsPerDay = Math.round((carbsCals / 4) * 10) / 10;
+
+  return {
+    caloriesPerDay: calories,
+    proteinPerDay,
+    carbsPerDay,
+    fatPerDay
+  };
+}

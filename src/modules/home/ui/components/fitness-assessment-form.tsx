@@ -92,6 +92,7 @@ const EQUIPMENT_OPTIONS = [
   { value: "bench", label: "Stůl" },
   { value: "barbell", label: "Barbell" },
   { value: "kettlebell", label: "Kettlebell" },
+  { value: "home_equipment", label: "Domácí cvičení" },
   { value: "gym_access", label: "Plné gymnastické centrum" },
 ];
 

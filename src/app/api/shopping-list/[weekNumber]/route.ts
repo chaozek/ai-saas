@@ -23,7 +23,7 @@ export async function GET(
       where: {
         userId: userId,
         name: {
-          contains: `Week ${weekNumber} Shopping List`
+          contains: `Nákupní seznam týden ${weekNumber}`
         }
       },
       include: {
@@ -41,8 +41,8 @@ export async function GET(
     }
 
     const content = projects[0].messages[0].content;
-    // Remove the prefix "Here's your organized shopping list for Week X:\n\n"
-    const shoppingListContent = content.replace(/^Here's your organized shopping list for Week \d+:\n\n/, '');
+    // Remove the prefix "Zde je váš organizovaný nákupní seznam pro týden X:\n\n"
+    const shoppingListContent = content.replace(/^Zde je váš organizovaný nákupní seznam pro týden \d+:\n\n/, '');
 
     return NextResponse.json({
       content: shoppingListContent,

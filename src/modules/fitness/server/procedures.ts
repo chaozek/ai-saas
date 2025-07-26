@@ -184,6 +184,21 @@ export const fitnessRouter = createTRPCRouter({
       weekMeals: z.array(z.any()),
     }))
     .mutation(async ({ ctx, input }) => {
+      try {
+        await consumeCredits();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "You do not have enough credits",
+        });
+      }
+
       // Trigger the Inngest function to generate the shopping list
       const result = await inngest.send({
         name: "generate-shopping-list/run",
@@ -386,38 +401,40 @@ export const fitnessRouter = createTRPCRouter({
   getShoppingList: protectedProcedure
     .input(z.object({ weekNumber: z.number() }))
     .query(async ({ ctx, input }) => {
-      try {
-        // Find the project that contains the shopping list for this week
-        const projects = await prisma.project.findMany({
-          where: {
-            userId: ctx.auth.userId,
-            name: {
-              contains: `Week ${input.weekNumber} Shopping List`
-            }
-          },
-          include: {
-            messages: {
-              orderBy: { createdAt: 'desc' },
-              take: 1
-            }
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 1
+      // Find the project that contains the shopping list for this week
+      const projects = await prisma.project.findMany({
+        where: {
+          userId: ctx.auth.userId,
+          name: {
+            contains: `Nákupní seznam týden ${input.weekNumber}`
+          }
+        },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      });
+
+      if (projects.length === 0 || !projects[0].messages.length) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Nákupní seznam pro týden ${input.weekNumber} nebyl nalezen. Vygenerujte ho nejdříve.`,
         });
-
-        if (projects.length === 0 || !projects[0].messages.length) {
-          return null;
-        }
-
-        return {
-          content: projects[0].messages[0].content,
-          projectId: projects[0].id,
-          createdAt: projects[0].createdAt
-        };
-      } catch (error) {
-        console.error("Error fetching shopping list:", error);
-        return null;
       }
+
+      const content = projects[0].messages[0].content;
+      // Remove the prefix "Zde je váš organizovaný nákupní seznam pro týden X:\n\n"
+      const shoppingListContent = content.replace(/^Zde je váš organizovaný nákupní seznam pro týden \d+:\n\n/, '');
+
+      return {
+        content: shoppingListContent,
+        projectId: projects[0].id,
+        createdAt: projects[0].createdAt
+      };
     }),
 
   generateMealPlanOnly: protectedProcedure
@@ -530,4 +547,6 @@ export const fitnessRouter = createTRPCRouter({
         eventId: result.ids[0],
       };
     }),
+
+
 });

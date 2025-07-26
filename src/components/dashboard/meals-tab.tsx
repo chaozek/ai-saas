@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Calendar } from "lucide-react";
 import { MealPlanHeader } from "./meal-plan-header";
 import { WeekMeals } from "./week-meals";
+import { ShoppingListModal } from "./shopping-list-modal";
 import { MealPlan, Meal } from "./types";
 import { useTRPC } from "@/trcp/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +30,9 @@ export function MealsTab({
   const [expandedWeeks, setExpandedWeeks] = useState<Set<number>>(new Set());
   const [generatingList, setGeneratingList] = useState<{[weekNumber: number]: boolean}>({});
   const [generatingMealPlan, setGeneratingMealPlan] = useState(false);
+  const [shoppingListModalOpen, setShoppingListModalOpen] = useState(false);
+  const [selectedWeekNumber, setSelectedWeekNumber] = useState<number | null>(null);
+  const [shoppingListContent, setShoppingListContent] = useState<string>('');
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -112,17 +116,49 @@ export function MealsTab({
     });
   };
 
+    const generateShoppingList = useMutation(trpc.fitness.generateShoppingList.mutationOptions({
+    onSuccess: (data) => {
+      toast.success("Generování nákupního seznamu zahájeno!");
+      // Reset loading state for all weeks since we don't know which one was clicked
+      setGeneratingList({});
+    },
+    onError: (error: any) => {
+      toast.error("Nepodařilo se vygenerovat nákupní seznam. Zkuste to prosím znovu.");
+      // Reset loading state for all weeks
+      setGeneratingList({});
+      console.error("Shopping list generation error:", error);
+    }
+  }));
+
   const handleGenerateShoppingList = async (weekNumber: number, weekMeals: Meal[]) => {
     setGeneratingList(prev => ({ ...prev, [weekNumber]: true }));
-    // This would be implemented with the actual API call
-    setTimeout(() => {
-      setGeneratingList(prev => ({ ...prev, [weekNumber]: false }));
-    }, 2000);
+    generateShoppingList.mutate({
+      weekNumber,
+      weekMeals
+    });
   };
 
   const handleFetchShoppingList = async (weekNumber: number) => {
-    // This would be implemented with the actual API call
-    console.log('Fetching shopping list for week', weekNumber);
+    try {
+      const response = await fetch(`/api/shopping-list/${weekNumber}`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          toast.error(`Nákupní seznam pro týden ${weekNumber} nebyl nalezen. Vygenerujte ho nejdříve.`);
+        } else {
+          toast.error('Chyba při načítání nákupního seznamu');
+        }
+        return;
+      }
+
+      const data = await response.json();
+      setShoppingListContent(data.content);
+      setSelectedWeekNumber(weekNumber);
+      setShoppingListModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching shopping list:', error);
+      toast.error('Chyba při načítání nákupního seznamu');
+    }
   };
 
   const handleGenerateMealPlan = () => {
@@ -292,6 +328,14 @@ export function MealsTab({
           );
         })}
       </div>
+
+      {/* Shopping List Modal */}
+      <ShoppingListModal
+        open={shoppingListModalOpen}
+        onOpenChange={setShoppingListModalOpen}
+        selectedWeekNumber={selectedWeekNumber}
+        shoppingListContent={shoppingListContent}
+      />
     </div>
   );
 }
