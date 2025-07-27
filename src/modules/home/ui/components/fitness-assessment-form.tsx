@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,12 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, ArrowRight, ArrowLeft, Target, Activity, Dumbbell, Calendar, Clock } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, ArrowRight, ArrowLeft, Target, Activity, Dumbbell, Calendar, Clock, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SignIn, SignInButton, useClerk } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useTRPC } from "@/trcp/client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useFitnessAssessmentStore } from "@/lib/fitness-assessment-store";
 
 interface AssessmentData {
@@ -49,6 +51,9 @@ interface AssessmentData {
   mealPrepTime: string;
   preferredCuisines: string[];
   cookingSkill: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+
+  // Consent
+  consent: boolean;
 }
 
 const FITNESS_GOALS = [
@@ -128,7 +133,7 @@ const COOKING_SKILLS = [
   { value: "ADVANCED", label: "Pokročilý (zkušený kuchař)" },
 ];
 
-export const FitnessAssessmentForm = () => {
+export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted?: boolean }) => {
   const router = useRouter();
   const { user } = useClerk();
   const trpc = useTRPC();
@@ -152,6 +157,22 @@ export const FitnessAssessmentForm = () => {
     nextStep: storeNextStep,
     prevStep: storePrevStep,
   } = useFitnessAssessmentStore();
+
+  // Add state to prevent step message flash after highlight
+  const [showStepMessage, setShowStepMessage] = useState(true);
+
+  // Handle highlight state changes
+  useEffect(() => {
+    if (isHighlighted) {
+      setShowStepMessage(false);
+    } else {
+      // Delay showing step message after highlight ends
+      const timer = setTimeout(() => {
+        setShowStepMessage(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isHighlighted]);
 
   const generatePlan = useMutation(trpc.fitness.generatePlan.mutationOptions({
     onSuccess: async (data) => {
@@ -181,6 +202,11 @@ export const FitnessAssessmentForm = () => {
 
     if (data.availableDays.length === 0) {
       toast.error("Prosím, vyberte alespoň jeden den pro vaše cvičení");
+      return;
+    }
+
+    if (!data.consent) {
+      toast.error("Prosím, souhlaste se zpracováním osobních údajů pro pokračování");
       return;
     }
 
@@ -249,12 +275,66 @@ export const FitnessAssessmentForm = () => {
       // Create a sequence of animations
       setTimeout(() => {
         setTrainerAnimation(false);
-      }, 800);
+      }, 1200);
     }
   };
 
   const prevStep = () => {
     storePrevStep();
+  };
+
+  // AI recommendation logic for step 4
+  const queryEnabled = currentStep === 4 && !!data.age && !!data.fitnessGoal && !!data.activityLevel && !!data.experienceLevel;
+
+  const { data: aiRecommendationsData, isLoading: aiRecommendationsLoading, error: aiRecommendationsError } = useQuery({
+    ...trpc.fitness.getAIRecommendations.queryOptions({
+      age: data.age,
+      gender: data.gender,
+      height: data.height,
+      weight: data.weight,
+      targetWeight: data.targetWeight,
+      fitnessGoal: data.fitnessGoal,
+      activityLevel: data.activityLevel,
+      experienceLevel: data.experienceLevel,
+      hasInjuries: data.hasInjuries,
+      injuries: data.injuries,
+      medicalConditions: data.medicalConditions,
+    }),
+    enabled: queryEnabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Debug logging
+  console.log("AI Recommendations Query State:", {
+    currentStep,
+    queryEnabled,
+    hasAge: !!data.age,
+    hasFitnessGoal: !!data.fitnessGoal,
+    hasActivityLevel: !!data.activityLevel,
+    hasExperienceLevel: !!data.experienceLevel,
+    isLoading: aiRecommendationsLoading,
+    hasError: !!aiRecommendationsError,
+    hasData: !!aiRecommendationsData,
+    data: aiRecommendationsData
+  });
+
+  const applyAIRecommendations = () => {
+    console.log("Applying AI recommendations:", aiRecommendationsData);
+
+    if (aiRecommendationsData?.recommendations) {
+      const recommendations = aiRecommendationsData.recommendations;
+      console.log("Recommendations to apply:", recommendations);
+
+      updateData("availableDays", recommendations.availableDays);
+      updateData("workoutDuration", recommendations.workoutDuration);
+      updateData("equipment", recommendations.equipment);
+      updateData("preferredExercises", recommendations.preferredExercises);
+
+      toast.success("AI doporučení byla úspěšně aplikována!");
+    } else {
+      console.log("No recommendations data available:", aiRecommendationsData);
+      toast.error("AI doporučení nejsou k dispozici. Zkuste to prosím znovu.");
+    }
   };
 
   const renderStep = () => {
@@ -413,48 +493,113 @@ export const FitnessAssessmentForm = () => {
         );
 
       case 4:
+        const aiRecommendations = aiRecommendationsData?.recommendations || {
+          availableDays: [],
+          workoutDuration: "",
+          equipment: [],
+          preferredExercises: "",
+          reasoning: { days: "", duration: "", equipment: "", exercises: "" }
+        };
         return (
           <div className="space-y-6">
+                        {/* AI Recommendations Header */}
+            <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                            <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <span className="font-semibold text-blue-800 dark:text-blue-200">AI Doporučení</span>
+                {aiRecommendationsLoading && (
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600 dark:text-blue-400" />
+                )}
+              </div>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                {aiRecommendationsLoading
+                  ? "Generujeme AI doporučení na základě vašich odpovědí..."
+                  : aiRecommendationsError
+                  ? "Nepodařilo se načíst AI doporučení. Zkuste to prosím znovu."
+                  : "Na základě vašich odpovědí jsme připravili doporučení pro optimální tréninkový plán."
+                }
+              </p>
+                            <Button
+                variant="outline"
+                size="sm"
+                onClick={applyAIRecommendations}
+                disabled={aiRecommendationsLoading || !!aiRecommendationsError || !aiRecommendationsData}
+                className="border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-950/20"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {aiRecommendationsLoading ? "Načítání..." : aiRecommendationsError ? "Chyba" : "Použít AI doporučení"}
+              </Button>
+            </div>
+
             <div className="space-y-4">
-              <Label>Které dny jste k dispozici pro cvičení?</Label>
+              <div className="flex items-center gap-2">
+                <Label>Které dny jste k dispozici pro cvičení?</Label>
+                <Badge variant="secondary" className="text-xs">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  AI doporučení
+                </Badge>
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {DAYS_OF_WEEK.map((day) => (
-                  <div key={day.value} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={day.value}
-                      checked={data.availableDays.includes(day.value)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          updateData("availableDays", [...data.availableDays, day.value]);
-                        } else {
-                          updateData("availableDays", data.availableDays.filter(d => d !== day.value));
-                        }
-                      }}
-                    />
-                    <Label htmlFor={day.value} className="text-sm">{day.label}</Label>
-                  </div>
-                ))}
+                {DAYS_OF_WEEK.map((day) => {
+                  const isRecommended = aiRecommendations.availableDays.includes(day.value);
+                  return (
+                    <div key={day.value} className={`flex items-center space-x-2 p-2 rounded-lg transition-colors ${
+                      isRecommended ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' : ''
+                    }`}>
+                      <Checkbox
+                        id={day.value}
+                        checked={data.availableDays.includes(day.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            updateData("availableDays", [...data.availableDays, day.value]);
+                          } else {
+                            updateData("availableDays", data.availableDays.filter(d => d !== day.value));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={day.value} className="text-sm">{day.label}</Label>
+                      {isRecommended && (
+                        <Sparkles className="w-3 h-3 text-green-600 dark:text-green-400 ml-auto" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
+
             <div className="space-y-4">
-              <Label>Preferovaná doba trvání cvičení (minuty)</Label>
+              <div className="flex items-center gap-2">
+                <Label>Preferovaná doba trvání cvičení (minuty)</Label>
+                <Badge variant="secondary" className="text-xs">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  AI doporučení
+                </Badge>
+              </div>
               <Select value={data.workoutDuration} onValueChange={(value) => updateData("workoutDuration", value)}>
-                <SelectTrigger>
+                <SelectTrigger className={aiRecommendations.workoutDuration === data.workoutDuration ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950/20' : ''}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="30">30 minut</SelectItem>
                   <SelectItem value="45">45 minut</SelectItem>
                   <SelectItem value="60">60 minut</SelectItem>
+                  <SelectItem value="75">75 minut</SelectItem>
                   <SelectItem value="90">90 minut</SelectItem>
                 </SelectContent>
               </Select>
+              {aiRecommendations.workoutDuration && (
+                <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Doporučeno: {aiRecommendations.workoutDuration} minut
+                </p>
+              )}
             </div>
+
             <div className="space-y-4">
               <Label>Jaké vybavení máte k dispozici?</Label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {EQUIPMENT_OPTIONS.map((equipment) => (
-                  <div key={equipment.value} className="flex items-center space-x-2">
+                  <div key={equipment.value} className="flex items-center space-x-2 p-2 rounded-lg">
                     <Checkbox
                       id={equipment.value}
                       checked={data.equipment.includes(equipment.value)}
@@ -471,14 +616,28 @@ export const FitnessAssessmentForm = () => {
                 ))}
               </div>
             </div>
+
             <div className="space-y-4">
-              <Label htmlFor="preferredExercises">Preferované cvičení nebo aktivity (Volitelné)</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="preferredExercises">Preferované cvičení nebo aktivity (Volitelné)</Label>
+                <Badge variant="secondary" className="text-xs">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  AI doporučení
+                </Badge>
+              </div>
               <Textarea
                 id="preferredExercises"
                 placeholder="např. běhání, jóga, tělesné výcviky, plavání..."
                 value={data.preferredExercises}
                 onChange={(e) => updateData("preferredExercises", e.target.value)}
+                className={aiRecommendations.preferredExercises && data.preferredExercises === aiRecommendations.preferredExercises ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950/20' : ''}
               />
+              {aiRecommendations.preferredExercises && (
+                <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Doporučeno: {aiRecommendations.preferredExercises}
+                </p>
+              )}
             </div>
           </div>
         );
@@ -609,6 +768,31 @@ export const FitnessAssessmentForm = () => {
                 </div>
               </>
             )}
+
+                                                {/* Consent Checkbox */}
+            <Separator className="my-2" />
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
+                <Checkbox
+                  id="consent"
+                  checked={data.consent}
+                  onCheckedChange={(checked) => updateData("consent", checked)}
+                  required
+                />
+                <Label htmlFor="consent" className="text-xs leading-tight block">
+                  Souhlasím se zpracováním mých osobních údajů za účelem vytvoření jídelníčku a tréninkového plánu v souladu s{" "}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    zásadami ochrany osobních údajů
+                  </a>
+                  .
+                </Label>
+              </div>
+            </div>
           </div>
         );
 
@@ -692,20 +876,33 @@ export const FitnessAssessmentForm = () => {
           )}
         </div>
 
-        {/* Motivational text bubble */}
-        <div className={`absolute -top-16 -right-4 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 shadow-lg border transition-all duration-500 ${
-          trainerAnimation ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2'
-        }`}>
-          <div className="text-xs font-medium text-green-600 dark:text-green-400">
-            {currentStep === 0 && "Skvěle! 🎯"}
-            {currentStep === 1 && "Výborný cíl! 💪"}
-            {currentStep === 2 && "Perfektní! 🏃‍♂️"}
-            {currentStep === 3 && "Důležité info! 🏥"}
-            {currentStep === 4 && "Skvělý plán! 📅"}
-            {currentStep === 5 && "Téměř hotovo! 🍎"}
-          </div>
-          <div className="absolute -bottom-1 left-4 w-2 h-2 bg-white dark:bg-slate-800 transform rotate-45 border-l border-b border-gray-200 dark:border-gray-700"></div>
-        </div>
+                                                        {/* Motivational text bubble with integrated arrow */}
+        {(() => {
+          const message = isHighlighted ? "Pokračujte vyplněním formuláře! 📝" :
+            showStepMessage && currentStep === 0 ? "Skvěle! 🎯" :
+            showStepMessage && currentStep === 1 ? "Výborný cíl! 💪" :
+            showStepMessage && currentStep === 2 ? "Perfektní! 🏃‍♂️" :
+            showStepMessage && currentStep === 3 ? "Důležité info! 🏥" :
+            showStepMessage && currentStep === 4 ? "Skvělý plán! 📅" :
+            showStepMessage && currentStep === 5 ? "Téměř hotovo! 🍎" : "";
+
+          return message && (
+            <div className={`absolute -top-20 -right-2 transition-all duration-500 ${
+              (trainerAnimation || isHighlighted || (showStepMessage && trainerAnimation)) ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2'
+            }`} style={{ zIndex: 2 }}>
+              <div className="relative">
+                {/* Main bubble */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl px-4 py-3 shadow-xl">
+                  <div className="text-xs font-medium text-green-600 dark:text-green-400">
+                    {message}
+                  </div>
+                </div>
+                {/* Seamless arrow */}
+                <div className="absolute -bottom-1 left-6 w-2 h-2 bg-white dark:bg-slate-800 transform rotate-45"></div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       <Card className="w-full relative z-10">

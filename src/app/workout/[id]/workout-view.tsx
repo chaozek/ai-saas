@@ -148,27 +148,27 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {currentExerciseData.sets && (
-                  <div className="text-center p-3 rounded-lg bg-blue-50">
-                    <div className="text-2xl font-bold text-blue-600">{currentExerciseData.sets}</div>
-                    <p className="text-sm text-blue-700">Série</p>
+                  <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{currentExerciseData.sets}</div>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">Série</p>
                   </div>
                 )}
                 {currentExerciseData.reps && (
-                  <div className="text-center p-3 rounded-lg bg-green-50">
-                    <div className="text-2xl font-bold text-green-600">{currentExerciseData.reps}</div>
-                    <p className="text-sm text-green-700">Opakování</p>
+                  <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{currentExerciseData.reps}</div>
+                    <p className="text-sm text-green-700 dark:text-green-300">Opakování</p>
                   </div>
                 )}
                 {currentExerciseData.duration && (
-                  <div className="text-center p-3 rounded-lg bg-orange-50">
-                    <div className="text-2xl font-bold text-orange-600">{currentExerciseData.duration}s</div>
-                    <p className="text-sm text-orange-700">Doba</p>
+                  <div className="text-center p-3 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
+                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{currentExerciseData.duration}s</div>
+                    <p className="text-sm text-orange-700 dark:text-orange-300">Doba</p>
                   </div>
                 )}
                 {currentExerciseData.restTime && (
-                  <div className="text-center p-3 rounded-lg bg-purple-50">
-                    <div className="text-2xl font-bold text-purple-600">{currentExerciseData.restTime}s</div>
-                    <p className="text-sm text-purple-700">Odpočinek</p>
+                  <div className="text-center p-3 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{currentExerciseData.restTime}s</div>
+                    <p className="text-sm text-purple-700 dark:text-purple-300">Odpočinek</p>
                   </div>
                 )}
               </div>
@@ -211,10 +211,10 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
                   key={workoutExercise.exercise.id}
                   className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
                     completedExercises.has(workoutExercise.exercise.id)
-                      ? 'bg-green-50 border-green-200'
+                      ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
                       : index === currentExercise && isActive
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'bg-white'
+                      ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800'
+                      : 'bg-card border-border'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -223,7 +223,7 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
                         ? 'bg-green-500 text-white'
                         : index === currentExercise && isActive
                         ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 text-gray-600'
+                        : 'bg-muted text-muted-foreground'
                     }`}>
                       {completedExercises.has(workoutExercise.exercise.id) ? (
                         <CheckCircle className="w-4 h-4" />
@@ -233,19 +233,19 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
                     </div>
                     <div>
                       <h3 className="font-medium">{workoutExercise.exercise.name}</h3>
-                      <p className="text-sm text-gray-600">{workoutExercise.exercise.description}</p>
+                      <p className="text-sm text-muted-foreground">{workoutExercise.exercise.description}</p>
                       <div className="flex items-center gap-4 mt-1">
                         {workoutExercise.sets && (
-                          <span className="text-xs text-gray-500">{workoutExercise.sets} série</span>
+                          <span className="text-xs text-muted-foreground">{workoutExercise.sets} série</span>
                         )}
                         {workoutExercise.reps && (
-                          <span className="text-xs text-gray-500">{workoutExercise.reps} opakování</span>
+                          <span className="text-xs text-muted-foreground">{workoutExercise.reps} opakování</span>
                         )}
                         {workoutExercise.duration && (
-                          <span className="text-xs text-gray-500">{workoutExercise.duration}s</span>
+                          <span className="text-xs text-muted-foreground">{workoutExercise.duration}s</span>
                         )}
                         {workoutExercise.restTime && (
-                          <span className="text-xs text-gray-500">{workoutExercise.restTime}s odpočinek</span>
+                          <span className="text-xs text-muted-foreground">{workoutExercise.restTime}s odpočinek</span>
                         )}
                       </div>
                     </div>
@@ -276,11 +276,11 @@ export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
           )}
 
           {isWorkoutCompleted && (
-            <Card className="w-full bg-green-50 border-green-200">
+            <Card className="w-full bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
               <CardContent className="py-6 text-center">
-                <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-green-800 mb-2">Trénink dokončen!</h3>
-                <p className="text-green-700 mb-4">
+                <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-green-800 dark:text-green-200 mb-2">Trénink dokončen!</h3>
+                <p className="text-green-700 dark:text-green-300 mb-4">
                   Výborně! Dokončili jste všechna {workout.workoutExercises.length} cvičení.
                 </p>
                 <Button onClick={() => router.push('/dashboard')}>

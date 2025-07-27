@@ -1,11 +1,24 @@
+"use client";
+
 import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { ScrollIndicator } from "@/components/ui/scroll-indicator";
+import { PriceBadge } from "@/components/ui/price-badge";
 import { ArrowRight, Play, CheckCircle } from "lucide-react";
 
 export function HeroSection() {
+  const handleGetPlanClick = () => {
+    // Trigger highlight event for MainFeaturesSection
+    window.dispatchEvent(new CustomEvent('highlight-fitness-form'));
+  };
+
   return (
     <section className="relative min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
+      {/* Absolute positioned price badge - hidden on mobile */}
+      <div className="hidden md:block absolute top-8 right-8 z-10">
+        <PriceBadge variant="highlighted" onClick={handleGetPlanClick} />
+      </div>
+
       <div className="max-w-6xl mx-auto">
         <div className="text-center space-y-8">
           <div className="flex items-center justify-center gap-3 mb-8">
@@ -13,15 +26,18 @@ export function HeroSection() {
           </div>
 
           <h1 className="text-4xl lg:text-6xl leading-tight">
-            Váš AI trenér <br />
+            Transformujte své tělo <br />
             <span className="font-bold text-green-600">
-              pro lepší zítřek
+              s AI trenérem
             </span>
           </h1>
 
           <p className="text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Investujte do svého zdraví s AI-powered fitness trenérem. Personalizované plány,
-            sledování pokroku a odborné vedení v jedné aplikaci.
+            Investujte do svého zdraví s AI-powered fitness trenérem. <strong>100% transparentní</strong> - prohlédněte si demo účet
+            s reálnými ukázkami vygenerovaných plánů před registrací.
+            <span className="font-semibold text-green-600">Automatické generování jídelníčků</span>,
+            <span className="font-semibold text-blue-600"> personalizované tréninky</span> a
+            <span className="font-semibold text-purple-600"> sledování pokroku</span> v jedné aplikaci.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -33,13 +49,13 @@ export function HeroSection() {
                 size="lg"
                 className="relative text-lg px-8 py-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0"
               >
-                Začněte zdarma
+                Zobrazit demo účtu
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
             </div>
             <Button size="lg" variant="outline" className="text-lg px-8 py-6">
               <Play className="mr-2 h-5 w-5" />
-              Zobrazit demo
+              Jak to funguje
             </Button>
           </div>
 
@@ -51,11 +67,15 @@ export function HeroSection() {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span>Bezplatný plán</span>
+              <span>100% transparentní demo</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span>Odborné vedení</span>
+              <span>Žádné skryté poplatky</span>
+            </div>
+            {/* Mobile price badge */}
+            <div className="md:hidden">
+              <PriceBadge variant="highlighted" onClick={handleGetPlanClick} />
             </div>
           </div>
 

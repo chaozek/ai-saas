@@ -1,6 +1,6 @@
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/prisma";
-import { protectedProcedure, createTRPCRouter } from "@/trcp/init";
+import { protectedProcedure, baseProcedure, createTRPCRouter } from "@/trcp/init";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { consumeCredits } from "@/lib/usage";
@@ -15,6 +15,7 @@ const assessmentDataSchema = z.object({
   fitnessGoal: z.enum(["WEIGHT_LOSS", "MUSCLE_GAIN", "ENDURANCE", "STRENGTH", "FLEXIBILITY", "GENERAL_FITNESS"]),
   activityLevel: z.enum(["SEDENTARY", "LIGHTLY_ACTIVE", "MODERATELY_ACTIVE", "VERY_ACTIVE", "EXTREMELY_ACTIVE"]),
   experienceLevel: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]),
+
   hasInjuries: z.boolean(),
   injuries: z.string().optional(),
   medicalConditions: z.string().optional(),
@@ -674,5 +675,240 @@ export const fitnessRouter = createTRPCRouter({
       };
     }),
 
+  getAIRecommendations: baseProcedure
+    .input(z.object({
+      age: z.string(),
+      gender: z.string(),
+      height: z.string(),
+      weight: z.string(),
+      targetWeight: z.string().optional(),
+      fitnessGoal: z.enum(["WEIGHT_LOSS", "MUSCLE_GAIN", "ENDURANCE", "STRENGTH", "FLEXIBILITY", "GENERAL_FITNESS"]),
+      activityLevel: z.enum(["SEDENTARY", "LIGHTLY_ACTIVE", "MODERATELY_ACTIVE", "VERY_ACTIVE", "EXTREMELY_ACTIVE"]),
+      experienceLevel: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]),
+      hasInjuries: z.boolean(),
+      injuries: z.string().optional(),
+      medicalConditions: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      // AI recommendation logic based on user data
+      const recommendations = {
+        availableDays: [] as string[],
+        workoutDuration: "",
+        equipment: [] as string[],
+        preferredExercises: "",
+        reasoning: {
+          days: "",
+          duration: "",
+          equipment: "",
+          exercises: ""
+        }
+      };
+
+      // Calculate comprehensive fitness metrics
+      const weight = parseFloat(input.weight);
+      const height = parseFloat(input.height);
+      const targetWeight = input.targetWeight ? parseFloat(input.targetWeight) : null;
+      const age = parseInt(input.age);
+      const bmi = height > 0 ? weight / Math.pow(height / 100, 2) : 0;
+      const weightToLose = targetWeight ? weight - targetWeight : 0;
+      const weightToGain = targetWeight ? targetWeight - weight : 0;
+
+      // Advanced fitness analysis
+      const isSignificantWeightLoss = weightToLose > 20;
+      const isModerateWeightLoss = weightToLose > 10 && weightToLose <= 20;
+      const isSignificantWeightGain = weightToGain > 15;
+      const isHighBMI = bmi > 30;
+      const isLowBMI = bmi < 18.5;
+      const isOverweight = bmi >= 25 && bmi < 30;
+      const isSenior = age > 50;
+      const isYoung = age < 25;
+      const isInjured = input.hasInjuries;
+
+      // Calculate optimal training frequency and duration based on multiple factors
+      let recommendedDays = 3;
+      let recommendedDuration = 45;
+      let reasoningDays = "";
+      let reasoningDuration = "";
+
+      // WEIGHT LOSS - Complex analysis
+      if (input.fitnessGoal === "WEIGHT_LOSS") {
+        if (isSignificantWeightLoss || isHighBMI) {
+          recommendedDays = 6;
+          recommendedDuration = 75;
+          reasoningDays = "Pro významné hubnutí (70kg+) doporučujeme intenzivní 6-denní program s maximálním spalováním kalorií.";
+          reasoningDuration = "75 minut umožňuje kombinaci kardia (30min), silového tréninku (30min) a protažení (15min) pro optimální hubnutí.";
+        } else if (isModerateWeightLoss || isOverweight) {
+          recommendedDays = 5;
+          recommendedDuration = 60;
+          reasoningDays = "Pro střední hubnutí (10-20kg) doporučujeme 5 dní týdně s vyváženým tréninkem.";
+          reasoningDuration = "60 minut je ideální pro efektivní kombinaci kardia a silového tréninku.";
+        } else {
+          recommendedDays = 4;
+          recommendedDuration = 45;
+          reasoningDays = "Pro mírné hubnutí doporučujeme 4 dny týdně s postupným navyšováním intenzity.";
+          reasoningDuration = "45 minut je dostačující pro začátek hubnutí s možností postupného prodlužování.";
+        }
+      }
+
+      // MUSCLE GAIN - Advanced hypertrophy analysis
+      else if (input.fitnessGoal === "MUSCLE_GAIN") {
+        if (input.experienceLevel === "ADVANCED" && !isSenior) {
+          recommendedDays = 6;
+          recommendedDuration = 90;
+          reasoningDays = "Pro pokročilé budování svalů doporučujeme 6-denní split trénink s optimálním rozložením svalových skupin.";
+          reasoningDuration = "90 minut umožňuje komplexní trénink s dostatečným časem na rozcvičení, hlavní cviky a izolované cviky.";
+        } else if (input.experienceLevel === "INTERMEDIATE" || isSenior) {
+          recommendedDays = 4;
+          recommendedDuration = 75;
+          reasoningDays = "Pro středně pokročilé osoby doporučujeme 4-denní full-body trénink s optimální frekvencí pro svalový růst.";
+          reasoningDuration = "75 minut je ideální pro efektivní stimulaci svalů s dostatečným časem na regeneraci.";
+        } else {
+          recommendedDays = 3;
+          recommendedDuration = 60;
+          reasoningDays = "Pro začátečníky doporučujeme 3-denní full-body trénink s postupným navyšováním zátěže.";
+          reasoningDuration = "60 minut je dostačující pro základní stimulaci svalů s důrazem na správnou techniku.";
+        }
+      }
+
+      // ENDURANCE - Cardiovascular optimization
+      else if (input.fitnessGoal === "ENDURANCE") {
+        if (input.activityLevel === "VERY_ACTIVE" || input.activityLevel === "EXTREMELY_ACTIVE") {
+          recommendedDays = 5;
+          recommendedDuration = 90;
+          reasoningDays = "Pro pokročilou vytrvalost doporučujeme 5 dní týdně s kombinací různých typů kardia.";
+          reasoningDuration = "90 minut umožňuje dlouhé aerobní tréninky a intervalový trénink pro maximální vytrvalost.";
+        } else if (input.activityLevel === "MODERATELY_ACTIVE") {
+          recommendedDays = 4;
+          recommendedDuration = 60;
+          reasoningDays = "Pro střední vytrvalost doporučujeme 4 dny týdně s postupným navyšováním vzdáleností.";
+          reasoningDuration = "60 minut je ideální pro rozvoj kardiovaskulární vytrvalosti.";
+        } else {
+          recommendedDays = 3;
+          recommendedDuration = 45;
+          reasoningDays = "Pro začátek vytrvalostního tréninku doporučujeme 3 dny týdně s postupným navyšováním intenzity.";
+          reasoningDuration = "45 minut je dostačující pro základní rozvoj vytrvalosti.";
+        }
+      }
+
+      // STRENGTH - Progressive overload optimization
+      else if (input.fitnessGoal === "STRENGTH") {
+        if (input.experienceLevel === "ADVANCED") {
+          recommendedDays = 4;
+          recommendedDuration = 90;
+          reasoningDays = "Pro pokročilý silový trénink doporučujeme 4-denní program s optimalizací pro maximální sílu.";
+          reasoningDuration = "90 minut umožňuje komplexní silový trénink s dostatečným časem na rozcvičení a delší odpočinky.";
+        } else if (input.experienceLevel === "INTERMEDIATE") {
+          recommendedDays = 3;
+          recommendedDuration = 75;
+          reasoningDays = "Pro střední silový trénink doporučujeme 3-denní program s důrazem na compound cviky.";
+          reasoningDuration = "75 minut je ideální pro silový trénink s dostatečným časem na regeneraci mezi sériemi.";
+        } else {
+          recommendedDays = 3;
+          recommendedDuration = 60;
+          reasoningDays = "Pro začátečníky doporučujeme 3-denní program s důrazem na správnou techniku a postupný nárůst zátěže.";
+          reasoningDuration = "60 minut je dostačující pro základní silový trénink s důrazem na kvalitu.";
+        }
+      }
+
+      // FLEXIBILITY - Mobility and recovery focus
+      else if (input.fitnessGoal === "FLEXIBILITY") {
+        if (isSenior || isInjured) {
+          recommendedDays = 5;
+          recommendedDuration = 45;
+          reasoningDays = "Pro seniory a osoby se zraněními doporučujeme 5 dní týdně s důrazem na bezpečnost a regeneraci.";
+          reasoningDuration = "45 minut je ideální pro bezpečné protažení a mobilitu bez přetížení.";
+        } else {
+          recommendedDays = 4;
+          recommendedDuration = 60;
+          reasoningDays = "Pro rozvoj flexibility doporučujeme 4 dny týdně s kombinací jógy, pilates a strečinku.";
+          reasoningDuration = "60 minut umožňuje komplexní trénink flexibility s dostatečným časem na každou pozici.";
+        }
+      }
+
+      // GENERAL_FITNESS - Balanced approach
+      else {
+        if (input.activityLevel === "SEDENTARY" || input.experienceLevel === "BEGINNER") {
+          recommendedDays = 3;
+          recommendedDuration = 45;
+          reasoningDays = "Pro začátečníky doporučujeme 3 dny týdně s vyváženým tréninkem všech složek fitness.";
+          reasoningDuration = "45 minut je ideální pro začátek s postupným navyšováním intenzity.";
+        } else if (input.activityLevel === "LIGHTLY_ACTIVE" || input.experienceLevel === "INTERMEDIATE") {
+          recommendedDays = 4;
+          recommendedDuration = 60;
+          reasoningDays = "Pro středně pokročilé osoby doporučujeme 4 dny týdně s komplexním tréninkem.";
+          reasoningDuration = "60 minut umožňuje vyvážený trénink všech složek fitness.";
+        } else {
+          recommendedDays = 5;
+          recommendedDuration = 75;
+          reasoningDays = "Pro pokročilé osoby doporučujeme 5 dní týdně s intenzivním tréninkem všech složek.";
+          reasoningDuration = "75 minut umožňuje komplexní trénink s dostatečným časem na všechny složky fitness.";
+        }
+      }
+
+      // Adjust for age and injuries
+      if (isSenior) {
+        recommendedDuration = Math.min(recommendedDuration, 60);
+        reasoningDuration += " Pro osoby nad 50 let doporučujeme mírně kratší tréninky s důrazem na kvalitu a bezpečnost.";
+      }
+
+      if (isInjured) {
+        recommendedDays = Math.min(recommendedDays, 3);
+        recommendedDuration = Math.min(recommendedDuration, 45);
+        reasoningDays = "Při zraněních doporučujeme snížit frekvenci na 3 dny týdně s důrazem na rehabilitaci.";
+        reasoningDuration += " Při zraněních je důležité nechat tělo regenerovat a zaměřit se na bezpečné cvičení.";
+      }
+
+      // Convert days to array format
+      const dayMapping = {
+        3: ["monday", "wednesday", "friday"],
+        4: ["monday", "tuesday", "thursday", "friday"],
+        5: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        6: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
+      };
+
+      recommendations.availableDays = dayMapping[recommendedDays as keyof typeof dayMapping] || ["monday", "wednesday", "friday"];
+      recommendations.workoutDuration = recommendedDuration.toString();
+      recommendations.reasoning.days = reasoningDays;
+      recommendations.reasoning.duration = reasoningDuration;
+
+      // Recommend exercises based on fitness goal (no equipment recommendations)
+      if (input.fitnessGoal === "WEIGHT_LOSS") {
+        recommendations.preferredExercises = "Kardio cvičení, HIIT, chůze, běhání, skákání přes švihadlo, plavání, cyklistika";
+        recommendations.reasoning.exercises = "Kardio cvičení a HIIT jsou nejefektivnější pro spalování kalorií a hubnutí.";
+      } else if (input.fitnessGoal === "MUSCLE_GAIN") {
+        recommendations.preferredExercises = "Silový trénink, compound cviky, progresivní přetížení, bench press, squat, deadlift";
+        recommendations.reasoning.exercises = "Compound cviky jsou nejefektivnější pro stimulaci svalového růstu.";
+      } else if (input.fitnessGoal === "ENDURANCE") {
+        recommendations.preferredExercises = "Běhání, cyklistika, plavání, intervalový trénink, dlouhé vzdálenosti";
+        recommendations.reasoning.exercises = "Aerobní aktivity a intervalový trénink rozvíjejí kardiovaskulární vytrvalost.";
+      } else if (input.fitnessGoal === "STRENGTH") {
+        recommendations.preferredExercises = "Deadlift, squat, bench press, overhead press, powerlifting cviky";
+        recommendations.reasoning.exercises = "Compound cviky s těžkými váhami jsou nejefektivnější pro rozvoj síly.";
+      } else if (input.fitnessGoal === "FLEXIBILITY") {
+        recommendations.preferredExercises = "Jóga, pilates, strečink, mobilita cvičení, balanční cviky";
+        recommendations.reasoning.exercises = "Jóga a pilates rozvíjejí flexibilitu, sílu a rovnováhu.";
+      } else {
+        recommendations.preferredExercises = "Smíšený trénink, funkční cvičení, kardio + silový trénink, circuit training";
+        recommendations.reasoning.exercises = "Smíšený trénink rozvíjející všechny složky fitness je ideální pro celkovou kondici.";
+      }
+
+      // Adjust for injuries
+      if (input.hasInjuries) {
+        recommendations.preferredExercises = "Nízká intenzita cvičení, rehabilitace, strečink, vodní cvičení";
+        recommendations.reasoning.exercises = "Nízká intenzita a rehabilitace jsou klíčové pro bezpečné cvičení při zraněních.";
+      }
+
+      // Age-specific adjustments (age is already defined above)
+      if (age > 50) {
+        recommendations.workoutDuration = Math.min(parseInt(recommendations.workoutDuration), 60).toString();
+        recommendations.reasoning.duration += " Pro osoby nad 50 let doporučujeme mírně kratší tréninky s důrazem na kvalitu a bezpečnost.";
+      }
+
+      return {
+        success: true,
+        recommendations,
+        message: "AI doporučení byla úspěšně vygenerována na základě vašich údajů."
+      };
+    }),
 
 });

@@ -13,7 +13,7 @@ interface WorkoutCardProps {
 
 export function WorkoutCard({ workout }: WorkoutCardProps) {
   return (
-    <Card className="transition-all duration-200 hover:shadow-lg border-border">
+    <Card className="transition-all duration-200 hover:shadow-lg border-border hover:border-border/80">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{workout.name}</CardTitle>

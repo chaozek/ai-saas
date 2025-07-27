@@ -22,11 +22,9 @@ export function Footer() {
       { name: "Jídelníčky", href: "/meal-plans" },
       { name: "Sledování Pokroku", href: "/progress" },
       { name: "AI Trenér", href: "/ai-trainer" },
-      { name: "Mobilní Aplikace", href: "/mobile-app" }
     ],
     resources: [
       { name: "Fitness Blog", href: "/blog" },
-      { name: "Video Návody", href: "/tutorials" },
       { name: "Recepty", href: "/recipes" },
       { name: "Fitness Kalkulačky", href: "/calculators" },
       { name: "FAQ", href: "/faq" }
@@ -34,15 +32,12 @@ export function Footer() {
     company: [
       { name: "O nás", href: "/about" },
       { name: "Kariéra", href: "/careers" },
-      { name: "Tiskové Zprávy", href: "/press" },
       { name: "Partneři", href: "/partners" },
       { name: "Kontakt", href: "/contact" }
     ],
     support: [
       { name: "Nápověda", href: "/help" },
       { name: "Podpora", href: "/support" },
-      { name: "Komunita", href: "/community" },
-      { name: "Bezpečnost", href: "/security" },
       { name: "Soukromí", href: "/privacy" }
     ]
   };
@@ -74,7 +69,7 @@ export function Footer() {
             </p>
 
             {/* Newsletter Signup */}
-            <div className="space-y-3">
+           {/*  <div className="space-y-3">
               <h4 className="font-semibold">Přihlaste se k odběru novinek</h4>
               <div className="flex gap-2">
                 <input
@@ -86,7 +81,7 @@ export function Footer() {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
+            </div> */}
 
             {/* Social Links */}
             <div className="flex gap-4">

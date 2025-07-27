@@ -18,7 +18,7 @@ export function EducationalContentSection() {
               Fitness vzdělávání a kurzy
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Akademie FitnessAI nabízí bezplatné, profesionální fitness vzdělávání všech úrovní
+              Akademie FitnessAI nabízí profesionální fitness vzdělávání všech úrovní
             </p>
           </div>
 
@@ -28,7 +28,7 @@ export function EducationalContentSection() {
                 <CardContent className="p-6 text-center">
                   <course.icon className="h-12 w-12 mx-auto mb-4 text-green-600" />
                   <h3 className="font-semibold mb-2">{course.title}</h3>
-                  <p className="text-sm text-muted-foreground">Bezplatný kurz</p>
+                  <p className="text-sm text-muted-foreground">Dostupné v předplatném</p>
                 </CardContent>
               </Card>
             ))}

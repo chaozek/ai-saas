@@ -3,26 +3,27 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { PriceBadge } from "@/components/ui/price-badge"
 import { Check, Crown, Zap, Target } from "lucide-react"
 import { useClerk } from "@clerk/nextjs"
 import Link from "next/link"
 
 const pricingPlans = [
   {
-    name: "Starter",
-    description: "Ideální pro začátečníky na začátku své fitness cesty",
+    name: "Demo",
+    description: "100% transparentní ukázka reálného účtu s vygenerovanými plány",
     price: "Zdarma",
     period: "forever",
     features: [
-      "AI-powered fitness assessment",
-      "Basic workout plan (4 weeks)",
-      "Progress tracking",
-      "Exercise library",
-      "Email support"
+      "Ukázka AI fitness assessment",
+      "Ukázka vygenerovaných tréninků",
+      "Ukázka jídelníčků a receptů",
+      "Ukázka sledování pokroku",
+      "Žádná registrace, žádné skryté poplatky"
     ],
     icon: <Target className="w-6 h-6" />,
     popular: false,
-    cta: "Začít zdarma"
+    cta: "Zobrazit demo"
   },
   {
     name: "Pro",
@@ -30,7 +31,7 @@ const pricingPlans = [
     price: "$19",
     period: "za měsíc",
     features: [
-      "Vše v Starter",
+      "Vše v Demo",
       "8-týdenní osobně přizpůsobené plány",
       "Pokročilé analýzy progresu",
       "Nutriční doporučení",
@@ -40,7 +41,7 @@ const pricingPlans = [
     ],
     icon: <Zap className="w-6 h-6" />,
     popular: true,
-    cta: "Vyzkoušet zdarma"
+    cta: "Začít"
   },
   {
     name: "Elite",
@@ -59,12 +60,17 @@ const pricingPlans = [
     ],
     icon: <Crown className="w-6 h-6" />,
     popular: false,
-    cta: "Vyzkoušet zdarma"
+    cta: "Začít"
   }
 ];
 
 export default function PricingPage() {
   const { openSignUp } = useClerk();
+
+  const handleGetPlanClick = () => {
+    // Trigger highlight event for MainFeaturesSection
+    window.dispatchEvent(new CustomEvent('highlight-fitness-form'));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
@@ -76,13 +82,16 @@ export default function PricingPage() {
               <span className="text-2xl">💪</span>
             </div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-              Vyberte si svou fitness cestu
+              100% transparentní ceník
             </h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Začněte s naším bezplatným vyšetřením a vyberte si tarif, který odpovídá vašim cílům.
-            Žádná kreditní karta není potřeba pro bezplatné plány.
+                    <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <strong>100% transparentní přístup</strong> - prohlédněte si demo ukázku plně funkčního účtu s reálnými vygenerovanými plány
+            a vyberte si tarif, který odpovídá vašim cílům. Demo je zcela zdarma, nevyžaduje registraci a ukazuje přesně to, co dostanete.
           </p>
+          <div className="flex justify-center mt-6">
+            <PriceBadge variant="highlighted" onClick={handleGetPlanClick} />
+          </div>
         </div>
 
         {/* Pricing Cards */}
@@ -205,11 +214,12 @@ export default function PricingPage() {
             <CardContent className="py-8">
               <h3 className="text-2xl font-bold mb-4">Jste připraveni transformovat své fitness?</h3>
               <p className="text-gray-600 mb-6">
-                Připojte se tisíce uživatelů, kteří již dosáhli svých fitness cílů pomocí naší AI-powered koučování.
+                <strong>Buďte transparentní ve svém rozhodování</strong> - prohlédněte si demo ukázku a připojte se k tisícům uživatelů,
+                kteří již dosáhli svých fitness cílů pomocí naší AI-powered koučování.
                </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" onClick={() => openSignUp()}>
-                  Začít zdarma
+                  Zobrazit transparentní demo
                 </Button>
                 <Button variant="outline" size="lg" asChild>
                   <Link href="/">Zjistit více</Link>

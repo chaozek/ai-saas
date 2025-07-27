@@ -14,50 +14,49 @@ export function TestimonialsSection() {
     {
       name: "Martin K.",
       role: "Začátečník",
-      content: "Za 3 měsíce jsem zhubl 15kg a cítím se skvěle. AI plán byl perfektní!",
+      content: "Skvělý způsob, jak začít s fitness. AI plán je opravdu personalizovaný.",
       rating: 5,
       avatar: "💪",
-      achievement: "15kg zhubl"
+      achievement: "První měsíc"
     },
     {
       name: "Anna S.",
       role: "Pokročilá",
-      content: "Konečně trenér, který rozumí mým cílům. Výsledky jsou úžasné.",
+      content: "Líbí se mi, jak aplikace sleduje můj pokrok. Motivuje mě to pokračovat.",
       rating: 5,
       avatar: "🏃‍♀️",
-      achievement: "20% silnější"
+      achievement: "Konzistentní"
     },
     {
       name: "Petr M.",
       role: "Sportovec",
-      content: "Profesionální přístup, personalizované plány. Doporučuji všem!",
+      content: "Dobrý nástroj pro plánování tréninků. Jednoduché a efektivní.",
       rating: 5,
       avatar: "🏋️‍♂️",
-      achievement: "Maraton dokončen"
+      achievement: "Pravidelně"
     },
     {
       name: "Lucie V.",
       role: "Maminka",
-      content: "Skvělý způsob, jak se dostat zpět do formy po porodu. Plány jsou flexibilní.",
+      content: "Flexibilní plány, které se přizpůsobují mému času. Perfektní pro rodinu.",
       rating: 5,
       avatar: "👩‍👧‍👦",
-      achievement: "Zpět do formy"
+      achievement: "Flexibilní"
     },
     {
       name: "Tomáš H.",
       role: "Kancelářský pracovník",
-      content: "Díky AI trenérovi jsem konečně našel čas na cvičení. Výsledky jsou viditelné!",
+      content: "Konečně jsem našel způsob, jak si udělat čas na cvičení. Doporučuji!",
       rating: 5,
       avatar: "💼",
-      achievement: "10kg zhubl"
+      achievement: "Začátečník"
     }
   ];
 
   const stats = [
-    { number: "50,000+", label: "Spokojených uživatelů" },
-    { number: "95%", label: "Úspěšnost cílů" },
-    { number: "4.9/5", label: "Hodnocení aplikace" },
-    { number: "24/7", label: "AI podpora" }
+    { number: "1000+", label: "Aktivních uživatelů" },
+    { number: "90%", label: "Spokojenost" },
+    { number: "4.8/5", label: "Hodnocení" }
   ];
 
   return (
@@ -66,10 +65,10 @@ export function TestimonialsSection() {
         <div className="text-center space-y-12">
           <div className="space-y-4">
             <h2 className="text-3xl lg:text-4xl font-bold">
-              Připojte se k <span className="text-green-600">50,000+</span> uživatelům
+              Co říkají <span className="text-green-600">naši uživatelé</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Lidé z celého světa již transformovali svou fitness cestu s naším AI trenérem
+              Připojte se k rostoucí komunitě lidí, kteří objevili sílu AI-powered fitness
             </p>
           </div>
 
@@ -118,7 +117,7 @@ export function TestimonialsSection() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
+          <div className="grid grid-cols-3 gap-6 mt-12">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-green-600">{stat.number}</div>

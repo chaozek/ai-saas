@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -63,6 +65,11 @@ const features = [
 ];
 
 export function FitnessFeatures() {
+  const handleGetPlanClick = () => {
+    // Trigger highlight event for MainFeaturesSection
+    window.dispatchEvent(new CustomEvent('highlight-fitness-form'));
+  };
+
   return (
     <section className="py-20 px-4">
       <div className="max-w-6xl mx-auto">
@@ -71,7 +78,9 @@ export function FitnessFeatures() {
             <h2 className="text-3xl font-bold">Proč si vybrat našeho AI fitness trenéra?</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Zažijte budoucnost fitness s personalizovaným AI koučováním, které se přizpůsobuje vašim potřebám a pomáhá vám dosáhnout vašich cílů rychleji.
+              <strong>100% transparentní</strong> - prohlédněte si demo před rozhodnutím.
             </p>
+
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -102,23 +111,23 @@ export function FitnessFeatures() {
               Připraveni transformovat vaši fitness cestu?
             </h3>
             <p className="text-green-700 dark:text-green-300 max-w-2xl mx-auto">
-              Připojte se k tisícům uživatelů, kteří již dosáhli svých fitness cílů s naším AI-powered koučovacím systémem.
-              Začněte svou personalizovanou fitness cestu ještě dnes!
+              <strong>Buďte transparentní ve svém rozhodování</strong> - prohlédněte si demo ukázku a připojte se k tisícům uživatelů,
+              kteří již dosáhli svých fitness cílů s naším AI-powered koučovacím systémem. Začněte svou personalizovanou fitness cestu ještě dnes!
             </p>
-            <div className="flex items-center justify-center gap-4 text-sm text-green-600 dark:text-green-400">
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>5minutové hodnocení</span>
+                          <div className="flex items-center justify-center gap-4 text-sm text-green-600 dark:text-green-400">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>5minutové hodnocení</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>100% transparentní</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>Demo zdarma</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Okamžité vytvoření plánu</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Začít zdarma</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

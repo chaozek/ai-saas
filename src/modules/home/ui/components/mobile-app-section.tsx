@@ -1,37 +1,55 @@
 import { Button } from "@/components/ui/button";
-import { Download, Smartphone } from "lucide-react";
+import { Brain, Target, TrendingUp, Heart } from "lucide-react";
+import Image from "next/image";
 
-export function MobileAppSection() {
+export function AITrainerFeaturesSection() {
   return (
-    <section className="py-20 px-4">
+    <section className="py-20 px-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/50 dark:to-blue-950/50">
       <div className="max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-6">
-            <h2 className="text-3xl lg:text-4xl font-bold">
-              Stáhněte si naši aplikaci
+            <h2 className="text-3xl lg:text-4xl font-bold dark:text-white">
+              Váš osobní AI fitness trenér
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              Mějte svůj AI fitness trenér vždy po ruce. Sledujte pokrok, upravujte plány
-              a získejte motivaci kdykoliv a kdekoliv.
+            <p className="text-lg text-muted-foreground leading-relaxed dark:text-slate-300">
+              Objevte sílu umělé inteligence ve fitness světě. Náš AI trenér vytváří
+              personalizované plány, sleduje váš pokrok a motivuje vás k dosažení vašich cílů.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="outline" size="lg" className="justify-start">
-                <Download className="mr-2 h-5 w-5" />
-                App Store
-              </Button>
-              <Button variant="outline" size="lg" className="justify-start">
-                <Download className="mr-2 h-5 w-5" />
-                Google Play
-              </Button>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-3">
+                <Brain className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <span className="font-medium dark:text-white">AI analýza</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Target className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <span className="font-medium dark:text-white">Osobní cíle</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                <span className="font-medium dark:text-white">Sledování pokroku</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Heart className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                <span className="font-medium dark:text-white">Motivace</span>
+              </div>
             </div>
+
+            <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 dark:from-green-500 dark:to-blue-500 dark:hover:from-green-600 dark:hover:to-blue-600">
+              Začít s AI trenérem
+            </Button>
           </div>
 
           <div className="flex justify-center">
             <div className="relative">
-              <Smartphone className="h-64 w-32 text-slate-300" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-24 h-40 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg"></div>
+              <Image
+                src="/trainer_thumbs-up-min.png"
+                alt="AI Fitness Trainer"
+                width={200}
+                height={250}
+              />
+              <div className="absolute -top-4 -right-4 bg-white dark:bg-slate-800 rounded-full p-3 shadow-lg">
+                <Brain className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>

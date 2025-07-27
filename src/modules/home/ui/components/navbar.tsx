@@ -53,7 +53,7 @@ export const Navbar = () => {
                               <Link href="/pricing">Ceník</Link>
                          </Button>
                     <Button asChild>
-                              <Link href="/sign-in">Začít</Link>
+                              <Link href="/sign-in">Demo</Link>
                     </Button>
                     </div>
                </SignedOut>

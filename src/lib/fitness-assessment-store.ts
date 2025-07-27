@@ -33,6 +33,9 @@ interface AssessmentData {
   mealPrepTime: string;
   preferredCuisines: string[];
   cookingSkill: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+
+  // Consent
+  consent: boolean;
 }
 
 interface FitnessAssessmentStore {
@@ -78,6 +81,7 @@ const initialData: AssessmentData = {
   mealPrepTime: "30",
   preferredCuisines: [],
   cookingSkill: "BEGINNER",
+  consent: false,
 };
 
 export const useFitnessAssessmentStore = create<FitnessAssessmentStore>()(

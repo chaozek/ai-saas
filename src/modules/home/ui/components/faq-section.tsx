@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Accordion,
   AccordionContent,
@@ -6,6 +8,11 @@ import {
 } from "@/components/ui/accordion";
 
 export function FAQSection() {
+  const handleGetPlanClick = () => {
+    // Trigger highlight event for MainFeaturesSection
+    window.dispatchEvent(new CustomEvent('highlight-fitness-form'));
+  };
+
   const faqs = [
     {
       question: "Jak funguje AI fitness trenér?",
@@ -37,7 +44,11 @@ export function FAQSection() {
     },
     {
       question: "Je aplikace zdarma?",
-      answer: "Ano! Základní verze je zcela zdarma a zahrnuje vytvoření personalizovaného plánu, základní sledování pokroku a přístup k fitness vzdělávání. Premium funkce jsou dostupné za měsíční poplatek."
+      answer: "Nabízíme 100% transparentní demo ukázku plně funkčního účtu zdarma, kde můžete vidět všechny funkce v akci před registrací. Pro plný přístup k personalizovaným plánům a sledování pokroku je potřeba předplatné."
+    },
+    {
+      question: "Jak transparentní je vaše služba?",
+      answer: "Jsme 100% transparentní - nabízíme demo účet s reálnými ukázkami vygenerovaných plánů, jídelníčků a funkcí. Můžete si vše prohlédnout před registrací, žádné skryté poplatky nebo překvapení."
     },
     {
       question: "Můžu získat i jídelníček?",
