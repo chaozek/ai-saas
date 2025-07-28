@@ -1,6 +1,6 @@
 import { Form, FormField } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {  useForm } from "react-hook-form";
 import { z } from "zod";
 import TextareaAutosize from 'react-textarea-autosize';
@@ -10,7 +10,7 @@ import { useTRPC } from "@/trcp/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Usage } from "@/modules/home/ui/components/usage";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 const formSchema = z.object({
      value: z.string().min(1, {message: "Zpráva je povinná"})
@@ -26,6 +26,8 @@ const formSchema = z.object({
 console.log(usage, "USAGE")
          const showUsage = !!usage
          const router = useRouter()
+         const pathname = usePathname()
+         const [shouldResetForm, setShouldResetForm] = useState(false)
          const form = useForm({
               defaultValues: {
                    value: ""
@@ -33,11 +35,15 @@ console.log(usage, "USAGE")
           })
           const createMessage = useMutation(trcp.messages.create.mutationOptions({
                onSuccess: () => {
-                    form.reset()
+                    // Don't reset form immediately - mark it for reset after navigation
+                    setShouldResetForm(true)
                     queryClient.invalidateQueries(trcp.messages.getmany.queryOptions({
                          projectId: projectId
                     }))
                     queryClient.invalidateQueries(trcp.usage.getCredits.queryOptions())
+
+                    // Example: Redirect to a different page after successful message creation
+                    // router.push(`/projects/${projectId}/result`)
                },
                onError: (error) => {
                     toast.error(error.message)
@@ -46,8 +52,16 @@ console.log(usage, "USAGE")
                     }
                }
           }))
-          const isPending = createMessage.isPending
-          const isDisabled = isPending || !form.formState.isValid
+                   const isPending = createMessage.isPending
+         const isDisabled = isPending || !form.formState.isValid
+
+         // Reset form after navigation
+         useEffect(() => {
+              if (shouldResetForm) {
+                   form.reset()
+                   setShouldResetForm(false)
+              }
+         }, [shouldResetForm, form])
 
          const onSubmit = async (value: z.infer<typeof formSchema>) => {
           await createMessage.mutateAsync({

@@ -60,6 +60,7 @@ model FitnessProfile {
   fitnessGoal         FitnessGoal?
   activityLevel       ActivityLevel?
   experienceLevel     ExperienceLevel?
+  targetMuscleGroups  String[]         @default([])
   hasInjuries         Boolean          @default(false)
   injuries            String?
   medicalConditions   String?

@@ -21,7 +21,7 @@ export function AwardsSection() {
     {
       icon: TrendingUp,
       title: "Rychlý růst",
-      description: "Každý den noví"
+      description: "Neustále se rozvíjíme"
     }
   ];
 

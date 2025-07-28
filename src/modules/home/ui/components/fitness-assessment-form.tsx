@@ -59,7 +59,7 @@ interface AssessmentData {
 const FITNESS_GOALS = [
   { value: "WEIGHT_LOSS", label: "Hmotnostní ztráta", icon: "⚖️" },
   { value: "MUSCLE_GAIN", label: "Svalová získání", icon: "💪" },
-  { value: "ENDURANCE", label: "Endurance", icon: "🏃" },
+  { value: "ENDURANCE", label: "Vytrvalost", icon: "🏃" },
   { value: "STRENGTH", label: "Síla", icon: "🏋️" },
   { value: "FLEXIBILITY", label: "Flexibilita", icon: "🧘" },
   { value: "GENERAL_FITNESS", label: "Obecná fitness", icon: "🌟" },
@@ -132,6 +132,22 @@ const COOKING_SKILLS = [
   { value: "INTERMEDIATE", label: "Střední (může následovat recepty)" },
   { value: "ADVANCED", label: "Pokročilý (zkušený kuchař)" },
 ];
+
+const getMuscleGroups = (gender?: string) => {
+  const isFemale = gender === "female";
+  const basePath = isFemale ? "/bodyParts/lady" : "/bodyParts";
+
+  return [
+    { value: "chest", label: "Hrudník", image: `${basePath}/chest.png` },
+    { value: "back", label: "Záda", image: `${basePath}/back.png` },
+    { value: "shoulders", label: "Ramena", image: `${basePath}/shoulders.png` },
+    { value: "arms", label: "Paže (biceps, triceps)", image: `${basePath}/arm.png` },
+    { value: "legs", label: "Nohy (stehna, lýtka)", image: `${basePath}/legs.png` },
+    { value: "glutes", label: "Hýždě", image: `${basePath}/bottom.png` },
+    { value: "core", label: "Břicho a core", image: `${basePath}/core.png` },
+    { value: "full_body", label: "Celé tělo", image: `${basePath}/full_body.png` },
+  ];
+};
 
 export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted?: boolean }) => {
   const router = useRouter();
@@ -239,6 +255,11 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
       icon: <Activity className="w-5 h-5" />,
     },
     {
+      title: "Cílové partie",
+      description: "Na které partie se chcete zaměřit?",
+      icon: <Dumbbell className="w-5 h-5" />,
+    },
+    {
       title: "Zkušenost a aktivita",
       description: "Řekněte nám o vaší současné úrovni fitness",
       icon: <Dumbbell className="w-5 h-5" />,
@@ -261,8 +282,8 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
   ];
 
   const nextStep = () => {
-    // Check if we're on step 4 (preferences step) and validate available days
-    if (currentStep === 4 && data.availableDays.length === 0) {
+    // Check if we're on step 5 (preferences step) and validate available days
+    if (currentStep === 5 && (data.availableDays || []).length === 0) {
       toast.error("Prosím, vyberte alespoň jeden den pro vaše cvičení");
       return;
     }
@@ -283,8 +304,8 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
     storePrevStep();
   };
 
-  // AI recommendation logic for step 4
-  const queryEnabled = currentStep === 4 && !!data.age && !!data.fitnessGoal && !!data.activityLevel && !!data.experienceLevel;
+  // AI recommendation logic for step 5
+  const queryEnabled = currentStep === 5 && !!data.age && !!data.fitnessGoal && !!data.activityLevel && !!data.experienceLevel;
 
   const { data: aiRecommendationsData, isLoading: aiRecommendationsLoading, error: aiRecommendationsError } = useQuery({
     ...trpc.fitness.getAIRecommendations.queryOptions({
@@ -296,6 +317,7 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
       fitnessGoal: data.fitnessGoal,
       activityLevel: data.activityLevel,
       experienceLevel: data.experienceLevel,
+      targetMuscleGroups: data.targetMuscleGroups || [],
       hasInjuries: data.hasInjuries,
       injuries: data.injuries,
       medicalConditions: data.medicalConditions,
@@ -428,6 +450,73 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
         return (
           <div className="space-y-6">
             <div className="space-y-4">
+              <Label>Na které partie se chcete zaměřit?</Label>
+              <p className="text-sm text-muted-foreground">
+                Vyberte partie, které chcete primárně trénovat. Můžete vybrat více partií nebo "Celé tělo" pro vyvážený trénink.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {getMuscleGroups(data.gender).map((group) => (
+                                                      <Button
+                    key={group.value}
+                    variant={(data.targetMuscleGroups || []).includes(group.value) ? "default" : "outline"}
+                    className="h-auto p-4 flex flex-col items-center gap-2"
+                    onClick={() => {
+                      const currentGroups = data.targetMuscleGroups || [];
+
+                      if (group.value === "full_body") {
+                        // If "full body" is selected, clear other selections
+                        updateData("targetMuscleGroups", ["full_body"]);
+                      } else {
+                        // Remove "full_body" if it was selected
+                        const newGroups = currentGroups.filter(g => g !== "full_body");
+
+                        if (currentGroups.includes(group.value)) {
+                          // Remove if already selected
+                          updateData("targetMuscleGroups", newGroups.filter(g => g !== group.value));
+                        } else {
+                          // Add if not selected
+                          updateData("targetMuscleGroups", [...newGroups, group.value]);
+                        }
+                      }
+                    }}
+                  >
+                    <img
+                      src={group.image}
+                      alt={group.label}
+                      className="w-12 h-12 object-contain"
+                    />
+                    <span className="font-medium">{group.label}</span>
+                  </Button>
+                ))}
+              </div>
+              {(data.targetMuscleGroups || []).length > 0 && (
+                <div className="mt-4">
+                  <Label>Vybrané partie:</Label>
+                                         <div className="flex flex-wrap gap-2 mt-2">
+                         {(data.targetMuscleGroups || []).map((group) => {
+                           const muscleGroup = getMuscleGroups(data.gender).find(g => g.value === group);
+                           return (
+                             <Badge key={group} variant="secondary" className="flex items-center gap-1">
+                               <img
+                                 src={muscleGroup?.image}
+                                 alt={muscleGroup?.label}
+                                 className="w-4 h-4 object-contain"
+                               />
+                               {muscleGroup?.label}
+                             </Badge>
+                           );
+                         })}
+                       </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div className="space-y-4">
               <Label>Jaká je vaše aktuální úroveň aktivity?</Label>
               <Select value={data.activityLevel} onValueChange={(value) => updateData("activityLevel", value)}>
                 <SelectTrigger>
@@ -460,7 +549,7 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-6">
             <div className="space-y-4">
@@ -492,7 +581,7 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
           </div>
         );
 
-      case 4:
+      case 5:
         const aiRecommendations = aiRecommendationsData?.recommendations || {
           availableDays: [],
           workoutDuration: "",
@@ -548,12 +637,13 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
                     }`}>
                       <Checkbox
                         id={day.value}
-                        checked={data.availableDays.includes(day.value)}
+                        checked={(data.availableDays || []).includes(day.value)}
                         onCheckedChange={(checked) => {
+                          const currentDays = data.availableDays || [];
                           if (checked) {
-                            updateData("availableDays", [...data.availableDays, day.value]);
+                            updateData("availableDays", [...currentDays, day.value]);
                           } else {
-                            updateData("availableDays", data.availableDays.filter(d => d !== day.value));
+                            updateData("availableDays", currentDays.filter(d => d !== day.value));
                           }
                         }}
                       />
@@ -642,7 +732,7 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
           </div>
         );
 
-      case 5:
+      case 6:
         return (
           <div className="space-y-6">
             <div className="space-y-4">
@@ -849,22 +939,57 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
             trainerAnimation ? 'scale-150 opacity-80' : 'scale-100 opacity-40'
           }`}></div>
 
-          {/* Trainer image with multiple animation states */}
-          <img
-            src="/trainer.png"
-            alt="Fitness Trainer"
-            className={`w-32 h-32 object-contain transition-all duration-700 ease-out ${
-              trainerAnimation
-                ? 'scale-125 rotate-12 translate-x-4 translate-y-4 drop-shadow-2xl'
-                : 'scale-100 rotate-0 translate-x-0 translate-y-0 drop-shadow-lg'
-            } ${
-              // Continuous floating animation
-              'animate-float'
-            }`}
-            style={{
-              filter: trainerAnimation ? 'brightness(1.2) contrast(1.1)' : 'brightness(1) contrast(1)',
-            }}
-          />
+          {/* Show both trainers when no gender is selected, or single trainer based on selection */}
+          <div className="relative w-32 h-32">
+            {/* Male trainer - always present but conditionally visible */}
+            <img
+              src="/trainer.png"
+              alt="Male Fitness Trainer"
+              className={`absolute w-24 h-24 object-contain transition-all duration-700 ease-out ${
+                trainerAnimation
+                  ? 'scale-125 rotate-12 translate-x-2 translate-y-2 drop-shadow-2xl'
+                  : 'scale-100 rotate-0 translate-x-0 translate-y-0 drop-shadow-lg'
+              } ${
+                // Continuous floating animation
+                'animate-float'
+              } ${
+                // Transition based on gender selection
+                !data.gender
+                  ? 'opacity-100 left-[-8px] top-[4px] z-[2]'
+                  : data.gender === "female"
+                    ? 'opacity-0 left-[-8px] top-[4px] z-[1]'
+                    : 'opacity-100 left-[0px] top-[0px] z-[2] w-32 h-32'
+              }`}
+              style={{
+                filter: trainerAnimation ? 'brightness(1.2) contrast(1.1)' : 'brightness(1) contrast(1)',
+              }}
+            />
+
+            {/* Female trainer - always present but conditionally visible */}
+            <img
+              src="/trainer_lady.png"
+              alt="Female Fitness Trainer"
+              className={`absolute w-24 h-24 object-contain transition-all duration-700 ease-out ${
+                trainerAnimation
+              ? 'scale-125 rotate-12 translate-x-2 translate-y-2 drop-shadow-2xl'
+                  : 'scale-100 rotate-0 translate-x-0 translate-y-0 drop-shadow-lg'
+              } ${
+                // Continuous floating animation with slight delay
+                'animate-float'
+              } ${
+                // Transition based on gender selection
+                !data.gender
+                  ? 'opacity-100 left-[24px] top-[4px] z-[1]'
+                  : data.gender === "female"
+                    ? 'opacity-100 left-[0px] top-[0px] z-[2] w-32 h-32'
+                    : 'opacity-0 left-[24px] top-[4px] z-[1]'
+              }`}
+              style={{
+                filter: trainerAnimation ? 'brightness(1.2) contrast(1.1)' : 'brightness(1) contrast(1)',
+                animationDelay: !data.gender ? '0.5s' : '0s',
+              }}
+            />
+          </div>
 
           {/* Success sparkles when animation triggers */}
           {trainerAnimation && (
@@ -881,10 +1006,11 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
           const message = isHighlighted ? "Pokračujte vyplněním formuláře! 📝" :
             showStepMessage && currentStep === 0 ? "Skvěle! 🎯" :
             showStepMessage && currentStep === 1 ? "Výborný cíl! 💪" :
-            showStepMessage && currentStep === 2 ? "Perfektní! 🏃‍♂️" :
-            showStepMessage && currentStep === 3 ? "Důležité info! 🏥" :
-            showStepMessage && currentStep === 4 ? "Skvělý plán! 📅" :
-            showStepMessage && currentStep === 5 ? "Téměř hotovo! 🍎" : "";
+            showStepMessage && currentStep === 2 ? "Perfektní 🏃‍♂️" :
+            showStepMessage && currentStep === 3 ? "Perfektní partie! 🏋️!" :
+            showStepMessage && currentStep === 4 ? "Důležité info! 🏥" :
+            showStepMessage && currentStep === 5 ? "Skvělý plán! 📅" :
+            showStepMessage && currentStep === 6 ? "Téměř hotovo! 🍎" : "";
 
           return message && (
             <div className={`absolute -top-20 -right-2 transition-all duration-500 ${

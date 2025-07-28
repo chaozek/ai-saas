@@ -14,6 +14,9 @@ interface AssessmentData {
   activityLevel: "SEDENTARY" | "LIGHTLY_ACTIVE" | "MODERATELY_ACTIVE" | "VERY_ACTIVE" | "EXTREMELY_ACTIVE";
   experienceLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 
+  // Target Muscle Groups
+  targetMuscleGroups: string[];
+
   // Health Information
   hasInjuries: boolean;
   injuries?: string;
@@ -67,6 +70,7 @@ const initialData: AssessmentData = {
   fitnessGoal: "GENERAL_FITNESS",
   activityLevel: "SEDENTARY",
   experienceLevel: "BEGINNER",
+  targetMuscleGroups: [],
   hasInjuries: false,
   injuries: "",
   medicalConditions: "",
@@ -132,12 +136,12 @@ export const useFitnessAssessmentStore = create<FitnessAssessmentStore>()(
 
       nextStep: () => {
         const { currentStep, data } = get();
-        // Check if we're on step 4 (preferences step) and validate available days
-        if (currentStep === 4 && data.availableDays.length === 0) {
+        // Check if we're on step 5 (preferences step) and validate available days
+        if (currentStep === 5 && data.availableDays.length === 0) {
           return false; // Validation failed
         }
 
-        if (currentStep < 5) { // 6 steps total (0-5)
+        if (currentStep < 6) { // 7 steps total (0-6)
           set((state) => ({ currentStep: state.currentStep + 1 }));
           return true;
         }

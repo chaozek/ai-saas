@@ -21,7 +21,8 @@ export async function generateWorkoutWithAI(
      weight: string,
      targetWeight: string,
      activityLevel: string,
-     preferredExercises: string
+     preferredExercises: string,
+     targetMuscleGroups: string[]
    ): Promise<{name: string, description: string, exercises: any[]}> {
      const openaiClient = new OpenAI({
        apiKey: process.env.OPENAI_API_KEY,
@@ -43,6 +44,7 @@ export async function generateWorkoutWithAI(
 
    FITNESS CÍLE A ZKUŠENOSTI:
    - Fitness cíl: ${fitnessGoal}
+   - Cílové partie: ${targetMuscleGroups.length > 0 ? targetMuscleGroups.join(', ') : 'Všechny partie'}
    - Úroveň aktivity: ${activityLevel}
    - Úroveň zkušeností: ${experienceLevel}
    - Preferované cviky: ${preferredExercises || 'není specifikováno'}
@@ -93,7 +95,15 @@ export async function generateWorkoutWithAI(
    - Zohledni pohlaví při výběru cviků a intenzity
    - Zohledni aktuální a cílovou váhu pro správnou intenzitu
 
-   2. FITNESS CÍLE - PROFESIONÁLNÍ PŘÍSTUP:
+   2. FITNESS CÍLE A CÍLOVÉ PARTIE - PROFESIONÁLNÍ PŘÍSTUP:
+
+   CÍLOVÉ PARTIE:
+   ${targetMuscleGroups.length > 0 ?
+     `- Uživatel se zaměřuje na tyto partie: ${targetMuscleGroups.join(', ')}
+   - KRITICKÉ: V každém tréninku musí být alespoň 60% cviků zaměřených na cílové partie
+   - Zbytek cviků může být pro podpůrné partie nebo celkové kondice` :
+     `- Uživatel se zaměřuje na všechny partie rovnoměrně
+   - Vytvoř vyvážený trénink pro celé tělo`}
 
    - WEIGHT_LOSS (Hubnutí):
      * KRITICKÉ: Kombinace silových cviků a KARDIO aktivit
@@ -1005,6 +1015,7 @@ export async function generateWorkoutWithAI(
                - Fitness Goal: ${assessmentData.fitnessGoal}
                - Activity Level: ${assessmentData.activityLevel}
                - Experience Level: ${assessmentData.experienceLevel}
+               - Target Muscle Groups: ${assessmentData.targetMuscleGroups?.join(', ') || 'All muscle groups'}
                - Has Injuries: ${assessmentData.hasInjuries}
                - Injuries: ${assessmentData.injuries || 'None'}
                - Medical Conditions: ${assessmentData.medicalConditions || 'None'}
@@ -1016,7 +1027,7 @@ export async function generateWorkoutWithAI(
                DŮLEŽITÉ: Vygeneruj pouze přehledový popis 8-týdenního tréninkového plánu. NEGENERUJ konkrétní cviky, série, opakování nebo technické detaily - ty se generují automaticky pro každý trénink zvlášť. Zaměř se na:
                - Obecný přehled plánu a jeho cíle
                - Vysvětlení postupu během 8 týdnů
-               - Jak plán podporuje jejich fitness cíle
+               - Jak plán podporuje jejich fitness cíle a cílové partie
                - Obecné tipy pro úspěch a bezpečnost
                - Motivující závěr
              `;
@@ -1104,7 +1115,8 @@ export async function generateWorkoutWithAI(
                  assessmentData.weight,
                  assessmentData.targetWeight,
                  assessmentData.activityLevel,
-                 assessmentData.preferredExercises
+                 assessmentData.preferredExercises,
+                 assessmentData.targetMuscleGroups
                );
 
                workoutTemplates[day] = aiWorkout;

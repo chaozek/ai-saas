@@ -15,6 +15,7 @@ const assessmentDataSchema = z.object({
   fitnessGoal: z.enum(["WEIGHT_LOSS", "MUSCLE_GAIN", "ENDURANCE", "STRENGTH", "FLEXIBILITY", "GENERAL_FITNESS"]),
   activityLevel: z.enum(["SEDENTARY", "LIGHTLY_ACTIVE", "MODERATELY_ACTIVE", "VERY_ACTIVE", "EXTREMELY_ACTIVE"]),
   experienceLevel: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]),
+  targetMuscleGroups: z.array(z.string()),
 
   hasInjuries: z.boolean(),
   injuries: z.string().optional(),
@@ -66,6 +67,7 @@ export const fitnessRouter = createTRPCRouter({
           fitnessGoal: input.fitnessGoal,
           activityLevel: input.activityLevel,
           experienceLevel: input.experienceLevel,
+          targetMuscleGroups: input.targetMuscleGroups,
           hasInjuries: input.hasInjuries,
           injuries: input.injuries || null,
           medicalConditions: input.medicalConditions || null,
@@ -91,6 +93,7 @@ export const fitnessRouter = createTRPCRouter({
           fitnessGoal: input.fitnessGoal,
           activityLevel: input.activityLevel,
           experienceLevel: input.experienceLevel,
+          targetMuscleGroups: input.targetMuscleGroups,
           hasInjuries: input.hasInjuries,
           injuries: input.injuries || null,
           medicalConditions: input.medicalConditions || null,
@@ -685,6 +688,7 @@ export const fitnessRouter = createTRPCRouter({
       fitnessGoal: z.enum(["WEIGHT_LOSS", "MUSCLE_GAIN", "ENDURANCE", "STRENGTH", "FLEXIBILITY", "GENERAL_FITNESS"]),
       activityLevel: z.enum(["SEDENTARY", "LIGHTLY_ACTIVE", "MODERATELY_ACTIVE", "VERY_ACTIVE", "EXTREMELY_ACTIVE"]),
       experienceLevel: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]),
+      targetMuscleGroups: z.array(z.string()),
       hasInjuries: z.boolean(),
       injuries: z.string().optional(),
       medicalConditions: z.string().optional(),
@@ -871,26 +875,56 @@ export const fitnessRouter = createTRPCRouter({
       recommendations.reasoning.days = reasoningDays;
       recommendations.reasoning.duration = reasoningDuration;
 
-      // Recommend exercises based on fitness goal (no equipment recommendations)
+      // Recommend exercises based on fitness goal and target muscle groups
+      let exerciseRecommendations = "";
+      let exerciseReasoning = "";
+
       if (input.fitnessGoal === "WEIGHT_LOSS") {
-        recommendations.preferredExercises = "Kardio cvičení, HIIT, chůze, běhání, skákání přes švihadlo, plavání, cyklistika";
-        recommendations.reasoning.exercises = "Kardio cvičení a HIIT jsou nejefektivnější pro spalování kalorií a hubnutí.";
+        exerciseRecommendations = "Kardio cvičení, HIIT, chůze, běhání, skákání přes švihadlo, plavání, cyklistika";
+        exerciseReasoning = "Kardio cvičení a HIIT jsou nejefektivnější pro spalování kalorií a hubnutí.";
       } else if (input.fitnessGoal === "MUSCLE_GAIN") {
-        recommendations.preferredExercises = "Silový trénink, compound cviky, progresivní přetížení, bench press, squat, deadlift";
-        recommendations.reasoning.exercises = "Compound cviky jsou nejefektivnější pro stimulaci svalového růstu.";
+        exerciseRecommendations = "Silový trénink, compound cviky, progresivní přetížení, bench press, squat, deadlift";
+        exerciseReasoning = "Compound cviky jsou nejefektivnější pro stimulaci svalového růstu.";
       } else if (input.fitnessGoal === "ENDURANCE") {
-        recommendations.preferredExercises = "Běhání, cyklistika, plavání, intervalový trénink, dlouhé vzdálenosti";
-        recommendations.reasoning.exercises = "Aerobní aktivity a intervalový trénink rozvíjejí kardiovaskulární vytrvalost.";
+        exerciseRecommendations = "Běhání, cyklistika, plavání, intervalový trénink, dlouhé vzdálenosti";
+        exerciseReasoning = "Aerobní aktivity a intervalový trénink rozvíjejí kardiovaskulární vytrvalost.";
       } else if (input.fitnessGoal === "STRENGTH") {
-        recommendations.preferredExercises = "Deadlift, squat, bench press, overhead press, powerlifting cviky";
-        recommendations.reasoning.exercises = "Compound cviky s těžkými váhami jsou nejefektivnější pro rozvoj síly.";
+        exerciseRecommendations = "Deadlift, squat, bench press, overhead press, powerlifting cviky";
+        exerciseReasoning = "Compound cviky s těžkými váhami jsou nejefektivnější pro rozvoj síly.";
       } else if (input.fitnessGoal === "FLEXIBILITY") {
-        recommendations.preferredExercises = "Jóga, pilates, strečink, mobilita cvičení, balanční cviky";
-        recommendations.reasoning.exercises = "Jóga a pilates rozvíjejí flexibilitu, sílu a rovnováhu.";
+        exerciseRecommendations = "Jóga, pilates, strečink, mobilita cvičení, balanční cviky";
+        exerciseReasoning = "Jóga a pilates rozvíjejí flexibilitu, sílu a rovnováhu.";
       } else {
-        recommendations.preferredExercises = "Smíšený trénink, funkční cvičení, kardio + silový trénink, circuit training";
-        recommendations.reasoning.exercises = "Smíšený trénink rozvíjející všechny složky fitness je ideální pro celkovou kondici.";
+        exerciseRecommendations = "Smíšený trénink, funkční cvičení, kardio + silový trénink, circuit training";
+        exerciseReasoning = "Smíšený trénink rozvíjející všechny složky fitness je ideální pro celkovou kondici.";
       }
+
+      // Add target muscle group specific recommendations
+      if (input.targetMuscleGroups && input.targetMuscleGroups.length > 0) {
+        const muscleGroupExercises = {
+          chest: "kliky, bench press, push-ups, chest press, dips",
+          back: "shyby, pull-ups, rows, lat pulldown, deadlift",
+          shoulders: "overhead press, lateral raises, front raises, military press",
+          arms: "biceps curls, triceps dips, hammer curls, skull crushers",
+          legs: "squats, lunges, leg press, deadlifts, calf raises",
+          glutes: "hip thrusts, glute bridges, squats, lunges, deadlifts",
+          core: "plank, crunches, Russian twists, leg raises, mountain climbers",
+          full_body: "compound cviky, functional training, circuit training"
+        };
+
+        const targetExercises = input.targetMuscleGroups
+          .map(group => muscleGroupExercises[group as keyof typeof muscleGroupExercises])
+          .filter(Boolean)
+          .join(", ");
+
+        if (targetExercises) {
+          exerciseRecommendations = `${exerciseRecommendations}, ${targetExercises}`;
+          exerciseReasoning += ` Zaměření na cílové partie: ${input.targetMuscleGroups.join(', ')}.`;
+        }
+      }
+
+      recommendations.preferredExercises = exerciseRecommendations;
+      recommendations.reasoning.exercises = exerciseReasoning;
 
       // Adjust for injuries
       if (input.hasInjuries) {
