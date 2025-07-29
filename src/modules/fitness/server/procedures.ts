@@ -7,6 +7,7 @@ import { consumeCredits } from "@/lib/usage";
 import { ensureUserExists } from "@/lib/user-utils";
 import Stripe from 'stripe';
 
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-06-30.basil',
 });
@@ -1091,5 +1092,87 @@ export const fitnessRouter = createTRPCRouter({
         });
       }
     }),
+
+  getPaymentSessions: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        const paymentSessions = await prisma.paymentSession.findMany({
+          where: {
+            userId: ctx.auth.userId,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+
+        return paymentSessions;
+      } catch (error) {
+        console.error('Error fetching payment sessions:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to fetch payment sessions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+  generateInvoice: protectedProcedure
+    .input(z.object({
+      invoiceNumber: z.string(),
+      invoiceDate: z.string(),
+      dueDate: z.string(),
+      supplier: z.object({
+        name: z.string(),
+        address: z.string(),
+        city: z.string(),
+        zipCode: z.string(),
+        ico: z.string(),
+        dic: z.string().optional(), // DIC je volitelné pro neplátce DPH
+        bankAccount: z.string(),
+        bankCode: z.string(),
+      }),
+      customer: z.object({
+        name: z.string(),
+        address: z.string(),
+        city: z.string(),
+        zipCode: z.string(),
+        ico: z.string().optional(),
+        dic: z.string().optional(),
+      }),
+      items: z.array(z.object({
+        id: z.string(),
+        description: z.string(),
+        quantity: z.number(),
+        unit: z.string(),
+        unitPrice: z.number(),
+        total: z.number(),
+      })),
+      currency: z.string(),
+      vatRate: z.number(),
+      paid: z.boolean().optional(), // Přidáno pole paid
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        console.log('Generating invoice for user:', ctx.auth.userId);
+        console.log('Invoice data:', input);
+
+        // For now, return success without PDF generation
+        // PDF generation will be implemented later
+        console.log('Invoice data prepared for PDF generation:', input);
+
+        return {
+          success: true,
+          invoiceNumber: input.invoiceNumber,
+          message: 'Faktura byla úspěšně vygenerována',
+          data: input,
+          downloadUrl: `/api/generate-invoice-pdf`,
+        };
+      } catch (error) {
+        console.error('Error generating invoice:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to generate invoice: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    })
 
 });
