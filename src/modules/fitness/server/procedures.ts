@@ -5,6 +5,11 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { consumeCredits } from "@/lib/usage";
 import { ensureUserExists } from "@/lib/user-utils";
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-06-30.basil',
+});
 
 const assessmentDataSchema = z.object({
   age: z.string(),
@@ -943,6 +948,148 @@ export const fitnessRouter = createTRPCRouter({
         recommendations,
         message: "AI doporučení byla úspěšně vygenerována na základě vašich údajů."
       };
+    }),
+
+  createPaymentIntent: protectedProcedure
+    .input(z.object({
+      planName: z.string(),
+      planPrice: z.number(),
+      planCurrency: z.string(),
+      assessmentData: z.any().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Check if Stripe is configured
+        if (!process.env.STRIPE_SECRET_KEY) {
+          console.error('STRIPE_SECRET_KEY is not configured');
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.",
+          });
+        }
+
+        // Convert price to cents for Stripe
+        const amountInCents = Math.round(input.planPrice * 100);
+
+        console.log('Creating payment intent with:', {
+          planName: input.planName,
+          planPrice: input.planPrice,
+          planCurrency: input.planCurrency,
+          amountInCents,
+          userId: ctx.auth.userId
+        });
+
+        // Create payment intent
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amountInCents,
+          currency: input.planCurrency.toLowerCase(),
+          metadata: {
+            userId: ctx.auth.userId,
+            planName: input.planName,
+            type: 'fitness_plan'
+          },
+          automatic_payment_methods: {
+            enabled: true,
+          },
+        });
+
+        // Save payment session to database with assessment data
+        try {
+          await prisma.paymentSession.create({
+            data: {
+              stripeSessionId: paymentIntent.id, // Using payment intent ID as session ID
+              userId: ctx.auth.userId,
+              planName: input.planName,
+              assessmentData: input.assessmentData || {},
+              status: 'pending'
+            }
+          });
+          console.log('Payment session saved to database');
+        } catch (dbError) {
+          console.error('Failed to save payment session to database:', dbError);
+          // Continue with payment even if database save fails
+        }
+
+        console.log('Payment intent created successfully:', paymentIntent.id);
+
+        return {
+          success: true,
+          clientSecret: paymentIntent.client_secret,
+          paymentIntentId: paymentIntent.id
+        };
+
+      } catch (error) {
+        console.error('Error creating payment intent:', error);
+
+        // Provide more specific error messages
+        if (error instanceof Error) {
+          if (error.message.includes('Invalid API key')) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Invalid Stripe API key. Please check your STRIPE_SECRET_KEY.",
+            });
+          }
+        }
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to create payment intent: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+  removeCurrentPlan: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      try {
+        // Get the fitness profile
+        const fitnessProfile = await prisma.fitnessProfile.findUnique({
+          where: { userId: ctx.auth.userId },
+          include: {
+            currentPlan: true,
+            currentMealPlan: true,
+          },
+        });
+
+        if (!fitnessProfile) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Fitness profile not found",
+          });
+        }
+
+        // Simply set isActive to false for the current plan
+        if (fitnessProfile.currentPlan) {
+          await prisma.workoutPlan.update({
+            where: { id: fitnessProfile.currentPlan.id },
+            data: {
+              isActive: false,
+            },
+          });
+          console.log(`Set plan ${fitnessProfile.currentPlan.id} to inactive`);
+        }
+
+        // Also set current meal plan to inactive
+        if (fitnessProfile.currentMealPlan) {
+          await prisma.mealPlan.update({
+            where: { id: fitnessProfile.currentMealPlan.id },
+            data: {
+              isActive: false,
+            },
+          });
+          console.log(`Set meal plan ${fitnessProfile.currentMealPlan.id} to inactive`);
+        }
+
+        return {
+          success: true,
+          message: "Current plan set to inactive",
+        };
+      } catch (error) {
+        console.error('Error setting current plan to inactive:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to set current plan to inactive: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
     }),
 
 });

@@ -58,6 +58,21 @@ export function MealCard({
     }
   };
 
+  const getMealTypeColors = (type: string) => {
+    switch (type) {
+      case 'BREAKFAST':
+        return 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400 hover:from-orange-600 hover:to-amber-600';
+      case 'LUNCH':
+        return 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-blue-400 hover:from-blue-600 hover:to-indigo-600';
+      case 'DINNER':
+        return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-purple-400 hover:from-purple-600 hover:to-pink-600';
+      case 'SNACK':
+        return 'bg-gradient-to-r from-green-500 to-emerald-500 text-white border-green-400 hover:from-green-600 hover:to-emerald-600';
+      default:
+        return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white border-gray-400 hover:from-gray-600 hover:to-slate-600';
+    }
+  };
+
   const getTotalTime = () => {
     const prepTime = meal.prepTime || 0;
     const cookTime = meal.cookTime || 0;
@@ -139,7 +154,10 @@ export function MealCard({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant={getMealTypeVariant(mealType) as any} className="text-xs flex-shrink-0">
+            <Badge
+              variant="outline"
+              className={`text-xs flex-shrink-0 font-semibold border-2 transition-all duration-200 ${getMealTypeColors(mealType)}`}
+            >
               {getMealTypeLabel(mealType)}
             </Badge>
             <CollapsibleTrigger asChild>

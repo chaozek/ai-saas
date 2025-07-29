@@ -107,97 +107,143 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
            const cookingSkill = fitnessProfile.cookingSkill || 'BEGINNER';
            const mealPrepTime = fitnessProfile.mealPrepTime || 30;
 
-           // Generate meal templates using AI (optimized to reduce API calls)
+           // Generate meals with variety for each day
            const mealTypes = ['BREAKFAST', 'LUNCH', 'DINNER'];
-           const mealTemplates: { [mealType: string]: any } = {};
            const mealPromises: Promise<any>[] = [];
 
-           console.log(`Generating ${mealTypes.length} meal templates for types: ${mealTypes.join(', ')}`);
+                      // TESTING: Nastav počet dní pro generování
+           // TESTING_DAYS = 2: Generuje 2 dny - velmi rychlé testování
+           // TESTING_DAYS = 7: Generuje 1 týden - rychlé testování
+           // TESTING_DAYS = 14: Generuje 2 týdny - střední testování
+           // TESTING_DAYS = 28: Generuje 4 týdny - téměř plný měsíc
+           // TESTING_DAYS = 0: Generuje plný měsíc (30 dní) - produkční režim
+           const TESTING_DAYS = 2; // Změň podle potřeby testování
+           const totalDays = TESTING_DAYS > 0 ? TESTING_DAYS : 30;
 
-           // Generate meal templates (only once per meal type)
-           for (const mealType of mealTypes) {
-             // Generate meal template using AI with realistic nutrition values
-             // AI will create meals with natural nutrition ratios, then we'll adjust portions
-             const aiMeal = await generateMealWithAI(
-               1, // Use day 1 as template
-               mealType,
-               fitnessProfile.fitnessGoal || 'GENERAL_FITNESS',
-               dietaryRestrictions,
-               preferredCuisines,
-               cookingSkill,
-               0, // Let AI generate natural nutrition values
-               0, // Let AI generate natural nutrition values
-               0, // Let AI generate natural nutrition values
-               0, // Let AI generate natural nutrition values
-               fitnessProfile.budgetPerWeek || 100,
-               mealPrepTime
-             );
+           console.log(`Generating unique meals for ${totalDays} days (${TESTING_DAYS > 0 ? TESTING_DAYS + ' days' : 'full month'}) with types: ${mealTypes.join(', ')}`);
 
-             mealTemplates[mealType] = aiMeal;
-             console.log(`Generated template for ${mealType}: ${aiMeal.name} (${aiMeal.calories} cal, ${aiMeal.protein}g protein, ${aiMeal.carbs}g carbs, ${aiMeal.fat}g fat)`);
-           }
+           // Arrays for rotating ingredients to ensure variety
+           const proteinSources = ['kuřecí prsa', 'krůtí prsa', 'losos', 'tuňák', 'treska', 'vejce', 'tvaroh', 'libové hovězí', 'tofu', 'tempeh', 'králík', 'proteinový prášek'];
+           const carbSources = ['ovesné vločky', 'quinoa', 'hnědá rýže', 'celozrnné těstoviny', 'sladké brambory', 'pohanka', 'ječmen', 'bulgur', 'celozrnný chléb'];
+           const vegetables = ['brokolice', 'špenát', 'kapusta', 'mrkev', 'paprika', 'rajčata', 'okurka', 'cuketa', 'lilek', 'cibule', 'česnek', 'zázvor', 'kedlubna', 'celer'];
+           const fruits = ['jablka', 'banány', 'borůvky', 'maliny', 'jahody', 'pomeranče', 'kiwi', 'ananas', 'mango', 'hrušky', 'hrozny'];
 
-           // Calculate total daily nutrition from all meals (for logging only)
-           const totalDailyCalories = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.calories, 0);
-           const totalDailyProtein = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.protein, 0);
-           const totalDailyCarbs = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.carbs, 0);
-           const totalDailyFat = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.fat, 0);
+           // Track used meal names to avoid repetition
+           const usedMealNames: { [key: string]: string[] } = { BREAKFAST: [], LUNCH: [], DINNER: [] };
 
-           console.log(`Total daily nutrition from meals: ${totalDailyCalories} cal, ${totalDailyProtein}g protein, ${totalDailyCarbs}g carbs, ${totalDailyFat}g fat`);
-           console.log(`Target daily nutrition: ${nutritionRequirements.caloriesPerDay} cal, ${nutritionRequirements.proteinPerDay}g protein, ${nutritionRequirements.carbsPerDay}g carbs, ${nutritionRequirements.fatPerDay}g fat`);
+           // Create meals for each day with variety - generate different meals for each day
+           console.log(`Creating meals for ${totalDays} days with variety...`);
 
-           // Keep natural nutrition values from AI - don't adjust them
-           console.log(`Using natural nutrition values from AI-generated meals`);
-
-           // Log the natural values for each meal type
-           for (const mealType of mealTypes) {
-             const meal = mealTemplates[mealType];
-             console.log(`Natural ${mealType}: ${meal.calories} cal, ${meal.protein}g protein, ${meal.carbs}g carbs, ${meal.fat}g fat`);
-           }
-
-           // Create meals for each day using the templates
-           console.log(`Creating meals for 30 days with proper week/day structure...`);
-
-           for (let day = 1; day <= 30; day++) {
+           for (let day = 1; day <= totalDays; day++) {
              // Calculate week number
              const weekNumber = Math.ceil(day / 7);
 
              console.log(`Day ${day}: Week ${weekNumber}`);
 
              for (const mealType of mealTypes) {
-               const template = mealTemplates[mealType];
+               // Calculate target nutrition for this meal type
+               let targetCalories = 0;
+               let targetProtein = 0;
+               let targetCarbs = 0;
+               let targetFat = 0;
+
+               switch (mealType) {
+                 case 'BREAKFAST':
+                   targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.25);
+                   targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.25 * 10) / 10;
+                   targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.25 * 10) / 10;
+                   targetFat = Math.round(nutritionRequirements.fatPerDay * 0.25 * 10) / 10;
+                   break;
+                 case 'LUNCH':
+                   targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.40);
+                   targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.40 * 10) / 10;
+                   targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.40 * 10) / 10;
+                   targetFat = Math.round(nutritionRequirements.fatPerDay * 0.40 * 10) / 10;
+                   break;
+                 case 'DINNER':
+                   targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.35);
+                   targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.35 * 10) / 10;
+                   targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.35 * 10) / 10;
+                   targetFat = Math.round(nutritionRequirements.fatPerDay * 0.35 * 10) / 10;
+                   break;
+               }
+
+               // Rotate ingredients to ensure variety
+               const dayIndex = day - 1;
+               const proteinIndex = dayIndex % proteinSources.length;
+               const carbIndex = dayIndex % carbSources.length;
+               const vegIndex = dayIndex % vegetables.length;
+               const fruitIndex = dayIndex % fruits.length;
+
+               const suggestedProtein = proteinSources[proteinIndex];
+               const suggestedCarb = carbSources[carbIndex];
+               const suggestedVeg = vegetables[vegIndex];
+               const suggestedFruit = fruits[fruitIndex];
+
+               console.log(`Day ${day}, ${mealType}: Suggested ingredients - Protein: ${suggestedProtein}, Carb: ${suggestedCarb}, Veg: ${suggestedVeg}, Fruit: ${suggestedFruit}`);
+
+               // Generate unique meal for this day and meal type
+               const aiMeal = await generateMealWithAI(
+                 day,
+                 mealType,
+                 fitnessProfile.fitnessGoal || 'GENERAL_FITNESS',
+                 dietaryRestrictions,
+                 preferredCuisines,
+                 cookingSkill,
+                 targetCalories,
+                 targetProtein,
+                 targetCarbs,
+                 targetFat,
+                 fitnessProfile.budgetPerWeek || 100,
+                 mealPrepTime,
+                 usedMealNames[mealType].join(', '), // Avoid previously used meal names
+                 {
+                   protein: suggestedProtein,
+                   carb: suggestedCarb,
+                   veg: suggestedVeg,
+                   fruit: suggestedFruit
+                 }
+               );
+
+               // Verify that we got a unique meal name
+               if (usedMealNames[mealType].includes(aiMeal.name)) {
+                 console.warn(`WARNING: Duplicate meal name generated for ${mealType}: ${aiMeal.name}`);
+               }
+
+               // Add to used names to avoid repetition
+               usedMealNames[mealType].push(aiMeal.name);
 
                const mealPromise = prisma.meal.create({
                  data: {
-                   name: `Day ${day} - ${template.name}`,
-                   description: template.description,
+                   name: `Day ${day} - ${aiMeal.name}`,
+                   description: aiMeal.description,
                    mealType: mealType as any,
                    dayOfWeek: day, // Use actual day number (1-30), not day of week (0-6)
                    weekNumber: weekNumber,
-                   calories: template.calories,
-                   protein: template.protein,
-                   carbs: template.carbs,
-                   fat: template.fat,
-                   prepTime: template.prepTime,
-                   cookTime: template.cookTime,
+                   calories: aiMeal.calories,
+                   protein: aiMeal.protein,
+                   carbs: aiMeal.carbs,
+                   fat: aiMeal.fat,
+                   prepTime: aiMeal.prepTime,
+                   cookTime: aiMeal.cookTime,
                    servings: 1,
                    mealPlanId: mealPlan.id,
                    recipes: {
                      create: {
-                       name: `Day ${day} - ${template.name}`,
-                       description: template.description,
-                       instructions: template.instructions,
-                       ingredients: JSON.stringify(template.ingredients),
+                       name: `Day ${day} - ${aiMeal.name}`,
+                       description: aiMeal.description,
+                       instructions: aiMeal.instructions,
+                       ingredients: JSON.stringify(aiMeal.ingredients),
                        nutrition: JSON.stringify({
-                         calories: template.calories,
-                         protein: template.protein,
-                         carbs: template.carbs,
-                         fat: template.fat,
+                         calories: aiMeal.calories,
+                         protein: aiMeal.protein,
+                         carbs: aiMeal.carbs,
+                         fat: aiMeal.fat,
                          fiber: Math.floor(Math.random() * 8) + 3,
                          sugar: Math.floor(Math.random() * 15) + 5
                        }),
-                       prepTime: template.prepTime,
-                       cookTime: template.cookTime,
+                       prepTime: aiMeal.prepTime,
+                       cookTime: aiMeal.cookTime,
                        servings: 1,
                        difficulty: cookingSkill,
                        cuisine: preferredCuisines[day % preferredCuisines.length] || "american",
@@ -209,11 +255,11 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
 
                // Add debug logging for nutrition values
                console.log(`Creating meal for Day ${day}, ${mealType}:`, {
-                 name: `Day ${day} - ${template.name}`,
-                 calories: template.calories,
-                 protein: template.protein,
-                 carbs: template.carbs,
-                 fat: template.fat
+                 name: `Day ${day} - ${aiMeal.name}`,
+                 calories: aiMeal.calories,
+                 protein: aiMeal.protein,
+                 carbs: aiMeal.carbs,
+                 fat: aiMeal.fat
                });
 
                mealPromises.push(mealPromise);
@@ -222,7 +268,7 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
 
            // Wait for all meals to be created
            const createdMeals = await Promise.all(mealPromises);
-           console.log(`Created ${createdMeals.length} meals using ${mealTypes.length} AI-generated templates for meal plan ${mealPlan.id}`);
+           console.log(`Created ${createdMeals.length} unique meals for meal plan ${mealPlan.id}`);
 
            // Update the fitness profile to point to the new current meal plan
            await prisma.fitnessProfile.update({

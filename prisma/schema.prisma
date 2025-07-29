@@ -227,6 +227,18 @@ model Usage {
   expire DateTime?
 }
 
+model PaymentSession {
+  id             String   @id @default(uuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  stripeSessionId String  @unique
+  userId         String
+  planName       String
+  assessmentData Json
+  status         String   @default("pending") // pending, completed, failed
+  paymentIntentId String?
+}
+
 enum MessageRole {
   USER
   ASSISTANT

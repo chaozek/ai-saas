@@ -1,37 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FitnessAI - AI-Powered Fitness Planning Platform
 
-## Getting Started
+Modern fitness planning platform with AI-generated personalized workout and meal plans, featuring Stripe payment integration for one-time payments.
 
-First, run the development server:
+## 🚀 Features
 
+- **AI-Powered Fitness Assessment** - Personalized questionnaire for optimal plan generation
+- **Custom Workout Plans** - Tailored exercise routines based on goals and equipment
+- **Meal Planning** - Personalized nutrition plans with recipes and shopping lists
+- **Stripe Payment Integration** - Secure one-time payments for premium plans
+- **Real-time Progress Tracking** - Monitor your fitness journey
+- **Mobile-Responsive Design** - Works perfectly on all devices
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
+- **Backend**: tRPC, Prisma ORM, Inngest (background jobs)
+- **Authentication**: Clerk
+- **Payments**: Stripe (one-time payments)
+- **Database**: PostgreSQL
+- **Styling**: Shadcn/ui components
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database
+- Stripe account
+- Clerk account
+
+### Installation
+
+1. **Clone the repository**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd FitnessAI
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Set up environment variables**
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Add your environment variables to `.env.local`:
+```env
+# Database
+DATABASE_URL="postgresql://..."
 
-## Learn More
+# Authentication (Clerk)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
 
-To learn more about Next.js, take a look at the following resources:
+# Payments (Stripe)
+STRIPE_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3001
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Set up the database**
+```bash
+npx prisma generate
+npx prisma db push
+```
 
-## Deploy on Vercel
+5. **Start the development server**
+```bash
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+6. **Start Stripe webhook listener** (in a separate terminal)
+```bash
+./start-stripe-webhooks.sh
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# ai-saas
+Open [http://localhost:3001](http://localhost:3001) to see the application.
+
+## 💳 Payment Setup
+
+### Stripe Configuration
+
+1. **Create a Stripe account** at [stripe.com](https://stripe.com)
+2. **Get your API keys** from Dashboard → Developers → API keys
+3. **Set up webhooks** for local development:
+   ```bash
+   stripe login
+   ./start-stripe-webhooks.sh
+   ```
+
+### Test Cards
+
+- **Successful payment**: `4242 4242 4242 4242`
+- **Failed payment**: `4000 0000 0000 0002`
+- **3D Secure required**: `4000 0025 0000 3155`
+
+## 📁 Project Structure
+
+```
+src/
+├── app/                    # Next.js app router
+│   ├── api/               # API routes
+│   ├── dashboard/         # User dashboard
+│   └── workout/           # Workout pages
+├── components/            # React components
+│   └── ui/               # Shadcn/ui components
+├── modules/              # Feature modules
+│   ├── fitness/          # Fitness-related features
+│   └── home/             # Home page components
+├── trcp/                 # tRPC configuration
+└── lib/                  # Utilities and configurations
+```
+
+## 🔧 Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `node test-stripe.js` - Test Stripe integration
+
+### Testing Stripe Integration
+
+```bash
+# Test Stripe connection
+node test-stripe.js
+
+# Start webhook listener
+./start-stripe-webhooks.sh
+```
+
+## 📚 Documentation
+
+- [Stripe Integration Guide](./STRIPE_INTEGRATION.md) - Complete Stripe setup guide
+- [Payment Integration](./PAYMENT_INTEGRATION.md) - Payment system overview
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.

@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useTRPC } from "@/trcp/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useFitnessAssessmentStore } from "@/lib/fitness-assessment-store";
+import { PaymentModal } from "@/components/ui/payment-modal";
 
 interface AssessmentData {
   // Personal Information
@@ -177,6 +178,10 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
   // Add state to prevent step message flash after highlight
   const [showStepMessage, setShowStepMessage] = useState(true);
 
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
+
   // Handle highlight state changes
   useEffect(() => {
     if (isHighlighted) {
@@ -190,21 +195,27 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
     }
   }, [isHighlighted]);
 
-  const generatePlan = useMutation(trpc.fitness.generatePlan.mutationOptions({
-    onSuccess: async (data) => {
-      toast.success("Generování fitness plánu zahájeno! Přesměrování na řídicí panel...");
-      reset(); // Reset form only on successful submission
-      router.push('/dashboard');
+  // Create payment intent mutation
+  const createPaymentIntent = useMutation(trpc.fitness.createPaymentIntent.mutationOptions({
+    onSuccess: (data) => {
+      if (data.clientSecret) {
+        setPaymentClientSecret(data.clientSecret);
+        setShowPaymentModal(true);
+      } else {
+        toast.error('Nepodařilo se vytvořit platbu. Zkuste to prosím znovu.');
+      }
     },
     onError: (error) => {
-      if (error.data?.code === "TOO_MANY_REQUESTS") {
-        toast.error("Dosáhli jste denní limit generování fitness plánů. Prosím, upgradujte na placený plán pro pokračování.");
-        setTimeout(() => {
-          router.push("/pricing");
-        }, 1000);
-      } else {
-        toast.error(error.message || "Něco se pokazilo. Prosím, zkuste to znovu.");
-      }
+      console.error('Error creating payment intent:', error);
+      toast.error(error.message || 'Nepodařilo se vytvořit platbu. Zkuste to prosím znovu.');
+    }
+  }));
+
+  // Remove current plan mutation
+  const removeCurrentPlan = useMutation(trpc.fitness.removeCurrentPlan.mutationOptions({
+    onError: (error) => {
+      console.error('Error removing current plan:', error);
+      // Don't show error toast as we still want to redirect
     }
   }));
 
@@ -226,13 +237,34 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
       return;
     }
 
-    setIsSubmitting(true);
-    generatePlan.mutate(data, {
-      onSettled: () => {
-        setIsSubmitting(false);
-      }
+    // Create payment intent first, then show modal
+    createPaymentIntent.mutate({
+      planName: "Fitness Plán",
+      planPrice: 199,
+      planCurrency: "CZK",
+      assessmentData: data,
     });
-  }, [user, data, setPendingSubmission, clerk, setIsSubmitting, generatePlan]);
+  }, [user, data, setPendingSubmission, clerk, createPaymentIntent]);
+
+  // Check if we're in any loading state
+  const isLoading = isSubmitting || createPaymentIntent.isPending;
+
+    const handlePaymentSuccess = useCallback(async () => {
+    try {
+      // Remove current plan before redirecting
+      await removeCurrentPlan.mutateAsync();
+
+      // After successful payment, the webhook will handle plan generation
+      // Just redirect to dashboard where the user can see their plan being generated
+      toast.success("Platba byla úspěšná! Váš fitness plán se generuje...");
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error removing current plan:', error);
+      // Still redirect even if removing current plan fails
+      toast.success("Platba byla úspěšná! Váš fitness plán se generuje...");
+      router.push('/dashboard');
+    }
+  }, [router, removeCurrentPlan]);
 
   // Handle pending submission after authentication
   useEffect(() => {
@@ -1058,17 +1090,17 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
             {currentStep === steps.length - 1 ? (
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={isLoading}
                 className="min-w-[120px]"
               >
-                {isSubmitting ? (
+                {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Vytvoření plánu...
+                    {createPaymentIntent.isPending ? 'Připravujeme platbu...' : 'Generování plánu...'}
                   </>
                 ) : (
                   <>
-                    Generovat plán
+                    Pokračovat k platbě
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
@@ -1097,6 +1129,15 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
           animation: float 3s ease-in-out infinite;
         }
       `}</style>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onSuccess={handlePaymentSuccess}
+        assessmentData={data}
+        clientSecret={paymentClientSecret}
+      />
     </div>
   );
 };

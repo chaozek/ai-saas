@@ -89,22 +89,22 @@ export default function DashboardPage() {
       currentPlanWorkouts: fitnessProfile.currentPlan?.workouts?.length || 0
     });
   }
-
-  // Simple refresh: if plan exists but has no workouts, keep refreshing
+console.log(workoutPlan?.isActive, "workoutPlan")
+  // Continuous refresh loop until workoutPlan.isActive becomes true
   useEffect(() => {
-    if (workoutPlan && workoutPlan.workouts.length === 0) {
+    if (workoutPlan && workoutPlan.isActive === false) {
       const interval = setInterval(() => {
         queryClient.invalidateQueries(trpc.fitness.getProfile.queryOptions());
       }, 3000); // Refresh every 3 seconds
 
       return () => clearInterval(interval);
     }
-  }, [workoutPlan?.workouts?.length, queryClient, trpc.fitness.getProfile]);
+  }, [workoutPlan?.isActive, queryClient, trpc.fitness.getProfile]);
 
-  // Check if we should show loading (simple check)
+  // Check if we should show loading - show loading when plan exists but is not active yet
   const shouldShowLoading = useMemo(() => {
-    return workoutPlan && workoutPlan.workouts.length === 0;
-  }, [workoutPlan?.workouts?.length]);
+    return workoutPlan && workoutPlan.isActive === false;
+  }, [workoutPlan?.isActive]);
 
   // Function to generate shopping list for a week
   const generateShoppingList = useMutation(trpc.fitness.generateShoppingList.mutationOptions({

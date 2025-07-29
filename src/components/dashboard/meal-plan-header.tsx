@@ -2,14 +2,17 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, BarChart3, RefreshCw } from "lucide-react";
 import { MealPlan } from "./types";
 
 interface MealPlanHeaderProps {
   mealPlan: MealPlan;
+  onRegenerateMealPlan?: () => void;
+  isRegenerating?: boolean;
 }
 
-export function MealPlanHeader({ mealPlan }: MealPlanHeaderProps) {
+export function MealPlanHeader({ mealPlan, onRegenerateMealPlan, isRegenerating }: MealPlanHeaderProps) {
   const getNutritionValue = (value: number | null) => value || 0;
 
   return (
@@ -25,19 +28,44 @@ export function MealPlanHeader({ mealPlan }: MealPlanHeaderProps) {
             {mealPlan.duration} dní • {mealPlan.meals?.length || 0} jídel • {getNutritionValue(mealPlan.caloriesPerDay)} kal/den
           </p>
         </div>
-        <div className="flex gap-2">
-          <Badge variant="outline" className="text-xs">
-            {Math.ceil(mealPlan.duration / 7)} Týdnů
-          </Badge>
-          <Badge variant="secondary" className="text-xs">
-            {mealPlan.meals?.filter((m: any) => m.mealType === 'BREAKFAST').length || 0} B
-          </Badge>
-          <Badge variant="secondary" className="text-xs">
-            {mealPlan.meals?.filter((m: any) => m.mealType === 'LUNCH').length || 0} L
-          </Badge>
-          <Badge variant="secondary" className="text-xs">
-            {mealPlan.meals?.filter((m: any) => m.mealType === 'DINNER').length || 0} D
-          </Badge>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-2">
+            <Badge variant="outline" className="text-xs">
+              {Math.ceil(mealPlan.duration / 7)} Týdnů
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              {mealPlan.meals?.filter((m: any) => m.mealType === 'BREAKFAST').length || 0} B
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              {mealPlan.meals?.filter((m: any) => m.mealType === 'LUNCH').length || 0} L
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              {mealPlan.meals?.filter((m: any) => m.mealType === 'DINNER').length || 0} D
+            </Badge>
+          </div>
+
+          {/* Testovací tlačítko pro regenerování celého jídelníčku */}
+          {onRegenerateMealPlan && (
+            <Button
+              onClick={onRegenerateMealPlan}
+              disabled={isRegenerating}
+              variant="outline"
+              size="sm"
+              className="ml-2"
+            >
+              {isRegenerating ? (
+                <>
+                  <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                  Regeneruji...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Test - Regenerovat celý jídelníček
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 

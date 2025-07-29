@@ -552,7 +552,7 @@ export async function generateWorkoutWithAI(
    }
 
 
-   export async function generateMealWithAI(day: number, mealType: string, fitnessGoal: string, dietaryRestrictions: string[], preferredCuisines: string[], cookingSkill: string, calories: number, protein: number, carbs: number, fat: number, budgetPerWeek: number, dailyPrepTime: number, avoidRecipeName?: string): Promise<{name: string, description: string, calories: number, protein: number, carbs: number, fat: number, instructions: string, ingredients: any[], prepTime: number, cookTime: number}> {
+   export async function generateMealWithAI(day: number, mealType: string, fitnessGoal: string, dietaryRestrictions: string[], preferredCuisines: string[], cookingSkill: string, calories: number, protein: number, carbs: number, fat: number, budgetPerWeek: number, dailyPrepTime: number, avoidRecipeName?: string, suggestedIngredients?: {protein?: string, carb?: string, veg?: string, fruit?: string}): Promise<{name: string, description: string, calories: number, protein: number, carbs: number, fat: number, instructions: string, ingredients: any[], prepTime: number, cookTime: number}> {
      const openaiClient = new OpenAI({
        apiKey: process.env.OPENAI_API_KEY,
      });
@@ -609,6 +609,37 @@ export async function generateWorkoutWithAI(
    - ${mealTypeGuidance}
    - ${nutritionGuidance}
    ${avoidRecipeName ? `- KRITICKÉ: NEGENERUJ recept "${avoidRecipeName}" - vytvoř úplně jiný recept!` : ''}
+   ${avoidRecipeName ? `- KRITICKÉ: VYHNI SE těmto jídlům: ${avoidRecipeName} - vytvoř úplně jiný recept s jinými surovinami!` : ''}
+   - KRITICKÉ: KAŽDÉ JÍDLO MUSÍ BÝT UNIKÁTNÍ! Používej různé kombinace surovin, různé způsoby přípravy, různé kuchyně
+   - KRITICKÉ: NIKDY neopakuj stejné jídlo nebo velmi podobné jídlo
+   - KRITICKÉ: Používej různé hlavní suroviny a kombinace
+   - KRITICKÉ: Používej různé přílohy a způsoby přípravy
+   - KRITICKÉ: Používej různé zeleniny, ovoce, koření a bylinky
+   - KRITICKÉ: Buď kreativní v kombinacích a způsobech přípravy
+   ${suggestedIngredients ? `- KRITICKÉ: PRO TENTO DEN SE VYHNI těmto surovinám (aby se neopakovaly):
+     * Vyhni se: ${suggestedIngredients.protein || 'kuřecí prsa'} jako hlavní bílkovině
+     * Vyhni se: ${suggestedIngredients.carb || 'ovesné vločky'} jako hlavnímu sacharidu
+     * Vyhni se: ${suggestedIngredients.veg || 'brokolice'} jako hlavní zelenině
+     * Vyhni se: ${suggestedIngredients.fruit || 'jablka'} jako hlavnímu ovoci
+   - KRITICKÉ: Použij JINÉ suroviny než tyto, aby se jídla neopakovala! Buď kreativní a vymysli něco jiného!` : ''}
+
+   KRITICKÉ POŽADAVKY PRO FITNESS STRAVU:
+   - POUŽÍVEJ VYSOKOKVALITNÍ BÍLKOVINY: kuřecí prsa, krůtí prsa, ryby (losos, tuňák, treska, makrela, sardinky, pstruh), vejce, tvaroh, řecký jogurt, proteinový prášek, libové hovězí, králík, tofu, tempeh, seitan, čočka, fazole, cizrna
+   - ZAHRNUJ KOMPLEXNÍ SACHARIDY: ovesné vločky, quinoa, hnědá rýže, celozrnné těstoviny, sladké brambory, pohanka, ječmen, bulgur, celozrnný chléb, kuskus, amarant, teff, proso
+   - POUŽÍVEJ ZDRAVÉ TUKY: avokádo, ořechy (mandle, vlašské, kešu, para, pekanové), semínka (chia, lněná, dýňová, slunečnicová, sezamová), olivový olej, rybí tuk, kokosový olej, arašídové máslo
+   - ZAHRNUJ ZELENINU: brokolice, špenát, kapusta, mrkev, paprika, rajčata, okurka, cuketa, lilek, cibule, česnek, zázvor, kedlubna, celer, řepa, dýně, batáty, chřest, artyčoky, růžičková kapusta
+   - ZAHRNUJ OVOCE: jablka, banány, borůvky, maliny, jahody, pomeranče, kiwi, ananas, mango, hrušky, hrozny, meruňky, broskve, nektarinky, švestky, třešně, višně, rybíz, angrešt
+   - VYHNI SE: rafinovaným cukrům, bílému pečivu, smaženým jídlům, sladkým nápojům, průmyslově zpracovaným potravinám
+   - POUŽÍVEJ RŮZNÉ SUROVINY: Neopakuj stejné ingredience v každém jídle, vytvářej pestrou stravu
+   - BUĎ KREATIVNÍ: Používej různé kombinace, koření, bylinky a způsoby přípravy
+
+   SPECIFICKÉ POŽADAVKY PODLE FITNESS CÍLE:
+   ${fitnessGoal === 'WEIGHT_LOSS' ? '- HUBNUTÍ: Zaměř se na vysoký obsah bílkovin (min 30g na jídlo), nízký obsah sacharidů, hodně zeleniny. Používej libové maso, vejce, tvaroh.' : ''}
+   ${fitnessGoal === 'MUSCLE_GAIN' ? '- NABÍRÁNÍ SVALŮ: Vysoký obsah bílkovin (min 40g na jídlo), střední obsah sacharidů pro energii, zdravé tuky. Používej proteinový prášek, kuřecí prsa, tvaroh, vejce.' : ''}
+   ${fitnessGoal === 'STRENGTH' ? '- SÍLA: Vysoký obsah bílkovin (min 35g na jídlo), komplexní sacharidy pro energii, zdravé tuky. Zaměř se na kvalitní maso, vejce, tvaroh.' : ''}
+   ${fitnessGoal === 'ENDURANCE' ? '- VYTRVALOST: Vyvážený poměr bílkovin a sacharidů, komplexní sacharidy pro energii. Používej ovesné vločky, quinoa, libové maso.' : ''}
+   ${fitnessGoal === 'FLEXIBILITY' ? '- MOBILITA: Lehká, protizánětlivá strava s omega-3 mastnými kyselinami. Ryby, avokádo, ořechy, zelenina.' : ''}
+   ${fitnessGoal === 'GENERAL_FITNESS' ? '- OBECNÁ KONDICE: Vyvážený poměr všech živin, pestrá strava s kvalitními surovinami.' : ''}
 
    Vytvoř chutné, výživné jídlo, které:
    - Podporuje fitness cíl (hubnutí = méně kalorií, nabírání svalů = více bílkovin, atd.)
@@ -620,6 +651,10 @@ export async function generateWorkoutWithAI(
    - Respektuje správné rozložení kalorií během dne (${mealType} = ${(caloriePercentage * 100).toFixed(0)}% denních kalorií)
    ${useNaturalValues ? '- Má přirozené a realistické výživové hodnoty odpovídající typu jídla' : '- Splňuje cílové výživové hodnoty'}
    - Je praktické a proveditelné
+   - POUŽÍVÁ PESTROU STRAVU s různými surovinami (neopakuj stejné ingredience)
+   - VYTVÁŘÍ ROZMANITOST: Každé jídlo má být jiné, používej různé kombinace surovin a způsoby přípravy
+   - RESPEKTUJE DENNÍ ROZLOŽENÍ: Snídaně = lehké, oběd = hlavní jídlo, večeře = lehčí než oběd
+   - BUĎ KREATIVNÍ: Vymysli originální kombinace a recepty, které jsou chutné a výživné
 
    KRITICKÉ: Musíš odpovědět POUZE platným JSON v tomto přesném formátu. Žádný další text, žádná vysvětlení, žádné markdown formátování:
 
@@ -688,7 +723,7 @@ export async function generateWorkoutWithAI(
            messages: [
                        {
                role: "system",
-               content: "Jsi profesionální výživový poradce a kuchař. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - gramy, mililitry, kusy, žádné cups, tablespoons, ounces. KRITICKÉ: VŽDY respektuj časové omezení, rozpočet a správné rozložení kalorií během dne. Snídaně = 25%, Oběd = 40%, Večeře = 35% denních kalorií. Večeře musí být lehčí než oběd. Používej levné, dostupné ingredience a jednoduché recepty, které se dají připravit v daném čase. KDYŽ JSOU ZADÁNY CÍLOVÉ ŽIVINY: Musíš SKUTEČNĚ POČÍTAT živiny z porcí surovin a upravit porce tak, aby celkový součet živin PŘESNĚ odpovídal cílovým hodnotám. Používej reálné živiny surovin a správně počítej: množství v gramech × živiny na 100g ÷ 100. KRITICKÉ: Součet živin všech surovin musí být PŘESNĚ roven cílovým hodnotám - ne méně, ne více! NIKDY neodhaduj živiny - vždy je počítej z porcí surovin! KRITICKÉ: Název jídla musí odpovídat surovinám - pokud je v názvu proteinové, musí obsahovat dostatek bílkovin. Všechny suroviny z názvu musí být v ingrediencích!"
+               content: "Jsi profesionální výživový poradce a fitness trenér. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - gramy, mililitry, kusy, žádné cups, tablespoons, ounces. KRITICKÉ: VŽDY respektuj časové omezení, rozpočet a správné rozložení kalorií během dne. Snídaně = 25%, Oběd = 40%, Večeře = 35% denních kalorií. Večeře musí být lehčí než oběd. Používej levné, dostupné ingredience a jednoduché recepty, které se dají připravit v daném čase. KDYŽ JSOU ZADÁNY CÍLOVÉ ŽIVINY: Musíš SKUTEČNĚ POČÍTAT živiny z porcí surovin a upravit porce tak, aby celkový součet živin PŘESNĚ odpovídal cílovým hodnotám. Používej reálné živiny surovin a správně počítej: množství v gramech × živiny na 100g ÷ 100. KRITICKÉ: Součet živin všech surovin musí být PŘESNĚ roven cílovým hodnotám - ne méně, ne více! NIKDY neodhaduj živiny - vždy je počítej z porcí surovin! KRITICKÉ: Název jídla musí odpovídat surovinám - pokud je v názvu proteinové, musí obsahovat dostatek bílkovin. Všechny suroviny z názvu musí být v ingrediencích! KRITICKÉ: VŽDY vytvářej FITNESS JÍDLA bohatá na bílkoviny, používej kvalitní suroviny, vyhni se nezdravým potravinám. Vytvářej pestrou stravu s různými surovinami! BUĎ KREATIVNÍ a vymysli originální kombinace!"
              },
                { role: "user", content: prompt }
              ],
@@ -856,7 +891,7 @@ export async function generateWorkoutWithAI(
              { role: "user", content: prompt }
            ],
            temperature: 0.3, // Low temperature for consistent calculations
-           max_tokens: 500,
+           max_tokens: 1500,
          });
 
          const content = completion.choices[0]?.message?.content;
@@ -929,14 +964,14 @@ export async function generateWorkoutWithAI(
 
 
 
-     type GenerateFitnessPlanEvent = {
-       name: "generate-fitness-plan/run";
-       data: {
-         assessmentData: any;
-         userId: string;
-         workoutPlanId: string;
-       };
-     };
+           type GenerateFitnessPlanEvent = {
+        name: "generate-fitness-plan/run";
+        data: {
+          assessmentData: any;
+          userId: string;
+          workoutPlanId: string | null;
+        };
+      };
 
      export const generateFitnessPlanFunction = inngest.createFunction(
        { id: "generate-fitness-plan" },
@@ -957,6 +992,7 @@ export async function generateWorkoutWithAI(
                where: { id: userId }
              });
 
+             console.log(userId, "userIduserIduserId")
              if (!existingUser) {
                console.log("Creating user in database:", userId);
                await prisma.user.create({
@@ -966,8 +1002,7 @@ export async function generateWorkoutWithAI(
                console.log("User already exists in database:", userId);
              }
            });
-
-           // Get the existing fitness profile and workout plan
+           // Get the existing fitness profile
            const fitnessProfile = await step.run("get-fitness-profile", async () => {
              const profile = await prisma.fitnessProfile.findUnique({
                where: { userId },
@@ -984,18 +1019,41 @@ export async function generateWorkoutWithAI(
              return profile;
            });
 
-           // Get the existing workout plan
-           const workoutPlan = await step.run("get-workout-plan", async () => {
-             const plan = await prisma.workoutPlan.findUnique({
-               where: { id: workoutPlanId }
-             });
+           // Get or create the workout plan
+           const workoutPlan = await step.run("get-or-create-workout-plan", async () => {
+             if (workoutPlanId) {
+               // Try to find existing workout plan
+               const plan = await prisma.workoutPlan.findUnique({
+                 where: { id: workoutPlanId }
+               });
 
-             if (!plan) {
-               throw new Error("Workout plan not found");
+               if (!plan) {
+                 throw new Error("Workout plan not found");
+               }
+
+               console.log("Using existing workout plan:", plan.id);
+               return plan;
+             } else {
+               // Create new workout plan
+               const newPlan = await prisma.workoutPlan.create({
+                 data: {
+                   fitnessProfileId: fitnessProfile.id,
+                   name: "Generování...",
+                   description: "Váš personalizovaný fitness plán se připravuje",
+                   duration: 8,
+                   difficulty: assessmentData.experienceLevel || "BEGINNER"
+                 }
+               });
+
+               console.log("Created new workout plan:", newPlan.id);
+               return newPlan;
              }
+           });
 
-             console.log("Using existing workout plan:", plan.id);
-             return plan;
+           console.log("Workout plan ready for use:", {
+             id: workoutPlan.id,
+             name: workoutPlan.name,
+             fitnessProfileId: workoutPlan.fitnessProfileId
            });
 
            // Generate workout plan details using AI
@@ -1019,10 +1077,10 @@ export async function generateWorkoutWithAI(
                - Has Injuries: ${assessmentData.hasInjuries}
                - Injuries: ${assessmentData.injuries || 'None'}
                - Medical Conditions: ${assessmentData.medicalConditions || 'None'}
-               - Available Days: ${assessmentData.availableDays.join(', ')}
-               - Workout Duration: ${assessmentData.workoutDuration} minutes
-               - Preferred Exercises: ${assessmentData.preferredExercises || 'None specified'}
-               - Available Equipment: ${assessmentData.equipment.join(', ')}
+                               - Available Days: ${assessmentData.availableDays?.join(', ') || 'None'}
+                - Workout Duration: ${assessmentData.workoutDuration || 'Not specified'} minutes
+                - Preferred Exercises: ${assessmentData.preferredExercises || 'None specified'}
+                - Available Equipment: ${assessmentData.equipment?.join(', ') || 'None'}
 
                DŮLEŽITÉ: Vygeneruj pouze přehledový popis 8-týdenního tréninkového plánu. NEGENERUJ konkrétní cviky, série, opakování nebo technické detaily - ty se generují automaticky pro každý trénink zvlášť. Zaměř se na:
                - Obecný přehled plánu a jeho cíle
@@ -1033,7 +1091,7 @@ export async function generateWorkoutWithAI(
              `;
 
              const completion = await openaiClient.chat.completions.create({
-               model: "gpt-4o",
+               model: "gpt-4o-mini",
                messages: [
                  { role: "system", content: PLAN_GENERATION_PROMPT },
                  { role: "user", content: assessmentPrompt }
@@ -1086,14 +1144,26 @@ export async function generateWorkoutWithAI(
 
            // Generate workouts for each week using AI (optimized to reduce API calls)
            await step.run("generate-workouts", async () => {
-             const availableDays = assessmentData.availableDays;
+             console.log("Starting workout generation step...");
+
+             // Parse availableDays - it might be a JSON string from the database
+             let availableDays = assessmentData.availableDays;
+             if (typeof availableDays === 'string') {
+               try {
+                 availableDays = JSON.parse(availableDays);
+               } catch (error) {
+                 console.error('Failed to parse availableDays:', error);
+                 throw new Error(`Failed to parse availableDays: ${availableDays}`);
+               }
+             }
+
              const workoutDuration = parseInt(assessmentData.workoutDuration);
 
+             console.log(`Available days:`, availableDays);
+             console.log(`Generating ${availableDays.length} workout templates for days: ${availableDays.join(', ')}`);
 
              // Generate workout templates for each day (only once, not per week)
              const workoutTemplates: { [day: string]: any } = {};
-
-             console.log(`Generating ${availableDays.length} workout templates for days: ${availableDays.join(', ')}`);
 
              for (let dayIndex = 0; dayIndex < availableDays.length; dayIndex++) {
                const day = availableDays[dayIndex];
@@ -1120,7 +1190,7 @@ export async function generateWorkoutWithAI(
                );
 
                workoutTemplates[day] = aiWorkout;
-               console.log(`Generated template for ${day}: ${aiWorkout.name}`);
+               console.log(`Generated template for ${day}: ${aiWorkout.name} with ${aiWorkout.exercises?.length || 0} exercises`);
              }
 
                      // Create workouts for each week using the templates
@@ -1152,6 +1222,8 @@ export async function generateWorkoutWithAI(
                      workoutPlanId: workoutPlan.id,
                    },
                  });
+
+                 console.log(`Created workout: ${workout.name} (ID: ${workout.id}) for plan ${workoutPlan.id} with ${template.exercises?.length || 0} exercises`);
 
                  // Process exercises with many-to-many relationship
                  for (const exercise of template.exercises) {
@@ -1232,9 +1304,31 @@ export async function generateWorkoutWithAI(
                where: { workoutPlanId: workoutPlan.id }
              });
              console.log(`Total workouts in database for plan ${workoutPlan.id}: ${workoutCount}`);
+
+             // Verify the workout plan has workouts
+             const finalWorkoutPlan = await prisma.workoutPlan.findUnique({
+               where: { id: workoutPlan.id },
+               include: {
+                 workouts: {
+                   include: {
+                     workoutExercises: {
+                       include: {
+                         exercise: true
+                       }
+                     }
+                   }
+                 }
+               }
+             });
+             console.log(`Final workout plan state:`, {
+               id: finalWorkoutPlan?.id,
+               name: finalWorkoutPlan?.name,
+               workoutCount: finalWorkoutPlan?.workouts?.length || 0,
+               totalExercises: finalWorkoutPlan?.workouts?.reduce((total, w) => total + (w.workoutExercises?.length || 0), 0) || 0
+             });
            });
 
-           // Calculate nutrition requirements using scientific formulas
+                      // Calculate nutrition requirements using scientific formulas
            const nutritionRequirements = await step.run("calculate-nutrition-requirements", async () => {
              try {
                const result = calculateNutritionTargets({
@@ -1313,147 +1407,146 @@ export async function generateWorkoutWithAI(
                  },
                });
 
-               // Generate meal templates using AI (optimized to reduce API calls)
+               // Generate meals with variety for each day
                const mealTypes = ['BREAKFAST', 'LUNCH', 'DINNER'];
-               const mealTemplates: { [mealType: string]: any } = {};
                const mealPromises: Promise<any>[] = [];
 
-               console.log(`Generating ${mealTypes.length} meal templates for types: ${mealTypes.join(', ')}`);
+                              // TESTING: Nastav počet dní pro generování
+               // TESTING_DAYS = 2: Generuje 2 dny - velmi rychlé testování
+               // TESTING_DAYS = 7: Generuje 1 týden - rychlé testování
+               // TESTING_DAYS = 14: Generuje 2 týdny - střední testování
+               // TESTING_DAYS = 28: Generuje 4 týdny - téměř plný měsíc
+               // TESTING_DAYS = 0: Generuje plný měsíc (30 dní) - produkční režim
+               const TESTING_DAYS = 2; // Změň podle potřeby testování
+               const totalDays = TESTING_DAYS > 0 ? TESTING_DAYS : 30;
+
+               console.log(`Generating unique meals for ${totalDays} days (${TESTING_DAYS > 0 ? TESTING_DAYS + ' days' : 'full month'}) with types: ${mealTypes.join(', ')}`);
 
                // PŘED GENEROVÁNÍM MEAL TEMPLATES
                console.log('DEBUG: nutritionRequirements před generováním jídel:', nutritionRequirements);
 
-               // Generate meal templates (only once per meal type)
-               for (const mealType of mealTypes) {
-                 // Calculate target nutrition for this meal type based on daily requirements
-                 let targetCalories = 0;
-                 let targetProtein = 0;
-                 let targetCarbs = 0;
-                 let targetFat = 0;
+                         // Create meals for each day with variety - generate different meals for each day
+               console.log(`Creating meals for ${totalDays} days with variety...`);
 
-                 switch (mealType) {
-                   case 'BREAKFAST':
-                     targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.25);
-                     targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.25 * 10) / 10;
-                     targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.25 * 10) / 10;
-                     targetFat = Math.round(nutritionRequirements.fatPerDay * 0.25 * 10) / 10;
-                     break;
-                   case 'LUNCH':
-                     targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.40);
-                     targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.40 * 10) / 10;
-                     targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.40 * 10) / 10;
-                     targetFat = Math.round(nutritionRequirements.fatPerDay * 0.40 * 10) / 10;
-                     break;
-                   case 'DINNER':
-                     targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.35);
-                     targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.35 * 10) / 10;
-                     targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.35 * 10) / 10;
-                     targetFat = Math.round(nutritionRequirements.fatPerDay * 0.35 * 10) / 10;
-                     break;
-                 }
+               // Track used meal names to avoid repetition
+               const usedMealNames: { [key: string]: string[] } = { BREAKFAST: [], LUNCH: [], DINNER: [] };
 
-                 console.log('DEBUG: Generuji meal s cíli:', { mealType, targetCalories, targetProtein, targetCarbs, targetFat });
+               // Arrays for rotating ingredients to ensure variety
+               const proteinSources = ['kuřecí prsa', 'krůtí prsa', 'losos', 'tuňák', 'treska', 'vejce', 'tvaroh', 'libové hovězí', 'tofu', 'tempeh', 'králík', 'proteinový prášek'];
+               const carbSources = ['ovesné vločky', 'quinoa', 'hnědá rýže', 'celozrnné těstoviny', 'sladké brambory', 'pohanka', 'ječmen', 'bulgur', 'celozrnný chléb'];
+               const vegetables = ['brokolice', 'špenát', 'kapusta', 'mrkev', 'paprika', 'rajčata', 'okurka', 'cuketa', 'lilek', 'cibule', 'česnek', 'zázvor', 'kedlubna', 'celer'];
+               const fruits = ['jablka', 'banány', 'borůvky', 'maliny', 'jahody', 'pomeranče', 'kiwi', 'ananas', 'mango', 'hrušky', 'hrozny'];
 
-                 // Generate meal template using AI with target nutrition values
-                 const aiMeal = await generateMealWithAI(
-                   1, // Use day 1 as template
-                   mealType,
-                   fitnessProfile.fitnessGoal || 'GENERAL_FITNESS',
-                   assessmentData.dietaryRestrictions,
-                   assessmentData.preferredCuisines,
-                   assessmentData.cookingSkill,
-                   targetCalories,
-                   targetProtein,
-                   targetCarbs,
-                   targetFat,
-                   assessmentData.budgetPerWeek,
-                   parseInt(assessmentData.mealPrepTime)
-                 );
-
-                 mealTemplates[mealType] = aiMeal;
-                 console.log(`Generated template for ${mealType}: ${aiMeal.name} (${aiMeal.calories} cal, ${aiMeal.protein}g protein, ${aiMeal.carbs}g carbs, ${aiMeal.fat}g fat)`);
-                 console.log(`Target for ${mealType}: ${targetCalories} cal, ${targetProtein}g protein, ${targetCarbs}g carbs, ${targetFat}g fat`);
-               }
-
-               // Calculate total daily nutrition from all meals
-               const totalDailyCalories = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.calories, 0);
-               const totalDailyProtein = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.protein, 0);
-               const totalDailyCarbs = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.carbs, 0);
-               const totalDailyFat = Object.values(mealTemplates).reduce((sum: number, meal: any) => sum + meal.fat, 0);
-
-               console.log(`Total daily nutrition from meals: ${totalDailyCalories} cal, ${totalDailyProtein}g protein, ${totalDailyCarbs}g carbs, ${totalDailyFat}g fat`);
-               console.log(`Target daily nutrition: ${nutritionRequirements.caloriesPerDay} cal, ${nutritionRequirements.proteinPerDay}g protein, ${nutritionRequirements.carbsPerDay}g carbs, ${nutritionRequirements.fatPerDay}g fat`);
-
-               // Calculate overall portion multiplier to match daily targets
-               const overallCalorieMultiplier = nutritionRequirements.caloriesPerDay / totalDailyCalories;
-               const overallProteinMultiplier = nutritionRequirements.proteinPerDay / totalDailyProtein;
-               const overallCarbsMultiplier = nutritionRequirements.carbsPerDay / totalDailyCarbs;
-               const overallFatMultiplier = nutritionRequirements.fatPerDay / totalDailyFat;
-
-               console.log(`Overall multipliers: calories=${overallCalorieMultiplier.toFixed(2)}, protein=${overallProteinMultiplier.toFixed(2)}, carbs=${overallCarbsMultiplier.toFixed(2)}, fat=${overallFatMultiplier.toFixed(2)}`);
-
-               // Adjust all meals to match daily targets
-               for (const mealType of mealTypes) {
-                 const meal = mealTemplates[mealType];
-
-                 // Adjust nutrition values to match daily targets
-                 meal.calories = Math.round(meal.calories * overallCalorieMultiplier);
-                 meal.protein = Math.round(meal.protein * overallProteinMultiplier * 10) / 10;
-                 meal.carbs = Math.round(meal.carbs * overallCarbsMultiplier * 10) / 10;
-                 meal.fat = Math.round(meal.fat * overallFatMultiplier * 10) / 10;
-
-                 // Adjust ingredient amounts based on calorie multiplier (most important for portion size)
-                 meal.ingredients = meal.ingredients.map((ingredient: any) => ({
-                   ...ingredient,
-                   amount: (parseFloat(ingredient.amount) * overallCalorieMultiplier).toFixed(1)
-                 }));
-
-                 console.log(`Adjusted ${mealType}: ${meal.calories} cal, ${meal.protein}g protein, ${meal.carbs}g carbs, ${meal.fat}g fat`);
-               }
-
-                         // Create meals for each day using the templates
-               console.log(`Creating meals for 30 days with proper week/day structure...`);
-
-               for (let day = 1; day <= 30; day++) {
+               for (let day = 1; day <= totalDays; day++) {
                  // Calculate week number
                  const weekNumber = Math.ceil(day / 7);
 
                  console.log(`Day ${day}: Week ${weekNumber}`);
 
                  for (const mealType of mealTypes) {
-                   const template = mealTemplates[mealType];
+                   // Calculate target nutrition for this meal type
+                   let targetCalories = 0;
+                   let targetProtein = 0;
+                   let targetCarbs = 0;
+                   let targetFat = 0;
+
+                   switch (mealType) {
+                     case 'BREAKFAST':
+                       targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.25);
+                       targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.25 * 10) / 10;
+                       targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.25 * 10) / 10;
+                       targetFat = Math.round(nutritionRequirements.fatPerDay * 0.25 * 10) / 10;
+                       break;
+                     case 'LUNCH':
+                       targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.40);
+                       targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.40 * 10) / 10;
+                       targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.40 * 10) / 10;
+                       targetFat = Math.round(nutritionRequirements.fatPerDay * 0.40 * 10) / 10;
+                       break;
+                     case 'DINNER':
+                       targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.35);
+                       targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.35 * 10) / 10;
+                       targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.35 * 10) / 10;
+                       targetFat = Math.round(nutritionRequirements.fatPerDay * 0.35 * 10) / 10;
+                       break;
+                   }
+
+                   // Generate unique meal for this day and meal type
+                                  // Track ingredients to avoid repetition
+               const dayIndex = day - 1;
+               const proteinIndex = dayIndex % proteinSources.length;
+               const carbIndex = dayIndex % carbSources.length;
+               const vegIndex = dayIndex % vegetables.length;
+               const fruitIndex = dayIndex % fruits.length;
+
+               const avoidProtein = proteinSources[proteinIndex];
+               const avoidCarb = carbSources[carbIndex];
+               const avoidVeg = vegetables[vegIndex];
+               const avoidFruit = fruits[fruitIndex];
+
+               console.log(`Day ${day}, ${mealType}: Avoid these ingredients - Protein: ${avoidProtein}, Carb: ${avoidCarb}, Veg: ${avoidVeg}, Fruit: ${avoidFruit}`);
+
+                   const aiMeal = await generateMealWithAI(
+                     day,
+                     mealType,
+                     fitnessProfile.fitnessGoal || 'GENERAL_FITNESS',
+                     assessmentData.dietaryRestrictions,
+                     assessmentData.preferredCuisines,
+                     assessmentData.cookingSkill,
+                     targetCalories,
+                     targetProtein,
+                     targetCarbs,
+                     targetFat,
+                     assessmentData.budgetPerWeek,
+                     parseInt(assessmentData.mealPrepTime),
+                     usedMealNames[mealType].join(', '), // Avoid previously used meal names
+                     {
+                       protein: avoidProtein,
+                       carb: avoidCarb,
+                       veg: avoidVeg,
+                       fruit: avoidFruit
+                     }
+                   );
+
+                   // Verify that we got a unique meal name
+                   if (usedMealNames[mealType].includes(aiMeal.name)) {
+                     console.warn(`WARNING: Duplicate meal name generated for ${mealType}: ${aiMeal.name}`);
+                   }
+
+                   // Add to used names to avoid repetition
+                   usedMealNames[mealType].push(aiMeal.name);
 
                    const mealPromise = prisma.meal.create({
                      data: {
-                       name: `Day ${day} - ${template.name}`,
-                       description: template.description,
+                       name: `Day ${day} - ${aiMeal.name}`,
+                       description: aiMeal.description,
                        mealType: mealType as any,
                        dayOfWeek: day, // Use actual day number (1-30), not day of week (0-6)
                        weekNumber: weekNumber,
-                       calories: template.calories,
-                       protein: template.protein,
-                       carbs: template.carbs,
-                       fat: template.fat,
-                       prepTime: template.prepTime,
-                       cookTime: template.cookTime,
+                       calories: aiMeal.calories,
+                       protein: aiMeal.protein,
+                       carbs: aiMeal.carbs,
+                       fat: aiMeal.fat,
+                       prepTime: aiMeal.prepTime,
+                       cookTime: aiMeal.cookTime,
                        servings: 1,
                        mealPlanId: mealPlan.id,
                        recipes: {
                          create: {
-                           name: `Day ${day} - ${template.name}`,
-                           description: template.description,
-                           instructions: template.instructions,
-                           ingredients: JSON.stringify(template.ingredients),
+                           name: `Day ${day} - ${aiMeal.name}`,
+                           description: aiMeal.description,
+                           instructions: aiMeal.instructions,
+                           ingredients: JSON.stringify(aiMeal.ingredients),
                            nutrition: JSON.stringify({
-                             calories: template.calories,
-                             protein: template.protein,
-                             carbs: template.carbs,
-                             fat: template.fat,
+                             calories: aiMeal.calories,
+                             protein: aiMeal.protein,
+                             carbs: aiMeal.carbs,
+                             fat: aiMeal.fat,
                              fiber: Math.floor(Math.random() * 8) + 3,
                              sugar: Math.floor(Math.random() * 15) + 5
                            }),
-                                               prepTime: template.prepTime,
-                         cookTime: template.cookTime,
+                           prepTime: aiMeal.prepTime,
+                           cookTime: aiMeal.cookTime,
                            servings: 1,
                            difficulty: assessmentData.cookingSkill,
                            cuisine: assessmentData.preferredCuisines[day % assessmentData.preferredCuisines.length] || "american",
@@ -1465,11 +1558,11 @@ export async function generateWorkoutWithAI(
 
                    // Add debug logging for nutrition values
                    console.log(`Creating meal for Day ${day}, ${mealType}:`, {
-                     name: `Day ${day} - ${template.name}`,
-                     calories: template.calories,
-                     protein: template.protein,
-                     carbs: template.carbs,
-                     fat: template.fat
+                     name: `Day ${day} - ${aiMeal.name}`,
+                     calories: aiMeal.calories,
+                     protein: aiMeal.protein,
+                     carbs: aiMeal.carbs,
+                     fat: aiMeal.fat
                    });
 
                    mealPromises.push(mealPromise);
@@ -1478,7 +1571,7 @@ export async function generateWorkoutWithAI(
 
                // Wait for all meals to be created
                const createdMeals = await Promise.all(mealPromises);
-               console.log(`Created ${createdMeals.length} meals using ${mealTypes.length} AI-generated templates for meal plan ${mealPlan.id}`);
+               console.log(`Created ${createdMeals.length} unique meals for meal plan ${mealPlan.id}`);
 
                // Update the fitness profile to point to the new current meal plan
                await prisma.fitnessProfile.update({
@@ -1495,6 +1588,27 @@ export async function generateWorkoutWithAI(
                return mealPlan;
              });
            }
+
+           // Update the fitness profile to set the current workout plan (always do this)
+           await step.run("update-fitness-profile", async () => {
+             await prisma.fitnessProfile.update({
+               where: { id: fitnessProfile.id },
+               data: { currentPlan: { connect: { id: workoutPlan.id } } }
+             });
+             console.log(`Updated fitness profile ${fitnessProfile.id} to set current plan to ${workoutPlan.id}`);
+           });
+
+           // Set the workout plan as active after successful generation
+           await step.run("activate-workout-plan", async () => {
+             await prisma.workoutPlan.update({
+               where: { id: workoutPlan.id },
+               data: {
+                 isActive: true,
+                 activeProfileId: fitnessProfile.id,
+               }
+             });
+             console.log(`Activated workout plan ${workoutPlan.id} - set isActive to true`);
+           });
 
            // Create fitness plan project and success message
            await step.run("create-fitness-project", async () => {
@@ -1522,6 +1636,8 @@ export async function generateWorkoutWithAI(
              userId,
              fitnessProfileId: fitnessProfile.id
            });
+
+           console.log("All steps completed, returning success...");
 
            return {
              success: true,
