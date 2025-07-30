@@ -6,7 +6,7 @@ import { WorkoutPlan } from "./types";
 
 interface StatsOverviewProps {
   currentWeek: number;
-  workoutPlan: WorkoutPlan;
+  workoutPlan: WorkoutPlan | undefined | null;
   weekProgress: number;
   currentWeekWorkouts: any[];
 }
@@ -25,6 +25,69 @@ export function StatsOverview({
   weekProgress,
   currentWeekWorkouts
 }: StatsOverviewProps) {
+  // Show loading state if workout plan is not available yet
+  if (!workoutPlan || workoutPlan === null) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-l-4 border-l-green-500">
+          <CardContent className="p-6 pl-10 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+                <Activity className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Aktuální týden</p>
+                <p className="text-2xl font-bold">Generování...</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-blue-500">
+          <CardContent className="p-6 pl-10 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Průběh týdne</p>
+                <p className="text-2xl font-bold">-</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-purple-500">
+          <CardContent className="p-6 pl-10 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+                <Dumbbell className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Tréninky tento týden</p>
+                <p className="text-2xl font-bold">-</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-orange-500">
+          <CardContent className="p-6 pl-10 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Prům. doba trvání</p>
+                <p className="text-2xl font-bold">-</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <Card className={`border-l-4 border-l-green-500 ${borderGlow.green}`}>

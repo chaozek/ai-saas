@@ -9,7 +9,7 @@ import { WorkoutCard } from "./workout-card";
 import { WorkoutPlan } from "./types";
 
 interface WorkoutsTabProps {
-  workoutPlan: WorkoutPlan;
+  workoutPlan: WorkoutPlan | undefined | null;
   shouldShowLoading: boolean | null | undefined;
   isDemoMode?: boolean;
 }
@@ -26,6 +26,27 @@ export function WorkoutsTab({ workoutPlan, shouldShowLoading, isDemoMode = false
     const weekWorkouts = getCurrentWeekWorkouts();
     return weekWorkouts.length > 0 ? 0 : 0; // For now, return 0 progress
   };
+
+  // Show loading state if workout plan is not available yet
+  if (!workoutPlan || workoutPlan === null) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+          <h3 className="text-lg font-medium">
+            Generuji tréninkový plán...
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Vytvářím personalizované tréninky pro vaše fitness cíle
+          </p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+            <span>Může to trvat několik minut</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (shouldShowLoading) {
     return (

@@ -6,7 +6,7 @@ import { Trophy } from "lucide-react";
 import { WorkoutPlan } from "./types";
 
 interface PlanOverviewProps {
-  workoutPlan: WorkoutPlan;
+  workoutPlan: WorkoutPlan | undefined | null;
 }
 
 export function PlanOverview({ workoutPlan }: PlanOverviewProps) {
@@ -18,6 +18,28 @@ export function PlanOverview({ workoutPlan }: PlanOverviewProps) {
       default: return difficulty;
     }
   };
+
+  if (!workoutPlan || workoutPlan === null) {
+    return (
+      <Card className="border-2 border-border">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Trophy className="w-6 h-6 text-yellow-500" />
+                Generování plánu...
+              </CardTitle>
+              <CardDescription className="text-base">Váš personalizovaný fitness plán se právě vytváří pomocí AI.</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-sm">-</Badge>
+              <Badge variant="outline" className="text-sm">-</Badge>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-2 border-border">

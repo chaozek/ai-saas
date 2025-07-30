@@ -105,7 +105,16 @@ export function MealsTab({
       }, 120000);
     },
     onError: (error: any) => {
-      toast.error(error.message || "Nepodařilo se povolit jídelní plánování. Zkuste to prosím znovu.");
+      // Zobraz konkrétní chybovou zprávu pouze pokud se nejedná o úspěšné spuštění
+      const errorMessage = error.message || "Nepodařilo se povolit jídelní plánování. Zkuste to prosím znovu.";
+
+      // Pokud se jedná o úspěšné spuštění Inngest funkce, nezobrazuj chybu
+      if (errorMessage.includes("Meal planning enabled and meal plan generation started") || errorMessage.includes("success")) {
+        console.log("Meal planning enabled and generation started successfully");
+        return;
+      }
+
+      toast.error(errorMessage);
       setGeneratingMealPlan(false);
       console.error("Meal planning enable error:", error);
     }
@@ -120,63 +129,18 @@ export function MealsTab({
       queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
       queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
 
-      // Start polling for updates and errors
-      const interval = setInterval(async () => {
-        try {
-          // Check for error projects using TRPC
-          const projects = await queryClient.fetchQuery(trpc.projects.getmany.queryOptions());
 
-          // Check for error messages
-          const errorProject = projects?.find((p: any) =>
-            p.name?.includes('Error') &&
-            p.messages?.some((m: any) => m.type === 'ERROR')
-          );
-
-          if (errorProject) {
-            const errorMessage = errorProject.messages.find((m: any) => m.type === 'ERROR')?.content;
-            if (errorMessage) {
-              toast.error(errorMessage);
-              clearInterval(interval);
-              setGeneratingMealPlan(false);
-              return;
-            }
-          }
-
-          // Check if meal plan has been generated with meals
-          // Použijeme invalidateQueries místo fetchQuery pro fresh data
-          queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
-          queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
-
-          // Počkáme chvilku a pak zkontrolujeme fresh data
-          setTimeout(async () => {
-            try {
-              const currentMealPlan = await queryClient.fetchQuery(trpc.fitness.getCurrentMealPlan.queryOptions());
-              if (currentMealPlan && currentMealPlan.meals && currentMealPlan.meals.length > 0) {
-                // Meal plan has been generated successfully
-                toast.success("Jídelní plán byl úspěšně vygenerován!");
-                clearInterval(interval);
-                setGeneratingMealPlan(false);
-                return;
-              }
-            } catch (error) {
-              console.error("Error checking meal plan:", error);
-            }
-          }, 1000); // Počkáme 1 sekundu po invalidaci
-        } catch (error) {
-          console.error("Error polling for updates:", error);
-        }
-      }, 3000); // Check every 3 seconds
-
-      // Stop polling after 2 minutes
-      setTimeout(() => {
-        clearInterval(interval);
-        setGeneratingMealPlan(false);
-        toast.error("Generování jídelního plánu trvalo příliš dlouho. Zkuste to prosím znovu.");
-      }, 120000);
     },
     onError: (error: any) => {
-      // Zobraz konkrétní chybovou zprávu
+      // Zobraz konkrétní chybovou zprávu pouze pokud se nejedná o úspěšné spuštění
       const errorMessage = error.message || "Nepodařilo se vygenerovat jídelní plán. Zkuste to prosím znovu.";
+
+      // Pokud se jedná o úspěšné spuštění Inngest funkce, nezobrazuj chybu
+      if (errorMessage.includes("Meal plan generation started") || errorMessage.includes("success")) {
+        console.log("Meal plan generation started successfully");
+        return;
+      }
+
       toast.error(errorMessage);
       setGeneratingMealPlan(false);
       console.error("Meal plan generation error:", error);
@@ -405,15 +369,15 @@ export function MealsTab({
   }
 
   // Check if meal plan is still generating - this should be checked FIRST
-  // Přidáme kontrolu, zda meal plan existuje ale nemá jídla (stále se generuje)
   // V demo režimu nepoužíváme loading stav
-  const isMealPlanGenerating = !isDemoMode && (
+  // Only show loading if meal planning is enabled
+  const isMealPlanGenerating = !isDemoMode && fitnessProfile?.mealPlanningEnabled && (
     generatingMealPlan ||
     shouldShowLoading ||
     (currentMealPlanLoading && !currentMealPlan) ||
-    (mealPlan && (!mealPlan.meals || mealPlan.meals.length === 0))
+    (mealPlan && mealPlan.isActive === false)
   );
-
+console.log(fitnessProfile, "fitnessProfile")
   if (isMealPlanGenerating) {
     return (
       <div className="space-y-4">
@@ -466,6 +430,36 @@ export function MealsTab({
   }
 
   if (!mealPlan) {
+    // If meal planning is not enabled, show message about enabling it
+    if (!fitnessProfile?.mealPlanningEnabled) {
+      return (
+        <div className="text-center space-y-4 py-8">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+            <Calendar className="w-8 h-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-bold">Jídelní plánování není povoleno</h2>
+          <p className="text-muted-foreground max-w-md mx-auto text-sm">
+            Pro vygenerování jídelního plánu musíte nejprve povolit jídelní plánování ve vašem fitness profilu.
+          </p>
+          <Button
+            onClick={handleGenerateMealPlan}
+            disabled={generatingMealPlan}
+            className="mt-4"
+          >
+            {generatingMealPlan ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Povoluji...
+              </>
+            ) : (
+              "Povolit jídelní plánování"
+            )}
+          </Button>
+        </div>
+      );
+    }
+
+    // If meal planning is enabled but no meal plan exists
     return (
       <div className="text-center space-y-4 py-8">
         <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">

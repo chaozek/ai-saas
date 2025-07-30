@@ -1084,10 +1084,12 @@ export const fitnessRouter = createTRPCRouter({
         });
 
         if (!fitnessProfile) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Fitness profile not found",
-          });
+          // If no fitness profile exists, that's fine - it means this is a new user
+          console.log('No fitness profile found for user:', ctx.auth.userId, '- this is normal for new users');
+          return {
+            success: true,
+            message: "No current plan to remove (new user)",
+          };
         }
 
         // Simply set isActive to false for the current plan
@@ -1391,6 +1393,21 @@ export const fitnessRouter = createTRPCRouter({
           message: `Failed to generate invoice: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
       }
-    })
+    }),
+
+  disableMealPlanning: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const fitnessProfile = await prisma.fitnessProfile.findUnique({
+        where: { userId: ctx.auth.userId },
+      });
+      if (!fitnessProfile) {
+        return { success: true, message: "No fitness profile to update" };
+      }
+      await prisma.fitnessProfile.update({
+        where: { id: fitnessProfile.id },
+        data: { mealPlanningEnabled: false },
+      });
+      return { success: true };
+    }),
 
 });

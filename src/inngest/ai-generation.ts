@@ -1004,7 +1004,7 @@ export async function generateWorkoutWithAI(
            });
            // Get the existing fitness profile
            const fitnessProfile = await step.run("get-fitness-profile", async () => {
-             const profile = await prisma.fitnessProfile.findUnique({
+             let profile = await prisma.fitnessProfile.findUnique({
                where: { userId },
                include: {
                  currentPlan: true
@@ -1012,10 +1012,44 @@ export async function generateWorkoutWithAI(
              });
 
              if (!profile) {
-               throw new Error("Fitness profile not found");
+               // Create fitness profile from assessment data
+               console.log("Creating new fitness profile for user:", userId);
+               profile = await prisma.fitnessProfile.create({
+                 data: {
+                   userId: userId,
+                   gender: assessmentData.gender || 'male',
+                   fitnessGoal: assessmentData.fitnessGoal || 'GENERAL_FITNESS',
+                   age: parseInt(assessmentData.age) || 25,
+                   weight: parseFloat(assessmentData.weight) || 70,
+                   height: parseFloat(assessmentData.height) || 170,
+                   targetWeight: parseFloat(assessmentData.targetWeight) || parseFloat(assessmentData.weight) || 70,
+                   experienceLevel: assessmentData.experienceLevel || 'BEGINNER',
+                   activityLevel: assessmentData.activityLevel || 'MODERATELY_ACTIVE',
+                   targetMuscleGroups: assessmentData.targetMuscleGroups || [],
+                   hasInjuries: assessmentData.hasInjuries || false,
+                   injuries: assessmentData.injuries || '',
+                   medicalConditions: assessmentData.medicalConditions || '',
+                   availableDays: JSON.stringify(assessmentData.availableDays || ['Pondělí', 'Středa', 'Pátek']),
+                   workoutDuration: parseInt(assessmentData.workoutDuration) || 45,
+                   preferredExercises: assessmentData.preferredExercises || '',
+                   equipment: JSON.stringify(assessmentData.equipment || ['Činky']),
+                   mealPlanningEnabled: assessmentData.mealPlanningEnabled || false,
+                   dietaryRestrictions: assessmentData.dietaryRestrictions || [],
+                   allergies: assessmentData.allergies || [],
+                   budgetPerWeek: parseFloat(assessmentData.budgetPerWeek) || 1000,
+                   mealPrepTime: parseInt(assessmentData.mealPrepTime) || 30,
+                   preferredCuisines: assessmentData.preferredCuisines || ['česká'],
+                   cookingSkill: assessmentData.cookingSkill || 'BEGINNER',
+                 },
+                 include: {
+                   currentPlan: true
+                 }
+               });
+               console.log("Created new fitness profile:", profile.id);
+             } else {
+               console.log("Found existing fitness profile:", profile.id);
              }
 
-             console.log("Found fitness profile:", profile.id);
              return profile;
            });
 
@@ -1380,8 +1414,10 @@ export async function generateWorkoutWithAI(
                // First, deactivate any existing active meal plans for this profile
                await prisma.mealPlan.updateMany({
                  where: {
-                   fitnessProfileId: fitnessProfile.id,
-                   isActive: true
+                   OR: [
+                     { fitnessProfileId: fitnessProfile.id },
+                     { activeProfileId: fitnessProfile.id }
+                   ]
                  },
                  data: {
                    isActive: false,
@@ -1649,26 +1685,7 @@ export async function generateWorkoutWithAI(
 
          } catch (error: any) {
            console.error("Error in generateFitnessPlan function:", error);
-
-           // Create error project and message
-           await step.run("create-error-project", async () => {
-             const project = await prisma.project.create({
-               data: {
-                 name: `Fitness Plan Error - ${new Date().toLocaleDateString()}`,
-                 userId: userId,
-                 messages: {
-                   create: {
-                     content: "Sorry, there was an error generating your fitness plan. Please try again or contact support.",
-                     role: "ASSISTANT",
-                     type: "ERROR",
-                   }
-                 }
-               },
-             });
-
-             return project;
-           });
-
+           // NEVYTVÁŘEJ error projekt, pouze loguj chybu
            throw error;
          } finally {
            await prisma.$disconnect();

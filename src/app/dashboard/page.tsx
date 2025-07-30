@@ -65,16 +65,25 @@ export default function DashboardPage() {
 
   const { data: mealPlans, isLoading: mealPlansLoading, error: mealPlansError } = useQuery({
     ...trpc.fitness.getMealPlans.queryOptions(),
-    enabled: !isDemoMode, // Only fetch in non-demo mode
+    enabled: !isDemoMode && !profileLoading && !!fitnessProfile && fitnessProfile.mealPlanningEnabled, // Only fetch in non-demo mode, after profile is loaded, and if meal planning is enabled
     staleTime: 0, // Always fresh data
     refetchOnMount: true, // Always refetch on mount
   });
 
+
+
   const { data: currentMealPlan, isLoading: currentMealPlanLoading, error: currentMealPlanError } = useQuery({
     ...trpc.fitness.getCurrentMealPlan.queryOptions(),
-    enabled: !isDemoMode, // Only fetch in non-demo mode
+    enabled: !isDemoMode && !profileLoading && !!fitnessProfile && fitnessProfile.mealPlanningEnabled, // Only fetch in non-demo mode, after profile is loaded, and if meal planning is enabled
     staleTime: 0, // Always fresh data
     refetchOnMount: true, // Always refetch on mount
+  });
+
+  // Check if user has paid plan
+  const { data: paidPlanData, isLoading: paidPlanLoading } = useQuery({
+    ...trpc.fitness.hasPaidPlan.queryOptions(),
+    enabled: !isDemoMode, // Only fetch in non-demo mode
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Demo plan query - always call useQuery but conditionally enable it
@@ -85,6 +94,7 @@ export default function DashboardPage() {
   });
 
   const error = (isDemoMode ? demoPlanError : (profileError || plansError || mealPlansError || currentMealPlanError));
+  const isLoading = (isDemoMode ? demoPlanLoading : (profileLoading || paidPlanLoading));
 
   // Debug logging
   if (profileError) {
@@ -94,7 +104,7 @@ export default function DashboardPage() {
     console.error('Plans error:', plansError);
   }
   // Use demo data or user data based on mode
-  const workoutPlan = isDemoMode ? demoPlanData?.workoutPlan : fitnessProfile?.currentPlan;
+  const workoutPlan = isDemoMode ? demoPlanData?.workoutPlan : (fitnessProfile?.currentPlan || null);
   const mealPlan = isDemoMode ? demoPlanData?.mealPlan : (currentMealPlan || mealPlans?.[0]);
   const profile = isDemoMode ? demoPlanData?.workoutPlan.fitnessProfile : fitnessProfile;
 
@@ -119,19 +129,37 @@ console.log(workoutPlan?.isActive, "workoutPlan")
   // Continuous refresh loop until workoutPlan.isActive becomes true
   useEffect(() => {
     // Only run this effect for non-demo mode
-    if (!isDemoMode && workoutPlan && workoutPlan.isActive === false) {
+    if (!isDemoMode && paidPlanData?.hasPaidPlan && (!workoutPlan || (workoutPlan && workoutPlan.isActive === false))) {
       const interval = setInterval(() => {
         queryClient.invalidateQueries(trpc.fitness.getProfile.queryOptions());
       }, 3000); // Refresh every 3 seconds
 
       return () => clearInterval(interval);
     }
-  }, [isDemoMode, workoutPlan?.isActive, queryClient, trpc.fitness.getProfile]);
+  }, [isDemoMode, paidPlanData?.hasPaidPlan, workoutPlan?.isActive, queryClient, trpc.fitness.getProfile]);
 
-  // Check if we should show loading - show loading when plan exists but is not active yet
-  const shouldShowLoading = useMemo(() => {
-    return !isDemoMode && workoutPlan && workoutPlan.isActive === false;
-  }, [isDemoMode, workoutPlan?.isActive]);
+  // Continuous refresh loop until mealPlan.isActive becomes true
+  useEffect(() => {
+    // Only run this effect for non-demo mode, after profile is loaded, and if meal planning is enabled
+    if (!isDemoMode && !profileLoading && !!fitnessProfile && fitnessProfile.mealPlanningEnabled && mealPlan && mealPlan.isActive === false) {
+      const interval = setInterval(() => {
+        queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
+        queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
+      }, 3000); // Refresh every 3 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isDemoMode, profileLoading, fitnessProfile?.mealPlanningEnabled, mealPlan?.isActive, queryClient, trpc.fitness.getCurrentMealPlan, trpc.fitness.getMealPlans]);
+
+  // Check if we should show loading for workout plan
+  const shouldShowWorkoutLoading = useMemo(() => {
+    return !isDemoMode && paidPlanData?.hasPaidPlan && (!workoutPlan || (workoutPlan && workoutPlan.isActive === false));
+  }, [isDemoMode, paidPlanData?.hasPaidPlan, workoutPlan?.isActive]);
+
+  // Check if we should show loading for meal plan
+  const shouldShowMealLoading = useMemo(() => {
+    return !isDemoMode && !profileLoading && !!fitnessProfile && fitnessProfile.mealPlanningEnabled && mealPlan && mealPlan.isActive === false;
+  }, [isDemoMode, profileLoading, fitnessProfile?.mealPlanningEnabled, mealPlan?.isActive]);
 
   // Function to generate shopping list for a week
   const generateShoppingList = useMutation(trpc.fitness.generateShoppingList.mutationOptions({
@@ -234,7 +262,7 @@ console.log(workoutPlan?.isActive, "workoutPlan")
       );
     }
   } else {
-    if (profileLoading && !fitnessProfile) {
+    if (isLoading && !fitnessProfile) {
       return <LoadingState />;
     }
 
@@ -242,8 +270,12 @@ console.log(workoutPlan?.isActive, "workoutPlan")
     if (!fitnessProfile) {
       return <NoProfileState />;
     }
+console.log(fitnessProfile, "fitnessProfile")
+    // If user has paid but no workout plan yet, continue to dashboard
+    // The workout plan will be generating in the background and shown in the appropriate tab
 
-    if (!workoutPlan) {
+    // Show assessment prompt if no workout plan and no paid plan
+    if (!workoutPlan && !paidPlanData?.hasPaidPlan) {
       return <NoWorkoutPlanState />;
     }
   }
@@ -270,16 +302,16 @@ console.log(workoutPlan?.isActive, "workoutPlan")
         {/* Stats Overview */}
         <StatsOverview
           currentWeek={1}
-          workoutPlan={workoutPlan!}
+          workoutPlan={workoutPlan}
           weekProgress={getWeekProgress()}
           currentWeekWorkouts={getCurrentWeekWorkouts()}
         />
 
         {/* Plan Overview */}
-        <PlanOverview workoutPlan={workoutPlan!} />
+        <PlanOverview workoutPlan={workoutPlan} />
 
         {/* Plan Details */}
-        <PlanDetails workoutPlan={workoutPlan!} />
+        <PlanDetails workoutPlan={workoutPlan} />
 
         {/* Main Content */}
         <Tabs defaultValue="workouts" className="space-y-6">
@@ -292,8 +324,8 @@ console.log(workoutPlan?.isActive, "workoutPlan")
 
           <TabsContent value="workouts" className="space-y-6">
             <WorkoutsTab
-              workoutPlan={workoutPlan!}
-              shouldShowLoading={shouldShowLoading}
+              workoutPlan={workoutPlan}
+              shouldShowLoading={shouldShowWorkoutLoading}
               isDemoMode={isDemoMode}
             />
           </TabsContent>
@@ -301,7 +333,7 @@ console.log(workoutPlan?.isActive, "workoutPlan")
           <TabsContent value="meals" className="space-y-4">
             <MealsTab
               fitnessProfile={profile!}
-              shouldShowLoading={shouldShowLoading}
+              shouldShowLoading={shouldShowMealLoading}
               currentMealPlanLoading={isDemoMode ? false : currentMealPlanLoading}
               currentMealPlan={isDemoMode ? mealPlan : currentMealPlan}
               mealPlan={mealPlan}
@@ -314,7 +346,7 @@ console.log(workoutPlan?.isActive, "workoutPlan")
           </TabsContent>
 
           <TabsContent value="overview" className="space-y-6">
-            <OverviewTab workoutPlan={workoutPlan!} currentWeek={1} />
+            <OverviewTab workoutPlan={workoutPlan} currentWeek={1} />
           </TabsContent>
         </Tabs>
       </div>

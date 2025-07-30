@@ -6,11 +6,32 @@ import { BarChart3 } from "lucide-react";
 import { WorkoutPlan } from "./types";
 
 interface OverviewTabProps {
-  workoutPlan: WorkoutPlan;
+  workoutPlan: WorkoutPlan | undefined | null;
   currentWeek: number;
 }
 
 export function OverviewTab({ workoutPlan, currentWeek }: OverviewTabProps) {
+  if (!workoutPlan || workoutPlan === null) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Úplný přehled plánu
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Generování přehledu plánu...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>

@@ -71,11 +71,13 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
          // Generate meal plan
          await step.run("generate-meal-plan", async () => {
            console.log("Deactivating existing meal plans for profile:", fitnessProfile.id);
-           // First, deactivate any existing active meal plans for this profile
+           // First, deactivate any existing meal plans for this profile and clear activeProfileId
            await prisma.mealPlan.updateMany({
              where: {
-               fitnessProfileId: fitnessProfile.id,
-               isActive: true
+               OR: [
+                 { fitnessProfileId: fitnessProfile.id },
+                 { activeProfileId: fitnessProfile.id }
+               ]
              },
              data: {
                isActive: false,
@@ -84,7 +86,7 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
            });
 
            console.log("Creating new meal plan...");
-           // Create the new meal plan
+           // Create the new meal plan with isActive: false initially
            const mealPlan = await prisma.mealPlan.create({
              data: {
                name: `${fitnessProfile.fitnessGoal?.replace('_', ' ') || 'Personalized'} Monthly Meal Plan`,
@@ -95,7 +97,7 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
                carbsPerDay: nutritionRequirements.carbsPerDay,
                fatPerDay: nutritionRequirements.fatPerDay,
                budgetPerWeek: fitnessProfile.budgetPerWeek || 100,
-               isActive: true,
+               isActive: false, // Start as inactive, will be set to true after meals are generated
                activeProfileId: fitnessProfile.id,
                fitnessProfileId: fitnessProfile.id,
              },
@@ -281,6 +283,13 @@ export const generateMealPlanOnlyFunction = inngest.createFunction(
              where: { fitnessProfileId: fitnessProfile.id }
            });
            console.log(`Total meal plans in database for profile ${fitnessProfile.id}: ${mealPlanCount}`);
+
+           // Set meal plan as active after all meals are generated
+           await prisma.mealPlan.update({
+             where: { id: mealPlan.id },
+             data: { isActive: true }
+           });
+           console.log(`Meal plan ${mealPlan.id} set to active`);
 
            return mealPlan;
          });

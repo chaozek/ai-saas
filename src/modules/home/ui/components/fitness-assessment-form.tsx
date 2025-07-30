@@ -219,6 +219,12 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
     }
   }));
 
+  const disableMealPlanning = useMutation(trpc.fitness.disableMealPlanning.mutationOptions({
+    onError: (error) => {
+      console.error('Error disabling meal planning:', error);
+    },
+  }));
+
   const handleSubmit = useCallback(async () => {
     if (!user) {
       toast.error("Prosím, přihlaste se pro pokračování");
@@ -251,20 +257,21 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
 
     const handlePaymentSuccess = useCallback(async () => {
     try {
-      // Remove current plan before redirecting
+      // Remove current plan before redirecting (if it exists)
       await removeCurrentPlan.mutateAsync();
+      await disableMealPlanning.mutateAsync();
 
       // After successful payment, the webhook will handle plan generation
       // Just redirect to dashboard where the user can see their plan being generated
       toast.success("Platba byla úspěšná! Váš fitness plán se generuje...");
       router.push('/dashboard');
     } catch (error) {
-      console.error('Error removing current plan:', error);
-      // Still redirect even if removing current plan fails
+      console.error('Error in payment success handler:', error);
+      // Still redirect even if there are any errors
       toast.success("Platba byla úspěšná! Váš fitness plán se generuje...");
       router.push('/dashboard');
     }
-  }, [router, removeCurrentPlan]);
+  }, [router, removeCurrentPlan, disableMealPlanning]);
 
   // Handle pending submission after authentication
   useEffect(() => {
