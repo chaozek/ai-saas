@@ -6,6 +6,7 @@ import { TRPCReactProvider } from "@/trcp/client";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
+import { csCZ } from '@clerk/localizations'
 
 const madera = localFont({
   src: [
@@ -80,7 +81,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider appearance={{
+    <ClerkProvider localization={csCZ} appearance={{
       variables: {
         colorPrimary: "#c96342",
         colorBackground: "#f5f5f5",

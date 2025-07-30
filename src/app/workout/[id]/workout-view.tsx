@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,13 +27,20 @@ interface WorkoutWithCompleted extends Workout {
 
 export const WorkoutView = ({ workoutId }: { workoutId: string }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const trpc = useTRPC();
   const [isActive, setIsActive] = useState(false);
   const [currentExercise, setCurrentExercise] = useState(0);
   const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
 
+  // Check if this is a demo workout (from URL params)
+  const isDemoMode = searchParams.get("demo") === "true";
+
   const { data: workout, isLoading } = useQuery({
-    ...trpc.fitness.getWorkout.queryOptions({ workoutId }),
+    ...(isDemoMode
+      ? trpc.fitness.getPublicWorkout.queryOptions({ workoutId })
+      : trpc.fitness.getWorkout.queryOptions({ workoutId })
+    ),
   });
 
   useEffect(() => {

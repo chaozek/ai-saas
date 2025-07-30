@@ -21,7 +21,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ userName }: DashboardHeaderProps) {
-  const { user, signOut } = useClerk();
+  const { user, signOut, openUserProfile } = useClerk();
   const router = useRouter();
 
   // Get user initials for avatar fallback
@@ -37,6 +37,8 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
   const handleNavigateToPayments = () => {
     router.push('/platby');
   };
+
+
 
   return (
     <div className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
@@ -74,6 +76,17 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
             {/* Divider */}
             <div className="hidden sm:block w-px h-6 bg-border/50"></div>
 
+            {/* Faktury button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNavigateToPayments}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 h-9"
+            >
+              <Receipt className="w-4 h-4" />
+              <span className="font-medium">Faktury</span>
+            </Button>
+
             {/* New plan button */}
        {/*      <Button size="sm" className="hidden sm:flex items-center gap-2 px-4 py-2 h-9">
               <Plus className="w-4 h-4" />
@@ -84,6 +97,17 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
             <Button size="sm" className="sm:hidden h-9 w-9 p-0">
               <Plus className="w-4 h-4" />
               <span className="sr-only">New Plan</span>
+            </Button>
+
+            {/* Mobile faktury button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNavigateToPayments}
+              className="sm:hidden h-9 w-9 p-0"
+            >
+              <Receipt className="w-4 h-4" />
+              <span className="sr-only">Faktury</span>
             </Button>
 
             {/* User dropdown */}
@@ -109,11 +133,8 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => openUserProfile()}>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>

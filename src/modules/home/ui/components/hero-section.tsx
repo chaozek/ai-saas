@@ -5,11 +5,19 @@ import { Button } from "@/components/ui/button";
 import { ScrollIndicator } from "@/components/ui/scroll-indicator";
 import { PriceBadge } from "@/components/ui/price-badge";
 import { ArrowRight, Play, CheckCircle } from "lucide-react";
+import { useState } from "react";
+import { DemoPlanModal } from "@/components/ui/demo-plan-modal";
 
 export function HeroSection() {
+  const [showDemoModal, setShowDemoModal] = useState(false);
+
   const handleGetPlanClick = () => {
     // Trigger highlight event for MainFeaturesSection
     window.dispatchEvent(new CustomEvent('highlight-fitness-form'));
+  };
+
+  const handleDemoClick = () => {
+    setShowDemoModal(true);
   };
 
   return (
@@ -47,6 +55,7 @@ export function HeroSection() {
               {/* Button with enhanced styling */}
               <Button
                 size="lg"
+                onClick={handleDemoClick}
                 className="relative text-lg px-8 py-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0"
               >
                 Zobrazit demo účtu
@@ -82,6 +91,12 @@ export function HeroSection() {
           <ScrollIndicator />
         </div>
       </div>
+
+      {/* Demo Plan Modal */}
+      <DemoPlanModal
+        isOpen={showDemoModal}
+        onClose={() => setShowDemoModal(false)}
+      />
     </section>
   );
 }

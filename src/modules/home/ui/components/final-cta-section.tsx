@@ -3,11 +3,19 @@
 import { Button } from "@/components/ui/button";
 import { PriceBadge } from "@/components/ui/price-badge";
 import { ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { DemoPlanModal } from "@/components/ui/demo-plan-modal";
 
 export function FinalCTASection() {
+  const [showDemoModal, setShowDemoModal] = useState(false);
+
   const handleGetPlanClick = () => {
     // Trigger highlight event for MainFeaturesSection
     window.dispatchEvent(new CustomEvent('highlight-fitness-form'));
+  };
+
+  const handleDemoClick = () => {
+    setShowDemoModal(true);
   };
 
   return (
@@ -22,12 +30,18 @@ export function FinalCTASection() {
         </p>
         <div className="flex flex-col items-center gap-4">
           <PriceBadge variant="default" onClick={handleGetPlanClick} />
-          <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
+          <Button size="lg" variant="secondary" className="text-lg px-8 py-6" onClick={handleDemoClick}>
             Zobrazit demo účtu
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
       </div>
+
+      {/* Demo Plan Modal */}
+      <DemoPlanModal
+        isOpen={showDemoModal}
+        onClose={() => setShowDemoModal(false)}
+      />
     </section>
   );
 }

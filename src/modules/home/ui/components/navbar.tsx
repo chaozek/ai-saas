@@ -6,8 +6,21 @@ import Link from "next/link"
 import { Logo } from "@/components/ui/logo"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { Dumbbell, BarChart3, Calendar, Target } from "lucide-react"
+import { useTRPC } from "@/trcp/client"
+import { useQuery } from "@tanstack/react-query"
+import { useState } from "react"
+import { DemoPlanModal } from "@/components/ui/demo-plan-modal"
 
 export const Navbar = () => {
+     const trpc = useTRPC();
+     const [showDemoModal, setShowDemoModal] = useState(false);
+
+     // Check if user has a paid plan
+     const { data: paidPlanData } = useQuery({
+          ...trpc.fitness.hasPaidPlan.queryOptions(),
+          staleTime: 5 * 60 * 1000, // 5 minutes
+     });
+
      return <nav className="flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="flex items-center gap-6">
                <Link href="/" className="flex items-center gap-2">
@@ -41,21 +54,26 @@ export const Navbar = () => {
           <div className="flex items-center gap-4">
                <ThemeToggle />
                <SignedIn>
-                    <Button variant="outline" size="sm" asChild>
-                         <Link href="/dashboard">Můj Plán</Link>
-                    </Button>
+                    {paidPlanData?.hasPaidPlan && (
+                         <Button variant="outline" size="sm" asChild>
+                              <Link href="/dashboard">Můj Plán</Link>
+                         </Button>
+                    )}
                     <UserButton />
                </SignedIn>
                <SignedOut>
                     <div className="flex items-center gap-3">
-                         <Button variant="ghost" size="sm" asChild>
-                              <Link href="/pricing">Ceník</Link>
+                         <Button onClick={() => setShowDemoModal(true)}>
+                              Demo
                          </Button>
-                    <Button asChild>
-                              <Link href="/sign-in">Demo</Link>
-                    </Button>
                     </div>
                </SignedOut>
           </div>
      </nav>
+
+     {/* Demo Plan Modal */}
+     <DemoPlanModal
+          isOpen={showDemoModal}
+          onClose={() => setShowDemoModal(false)}
+     />
 }

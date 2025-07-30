@@ -1402,6 +1402,7 @@ export async function generateWorkoutWithAI(
                    fatPerDay: nutritionRequirements.fatPerDay,
                    budgetPerWeek: parseFloat(assessmentData.budgetPerWeek),
                    isActive: true,
+                   isPublic: fitnessProfile.isPublic || false, // Set isPublic based on profile
                    activeProfileId: fitnessProfile.id,
                    fitnessProfileId: fitnessProfile.id,
                  },

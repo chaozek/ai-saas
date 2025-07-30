@@ -75,6 +75,7 @@ model FitnessProfile {
   mealPrepTime        Int?
   preferredCuisines   String[]         @default([])
   cookingSkill        ExperienceLevel?
+  isPublic            Boolean          @default(false)
   userId              String           @unique
   user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   currentMealPlan     MealPlan?        @relation("CurrentMealPlan")
@@ -94,6 +95,7 @@ model WorkoutPlan {
   duration         Int
   difficulty       ExperienceLevel
   isActive         Boolean         @default(false)
+  isPublic         Boolean         @default(false)
   fitnessProfileId String
   activeProfileId  String?         @unique
   workouts         Workout[]
@@ -174,6 +176,7 @@ model MealPlan {
   fatPerDay        Float?
   budgetPerWeek    Float?
   isActive         Boolean         @default(false)
+  isPublic         Boolean         @default(false)
   fitnessProfileId String
   activeProfileId  String?         @unique
   meals            Meal[]

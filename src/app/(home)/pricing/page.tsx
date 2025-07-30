@@ -7,6 +7,8 @@ import { PriceBadge } from "@/components/ui/price-badge"
 import { Check, Crown, Zap, Target } from "lucide-react"
 import { useClerk } from "@clerk/nextjs"
 import Link from "next/link"
+import { useState } from "react"
+import { DemoPlanModal } from "@/components/ui/demo-plan-modal"
 
 const pricingPlans = [
   {
@@ -66,6 +68,11 @@ const pricingPlans = [
 
 export default function PricingPage() {
   const { openSignUp } = useClerk();
+  const [showDemoModal, setShowDemoModal] = useState(false);
+
+  const handleDemoClick = () => {
+    setShowDemoModal(true);
+  };
 
   const handleGetPlanClick = () => {
     // Trigger highlight event for MainFeaturesSection
@@ -149,7 +156,7 @@ export default function PricingPage() {
                       ? 'bg-green-600 hover:bg-green-700'
                       : 'bg-gray-900 hover:bg-gray-800'
                   }`}
-                  onClick={() => openSignUp()}
+                  onClick={plan.name === "Demo" ? handleDemoClick : () => openSignUp()}
                 >
                   {plan.cta}
                 </Button>
@@ -218,7 +225,7 @@ export default function PricingPage() {
                 kteří již dosáhli svých fitness cílů pomocí naší AI-powered koučování.
                </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" onClick={() => openSignUp()}>
+                <Button size="lg" onClick={handleDemoClick}>
                   Zobrazit transparentní demo
                 </Button>
                 <Button variant="outline" size="lg" asChild>
@@ -229,6 +236,12 @@ export default function PricingPage() {
           </Card>
         </div>
       </div>
+
+      {/* Demo Plan Modal */}
+      <DemoPlanModal
+        isOpen={showDemoModal}
+        onClose={() => setShowDemoModal(false)}
+      />
      </div>
   );
 }

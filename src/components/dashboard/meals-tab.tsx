@@ -17,6 +17,7 @@ interface MealsTabProps {
   currentMealPlanLoading: boolean;
   currentMealPlan: MealPlan | null | undefined;
   mealPlan: MealPlan | null | undefined;
+  isDemoMode?: boolean;
 }
 
 export function MealsTab({
@@ -24,7 +25,8 @@ export function MealsTab({
   shouldShowLoading,
   currentMealPlanLoading,
   currentMealPlan,
-  mealPlan
+  mealPlan,
+  isDemoMode = false
 }: MealsTabProps) {
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set());
   const [expandedWeeks, setExpandedWeeks] = useState<Set<number>>(new Set());
@@ -404,10 +406,13 @@ export function MealsTab({
 
   // Check if meal plan is still generating - this should be checked FIRST
   // Přidáme kontrolu, zda meal plan existuje ale nemá jídla (stále se generuje)
-  const isMealPlanGenerating = generatingMealPlan ||
-                               shouldShowLoading ||
-                               (currentMealPlanLoading && !currentMealPlan) ||
-                               (mealPlan && (!mealPlan.meals || mealPlan.meals.length === 0));
+  // V demo režimu nepoužíváme loading stav
+  const isMealPlanGenerating = !isDemoMode && (
+    generatingMealPlan ||
+    shouldShowLoading ||
+    (currentMealPlanLoading && !currentMealPlan) ||
+    (mealPlan && (!mealPlan.meals || mealPlan.meals.length === 0))
+  );
 
   if (isMealPlanGenerating) {
     return (

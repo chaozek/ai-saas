@@ -11,9 +11,10 @@ import { WorkoutPlan } from "./types";
 interface WorkoutsTabProps {
   workoutPlan: WorkoutPlan;
   shouldShowLoading: boolean | null | undefined;
+  isDemoMode?: boolean;
 }
 
-export function WorkoutsTab({ workoutPlan, shouldShowLoading }: WorkoutsTabProps) {
+export function WorkoutsTab({ workoutPlan, shouldShowLoading, isDemoMode = false }: WorkoutsTabProps) {
   const [currentWeek, setCurrentWeek] = useState(1);
 
   const getCurrentWeekWorkouts = () => {
@@ -87,7 +88,7 @@ export function WorkoutsTab({ workoutPlan, shouldShowLoading }: WorkoutsTabProps
       {/* Workouts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {getCurrentWeekWorkouts().map((workout: any) => (
-          <WorkoutCard key={workout.id} workout={workout} />
+          <WorkoutCard key={workout.id} workout={workout} isDemoMode={isDemoMode} />
         ))}
       </div>
     </div>

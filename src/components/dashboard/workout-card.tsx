@@ -9,9 +9,10 @@ import { Workout, DAYS } from "./types";
 
 interface WorkoutCardProps {
   workout: Workout;
+  isDemoMode?: boolean;
 }
 
-export function WorkoutCard({ workout }: WorkoutCardProps) {
+export function WorkoutCard({ workout, isDemoMode = false }: WorkoutCardProps) {
   return (
     <Card className="transition-all duration-200 hover:shadow-lg border-border hover:border-border/80">
       <CardHeader className="pb-3">
@@ -36,13 +37,22 @@ export function WorkoutCard({ workout }: WorkoutCardProps) {
         </div>
 
         <div className="flex gap-2">
-          <Button size="sm" className="flex-1" asChild>
-            <Link href={`/workout/${workout.id}`}>
-              <Play className="w-4 h-4 mr-2" />
-              Začít trénink
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm">
+          {isDemoMode ? (
+            <Button size="sm" className="flex-1" asChild>
+              <Link href={`/workout/${workout.id}?demo=true`}>
+                <Play className="w-4 h-4 mr-2" />
+                Demo - Začít trénink
+              </Link>
+            </Button>
+          ) : (
+            <Button size="sm" className="flex-1" asChild>
+              <Link href={`/workout/${workout.id}`}>
+                <Play className="w-4 h-4 mr-2" />
+                Začít trénink
+              </Link>
+            </Button>
+          )}
+          <Button variant="outline" size="sm" disabled={isDemoMode}>
             <SkipForward className="w-4 h-4" />
           </Button>
         </div>

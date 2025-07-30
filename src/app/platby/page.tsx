@@ -14,6 +14,12 @@ import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButton";
 import { useInvoiceGenerator } from "@/hooks/useInvoiceGenerator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Payment {
   id: string;
@@ -103,146 +109,161 @@ export default function PaymentsPage() {
     .reduce((sum, p) => sum + p.amount, 0);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <DashboardHeader userName={user?.firstName} />
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* Header */}
+          <DashboardHeader userName={user?.firstName} />
 
-        {/* Page Title */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Platby a faktury</h1>
-            <p className="text-muted-foreground">
-              Přehled všech vašich plateb a faktur
-            </p>
+          {/* Page Title */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight">Platby a faktury</h2>
+              <p className="text-muted-foreground">
+                Přehled všech vašich plateb a faktur
+              </p>
+            </div>
+
           </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Nová faktura
-          </Button>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Celkem zaplaceno</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatAmount(totalPaid, 'CZK')}</div>
+                <p className="text-xs text-muted-foreground">
+                  {payments.filter(p => p.status === 'paid').length} úspěšných plateb
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Čekající platby</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatAmount(pendingAmount, 'CZK')}</div>
+                <p className="text-xs text-muted-foreground">
+                  {payments.filter(p => p.status === 'pending').length} nevyřízených plateb
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Dostupné faktury</CardTitle>
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{payments.filter(p => p.status === 'paid').length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Z {payments.length} celkem faktur
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Payments Table */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Celkem zaplaceno</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>Historie plateb</CardTitle>
+              <CardDescription>
+                Seznam všech vašich plateb a faktur
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatAmount(totalPaid, 'CZK')}</div>
-              <p className="text-xs text-muted-foreground">
-                {payments.filter(p => p.status === 'paid').length} úspěšných plateb
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Čekající platby</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatAmount(pendingAmount, 'CZK')}</div>
-              <p className="text-xs text-muted-foreground">
-                {payments.filter(p => p.status === 'pending').length} nevyřízených plateb
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Celkem faktur</CardTitle>
-              <Receipt className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{payments.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Všechny vaše faktury
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Payments Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Historie plateb</CardTitle>
-            <CardDescription>
-              Seznam všech vašich plateb a faktur
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Faktura</TableHead>
-                  <TableHead>Popis</TableHead>
-                  <TableHead>Částka</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Datum</TableHead>
-                  <TableHead>Platební metoda</TableHead>
-                  <TableHead className="text-right">Akce</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-medium">
-                      {payment.id}
-                    </TableCell>
-                    <TableCell>{payment.description}</TableCell>
-                    <TableCell className="font-medium">
-                      {formatAmount(payment.amount, payment.currency)}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(payment.status)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        {formatDate(payment.createdAt)}
-                      </div>
-                    </TableCell>
-                    <TableCell>{payment.paymentMethod}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <InvoiceDownloadButton
-                          invoiceData={createInvoiceData(
-                            {
-                              name: user?.fullName || user?.firstName || "Zákazník",
-                              address: "Dodací adresa",
-                              city: "Praha",
-                              zipCode: "120 00"
-                            },
-                            [
-                              {
-                                id: payment.id,
-                                description: payment.description,
-                                quantity: 1,
-                                unit: "ks",
-                                unitPrice: payment.amount,
-                                total: payment.amount
-                              }
-                            ],
-                            `F${payment.id.slice(-6)}`,
-                            payment.status === 'paid' // Předá informaci o zaplacení
-                          )}
-                          size="sm"
-                          variant="ghost"
-                        />
-                      </div>
-                    </TableCell>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Faktura</TableHead>
+                    <TableHead>Popis</TableHead>
+                    <TableHead>Částka</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Datum</TableHead>
+                    <TableHead>Platební metoda</TableHead>
+                    <TableHead className="text-right">Akce</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {payments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell className="font-medium">
+                        {payment.id}
+                      </TableCell>
+                      <TableCell>{payment.description}</TableCell>
+                      <TableCell className="font-medium">
+                        {formatAmount(payment.amount, payment.currency)}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(payment.status)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          {formatDate(payment.createdAt)}
+                        </div>
+                      </TableCell>
+                      <TableCell>{payment.paymentMethod}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+
+                          {payment.status === 'paid' ? (
+                            <InvoiceDownloadButton
+                              invoiceData={createInvoiceData(
+                                {
+                                  name: user?.fullName || user?.firstName || "Zákazník",
+                                  address: "Dodací adresa",
+                                  city: "Praha",
+                                  zipCode: "120 00"
+                                },
+                                [
+                                  {
+                                    id: payment.id,
+                                    description: payment.description,
+                                    quantity: 1,
+                                    unit: "ks",
+                                    unitPrice: payment.amount,
+                                    total: payment.amount
+                                  }
+                                ],
+                                `F${payment.id.slice(-6)}`,
+                                payment.status === 'paid' // Předá informaci o zaplacení
+                              )}
+                              size="sm"
+                              variant="ghost"
+                            />
+                          ) : (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled
+                                  className="opacity-50 cursor-not-allowed"
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Faktura bude dostupná po zaplacení.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

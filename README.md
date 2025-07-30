@@ -83,6 +83,29 @@ npm run dev
 
 Open [http://localhost:3001](http://localhost:3001) to see the application.
 
+## 🎯 Demo Setup
+
+### Quick Demo Setup
+
+1. **Generate AI data for demo plans:**
+   ```bash
+   npm run generate:demo-ai
+   ```
+   *Note: This requires Inngest to be running (`npm run inngest`) and OpenAI API key configured*
+
+3. **Access demo:**
+   - Click "Demo" button in navbar (when not signed in)
+   - Select from 4 different scenarios (male/female, muscle gain/weight loss)
+   - View realistic AI-generated plans on the main dashboard
+
+### Demo Features
+
+- **Real Dashboard Experience:** Uses actual dashboard with demo data
+- **Multiple Scenarios:** 4 different user types with realistic data
+- **Public Access:** No authentication required
+- **AI-Generated Content:** Shows personalized workout and meal plans
+- **Real AI Data:** When AI generation is run, demo plans contain actual AI-generated workouts and meals
+
 ## 💳 Payment Setup
 
 ### Stripe Configuration

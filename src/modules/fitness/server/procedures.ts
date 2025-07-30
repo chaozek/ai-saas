@@ -320,6 +320,38 @@ export const fitnessRouter = createTRPCRouter({
       return workout;
     }),
 
+  getPublicWorkout: baseProcedure
+    .input(z.object({ workoutId: z.string() }))
+    .query(async ({ input }) => {
+      const workout = await prisma.workout.findFirst({
+        where: {
+          id: input.workoutId,
+          workoutPlan: {
+            isPublic: true,
+          },
+        },
+        include: {
+          workoutExercises: {
+            include: {
+              exercise: true,
+            },
+            orderBy: {
+              createdAt: 'asc'
+            }
+          },
+        },
+      });
+
+      if (!workout) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Public workout not found",
+        });
+      }
+
+      return workout;
+    }),
+
   logProgress: protectedProcedure
     .input(z.object({
       weight: z.number().optional(),
@@ -1111,6 +1143,192 @@ export const fitnessRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: `Failed to fetch payment sessions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+  hasPaidPlan: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        const paidSession = await prisma.paymentSession.findFirst({
+          where: {
+            userId: ctx.auth.userId,
+            status: 'completed',
+          },
+        });
+
+        return {
+          hasPaidPlan: !!paidSession,
+        };
+      } catch (error) {
+        console.error('Error checking paid plan status:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to check paid plan status: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+  getPublicDemoPlans: baseProcedure
+    .query(async () => {
+      try {
+        const demoPlans = await prisma.workoutPlan.findMany({
+          where: {
+            isPublic: true,
+          },
+          include: {
+            fitnessProfile: {
+              select: {
+                gender: true,
+                fitnessGoal: true,
+                age: true,
+                weight: true,
+                height: true,
+                targetWeight: true,
+                experienceLevel: true,
+                activityLevel: true,
+                availableDays: true,
+                workoutDuration: true,
+                equipment: true,
+                mealPlanningEnabled: true,
+              },
+            },
+            workouts: {
+              include: {
+                workoutExercises: {
+                  include: {
+                    exercise: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+
+        return demoPlans;
+      } catch (error) {
+        console.error('Error fetching public demo plans:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to fetch public demo plans: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+  getPublicDemoPlan: baseProcedure
+    .input(z.object({
+      planId: z.string(),
+    }))
+    .query(async ({ input }) => {
+      try {
+        const demoPlan = await prisma.workoutPlan.findFirst({
+          where: {
+            id: input.planId,
+            isPublic: true,
+          },
+          include: {
+            fitnessProfile: {
+              select: {
+                gender: true,
+                fitnessGoal: true,
+                age: true,
+                weight: true,
+                height: true,
+                targetWeight: true,
+                experienceLevel: true,
+                activityLevel: true,
+                availableDays: true,
+                workoutDuration: true,
+                equipment: true,
+                mealPlanningEnabled: true,
+                dietaryRestrictions: true,
+                allergies: true,
+                budgetPerWeek: true,
+                mealPrepTime: true,
+                preferredCuisines: true,
+                cookingSkill: true,
+              },
+            },
+            workouts: {
+              include: {
+                workoutExercises: {
+                  include: {
+                    exercise: true,
+                  },
+                },
+              },
+              orderBy: [
+                { weekNumber: 'asc' },
+                { dayOfWeek: 'asc' },
+              ],
+            },
+          },
+        });
+
+        if (!demoPlan) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Demo plan not found",
+          });
+        }
+
+        // Get meal plan for demo - always try to get it regardless of mealPlanningEnabled
+        let mealPlan = null;
+        mealPlan = await prisma.mealPlan.findFirst({
+          where: {
+            fitnessProfileId: demoPlan.fitnessProfileId,
+            isPublic: true,
+            isActive: true, // Prefer active meal plans
+          },
+          include: {
+            meals: {
+              include: {
+                recipes: true,
+              },
+              orderBy: [
+                { weekNumber: 'asc' },
+                { dayOfWeek: 'asc' },
+              ],
+            },
+          },
+        });
+
+        // If no active meal plan found, get any public meal plan with meals
+        if (!mealPlan || !mealPlan.meals || mealPlan.meals.length === 0) {
+          mealPlan = await prisma.mealPlan.findFirst({
+            where: {
+              fitnessProfileId: demoPlan.fitnessProfileId,
+              isPublic: true,
+            },
+            include: {
+              meals: {
+                include: {
+                  recipes: true,
+                },
+                orderBy: [
+                  { weekNumber: 'asc' },
+                  { dayOfWeek: 'asc' },
+                ],
+              },
+            },
+            orderBy: {
+              createdAt: 'desc', // Get the most recent one
+            },
+          });
+        }
+
+        return {
+          workoutPlan: demoPlan,
+          mealPlan,
+        };
+      } catch (error) {
+        console.error('Error fetching public demo plan:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to fetch public demo plan: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
       }
     }),
