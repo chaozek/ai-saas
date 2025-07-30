@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { inngest } from '@/inngest/client';
 import prisma from '@/lib/prisma';
+import { generateAndSaveInvoice, createInvoiceData } from '@/lib/invoice-utils';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-06-30.basil',
@@ -60,6 +61,99 @@ export async function POST(req: NextRequest) {
                 paymentIntentId: paymentIntent.id
               }
             });
+
+                        // Generate and save invoice automatically
+            try {
+              // Získat údaje o zákazníkovi z Clerk
+              const { clerkClient } = await import('@clerk/nextjs/server');
+              let customerName = "Zákazník";
+              let customerAddress = "";
+              let customerCity = "";
+              let customerZipCode = "";
+
+              try {
+                const clerk = await clerkClient();
+                const user = await clerk.users.getUser(userId);
+                customerName = user.fullName || user.firstName || user.emailAddresses[0]?.emailAddress || "Zákazník";
+
+                // Zkusit získat adresu z metadata uživatele
+                if (user.publicMetadata?.address) {
+                  customerAddress = user.publicMetadata.address as string;
+                }
+                if (user.publicMetadata?.city) {
+                  customerCity = user.publicMetadata.city as string;
+                }
+                if (user.publicMetadata?.zipCode) {
+                  customerZipCode = user.publicMetadata.zipCode as string;
+                }
+              } catch (clerkError) {
+                console.log('Could not fetch user data from Clerk:', clerkError);
+              }
+
+              // Zkusit získat údaje z Stripe PaymentIntent
+              try {
+                const paymentIntentWithCustomer = await stripe.paymentIntents.retrieve(paymentIntent.id, {
+                  expand: ['customer']
+                });
+
+                if (paymentIntentWithCustomer.customer && typeof paymentIntentWithCustomer.customer === 'object') {
+                  const customer = paymentIntentWithCustomer.customer as Stripe.Customer;
+
+                  // Použít údaje ze Stripe, pokud nejsou z Clerk
+                  if (!customerName || customerName === "Zákazník") {
+                    customerName = customer.name || customer.email || customerName;
+                  }
+
+                  // Zkusit získat adresu ze Stripe
+                  if (customer.address && !customerAddress) {
+                    customerAddress = customer.address.line1 || "";
+                    customerCity = customer.address.city || "";
+                    customerZipCode = customer.address.postal_code || "";
+                  }
+                }
+              } catch (stripeError) {
+                console.log('Could not fetch customer data from Stripe:', stripeError);
+              }
+
+              // Zkusit získat údaje z assessment data
+              if (paymentSession?.assessmentData) {
+                const assessmentData = paymentSession.assessmentData as any;
+                if (assessmentData.customerName && !customerName) {
+                  customerName = assessmentData.customerName;
+                }
+                if (assessmentData.customerAddress && !customerAddress) {
+                  customerAddress = assessmentData.customerAddress;
+                }
+                if (assessmentData.customerCity && !customerCity) {
+                  customerCity = assessmentData.customerCity;
+                }
+                if (assessmentData.customerZipCode && !customerZipCode) {
+                  customerZipCode = assessmentData.customerZipCode;
+                }
+              }
+
+              const invoiceData = createInvoiceData(
+                customerName,
+                customerAddress,
+                customerCity,
+                customerZipCode,
+                planName || "Fitness plán",
+                paymentIntent.amount / 100, // Stripe ukládá částky v centech
+                paymentIntent.id,
+                true // Zaplaceno
+              );
+
+              await generateAndSaveInvoice(
+                invoiceData,
+                userId,
+                paymentSession?.id
+              );
+
+              console.log('Invoice generated and saved for payment intent:', paymentIntent.id);
+            } catch (invoiceError) {
+              console.error('Error generating invoice:', invoiceError);
+              // Nevyhazujeme chybu, protože nechceme přerušit generování plánu
+            }
 
             // Trigger fitness plan generation
             try {

@@ -1164,10 +1164,10 @@ export const fitnessRouter = createTRPCRouter({
         };
       } catch (error) {
         console.error('Error checking paid plan status:', error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to check paid plan status: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        });
+        // Return fallback value instead of throwing error
+        return {
+          hasPaidPlan: false,
+        };
       }
     }),
 
@@ -1391,6 +1391,336 @@ export const fitnessRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: `Failed to generate invoice: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+  saveInvoiceWithPDF: protectedProcedure
+    .input(z.object({
+      invoiceNumber: z.string(),
+      invoiceDate: z.string(),
+      dueDate: z.string(),
+      supplier: z.object({
+        name: z.string(),
+        address: z.string(),
+        city: z.string(),
+        zipCode: z.string(),
+        ico: z.string(),
+        dic: z.string().optional(),
+        bankAccount: z.string(),
+        bankCode: z.string(),
+      }),
+      customer: z.object({
+        name: z.string(),
+        address: z.string(),
+        city: z.string(),
+        zipCode: z.string(),
+        ico: z.string().optional(),
+        dic: z.string().optional(),
+      }),
+      items: z.array(z.object({
+        id: z.string(),
+        description: z.string(),
+        quantity: z.number(),
+        unit: z.string(),
+        unitPrice: z.number(),
+        total: z.number(),
+      })),
+      currency: z.string(),
+      vatRate: z.number(),
+      paid: z.boolean().optional(),
+      paymentSessionId: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        console.log('Saving invoice with PDF for user:', ctx.auth.userId);
+
+        // Import React a PDF komponenty dynamicky
+        const React = await import('react');
+        const { renderToBuffer } = await import('@react-pdf/renderer');
+        const SimpleCzechInvoice = (await import('@/components/invoice/SimpleCzechInvoice')).default;
+
+        // Vytvoření faktury v databázi
+        const invoice = await prisma.invoice.create({
+          data: {
+            invoiceNumber: input.invoiceNumber,
+            invoiceDate: new Date(input.invoiceDate),
+            dueDate: new Date(input.dueDate),
+            supplier: input.supplier,
+            customer: input.customer,
+            items: input.items,
+            currency: input.currency,
+            vatRate: input.vatRate,
+            totalAmount: input.items.reduce((sum, item) => sum + item.total, 0),
+            paid: input.paid || false,
+            userId: ctx.auth.userId,
+            paymentSessionId: input.paymentSessionId || null,
+          },
+        });
+
+        // Generování PDF
+        const InvoiceElement = React.createElement(SimpleCzechInvoice, {
+          invoiceNumber: input.invoiceNumber,
+          invoiceDate: input.invoiceDate,
+          dueDate: input.dueDate,
+          supplier: input.supplier,
+          customer: input.customer,
+          items: input.items,
+          currency: input.currency,
+          vatRate: input.vatRate,
+          paid: input.paid || false,
+        });
+
+        const pdfBuffer = await (renderToBuffer as any)(InvoiceElement);
+
+        // Uložení PDF do databáze
+        await prisma.invoice.update({
+          where: { id: invoice.id },
+          data: {
+            pdfBuffer: pdfBuffer,
+          },
+        });
+
+        console.log('Invoice saved with PDF, ID:', invoice.id);
+
+        return {
+          success: true,
+          invoiceId: invoice.id,
+          invoiceNumber: input.invoiceNumber,
+          message: 'Faktura byla úspěšně uložena s PDF',
+        };
+      } catch (error) {
+        console.error('Error saving invoice with PDF:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to save invoice: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+  getInvoices: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        const invoices = await prisma.invoice.findMany({
+          where: { userId: ctx.auth.userId },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        return invoices;
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to fetch invoices: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+    getInvoicePDF: protectedProcedure
+    .input(z.object({ invoiceId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            id: input.invoiceId,
+            userId: ctx.auth.userId
+          },
+        });
+
+        if (!invoice || !invoice.pdfBuffer) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Faktura nebo PDF nebylo nalezeno",
+          });
+        }
+
+        return {
+          pdfBuffer: invoice.pdfBuffer,
+          invoiceNumber: invoice.invoiceNumber,
+        };
+      } catch (error) {
+        console.error('Error fetching invoice PDF:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to fetch invoice PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+    // Admin procedures - using protectedProcedure with manual admin check
+  getAllInvoices: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        // Manual admin check
+        const user = await prisma.user.findUnique({
+          where: { id: ctx.auth.userId },
+          select: { isAdmin: true }
+        });
+
+        if (!user?.isAdmin) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Přístup odepřen. Vyžadována admin role."
+          });
+        }
+
+        const invoices = await prisma.invoice.findMany({
+          include: {
+            paymentSession: {
+              select: {
+                planName: true,
+                status: true,
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        return invoices;
+      } catch (error) {
+        console.error('Error fetching all invoices:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to fetch invoices: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+    markInvoiceAsDownloaded: protectedProcedure
+    .input(z.object({ invoiceId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Manual admin check
+        const user = await prisma.user.findUnique({
+          where: { id: ctx.auth.userId },
+          select: { isAdmin: true }
+        });
+
+        if (!user?.isAdmin) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Přístup odepřen. Vyžadována admin role."
+          });
+        }
+
+        const invoice = await prisma.invoice.update({
+          where: { id: input.invoiceId },
+          data: {
+            downloadedAt: new Date(),
+            downloadedBy: ctx.auth.userId
+          },
+        });
+
+        return { success: true, invoice };
+      } catch (error) {
+        console.error('Error marking invoice as downloaded:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to mark invoice as downloaded: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+      getInvoicePDFAdmin: protectedProcedure
+    .input(z.object({ invoiceId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        // Manual admin check
+        const user = await prisma.user.findUnique({
+          where: { id: ctx.auth.userId },
+          select: { isAdmin: true }
+        });
+
+        if (!user?.isAdmin) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Přístup odepřen. Vyžadována admin role."
+          });
+        }
+
+        const invoice = await prisma.invoice.findUnique({
+          where: { id: input.invoiceId },
+        });
+
+        if (!invoice || !invoice.pdfBuffer) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Faktura nebo PDF nebylo nalezeno",
+          });
+        }
+
+        // Označit jako stažené
+        await prisma.invoice.update({
+          where: { id: input.invoiceId },
+          data: {
+            downloadedAt: new Date(),
+            downloadedBy: ctx.auth.userId
+          },
+        });
+
+        return {
+          pdfBuffer: invoice.pdfBuffer,
+          invoiceNumber: invoice.invoiceNumber,
+        };
+      } catch (error) {
+        console.error('Error fetching invoice PDF (admin):', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to fetch invoice PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
+
+  // Check if user is admin
+  isAdmin: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: ctx.auth.userId },
+          select: { isAdmin: true }
+        });
+
+        return { isAdmin: user?.isAdmin || false };
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        return { isAdmin: false };
+      }
+    }),
+
+  // Set admin role (pouze pro vás - můžete to později odstranit)
+  setAdminRole: protectedProcedure
+    .input(z.object({
+      targetUserId: z.string(),
+      isAdmin: z.boolean()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Zkontrolovat, zda je aktuální uživatel admin
+        const currentUser = await prisma.user.findUnique({
+          where: { id: ctx.auth.userId },
+          select: { isAdmin: true }
+        });
+
+        if (!currentUser?.isAdmin) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Přístup odepřen. Vyžadována admin role."
+          });
+        }
+
+        // Nastavit admin roli pro cílového uživatele
+        const updatedUser = await prisma.user.update({
+          where: { id: input.targetUserId },
+          data: { isAdmin: input.isAdmin },
+          select: { id: true, isAdmin: true }
+        });
+
+        return { success: true, user: updatedUser };
+      } catch (error) {
+        console.error('Error setting admin role:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to set admin role: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
       }
     }),

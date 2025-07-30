@@ -45,6 +45,7 @@ model User {
   id             String          @id @default(uuid())
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  isAdmin        Boolean         @default(false)
   fitnessProfile FitnessProfile?
 }
 
@@ -240,6 +241,30 @@ model PaymentSession {
   assessmentData Json
   status         String   @default("pending") // pending, completed, failed
   paymentIntentId String?
+  invoice        Invoice? // Relace k faktuře
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  invoiceNumber String   @unique
+  invoiceDate   DateTime
+  dueDate       DateTime
+  supplier      Json     // Údaje o dodavateli (Pavel Kaplan)
+  customer      Json     // Údaje o zákazníkovi
+  items         Json     // Položky faktury
+  currency      String   @default("CZK")
+  vatRate       Float    @default(0)
+  totalAmount   Float
+  paid          Boolean  @default(false)
+  pdfUrl        String?  // URL k uloženému PDF souboru
+  pdfBuffer     Bytes?   // Alternativně uložit PDF jako bytes
+  userId        String   // ID uživatele, který fakturu vytvořil
+  paymentSessionId String? @unique
+  paymentSession PaymentSession? @relation(fields: [paymentSessionId], references: [id])
+  downloadedAt  DateTime? // Kdy byla faktura stažena
+  downloadedBy  String?   // Kdo stáhl fakturu
 }
 
 enum MessageRole {

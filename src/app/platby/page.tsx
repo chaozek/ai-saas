@@ -12,8 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Receipt, Download, Eye, Calendar, CreditCard, DollarSign, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
-import { InvoiceDownloadButton } from "@/components/invoice/InvoiceDownloadButton";
-import { useInvoiceGenerator } from "@/hooks/useInvoiceGenerator";
+
 import {
   Tooltip,
   TooltipContent,
@@ -29,13 +28,13 @@ interface Payment {
   description: string;
   createdAt: string;
   invoiceUrl?: string;
+  invoiceId?: string;
   paymentMethod: string;
 }
 
 export default function PaymentsPage() {
   const { user } = useClerk();
   const trpc = useTRPC();
-  const { createInvoiceData } = useInvoiceGenerator();
 
   // Fetch real payment sessions from database
   const { data: paymentSessions, isLoading: paymentsLoading } = useQuery({
@@ -44,17 +43,29 @@ export default function PaymentsPage() {
     refetchOnMount: true,
   });
 
-  // Convert payment sessions to payment format
-  const payments: Payment[] = paymentSessions?.map(session => ({
-    id: session.paymentIntentId || session.stripeSessionId,
-    amount: 199, // Default amount for fitness plans
-    currency: "CZK",
-    status: session.status === 'completed' ? 'paid' : session.status === 'pending' ? 'pending' : 'failed',
-    description: session.planName,
-    createdAt: session.createdAt.toISOString(),
-    paymentMethod: "Kreditní karta",
-    invoiceUrl: "#"
-  })) || [];
+  // Fetch invoices from database
+  const { data: invoices, isLoading: invoicesLoading } = useQuery({
+    ...trpc.fitness.getInvoices.queryOptions(),
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+
+  // Convert payment sessions to payment format and merge with invoices
+  const payments: Payment[] = paymentSessions?.map(session => {
+    const relatedInvoice = invoices?.find(inv => inv.paymentSessionId === session.id);
+
+    return {
+      id: session.paymentIntentId || session.stripeSessionId,
+      amount: 199, // Default amount for fitness plans
+      currency: "CZK",
+      status: session.status === 'completed' ? 'paid' : session.status === 'pending' ? 'pending' : 'failed',
+      description: session.planName,
+      createdAt: session.createdAt.toISOString(),
+      paymentMethod: "Kreditní karta",
+      invoiceUrl: relatedInvoice ? `/api/invoices/${relatedInvoice.id}/pdf` : undefined,
+      invoiceId: relatedInvoice?.id
+    };
+  }) || [];
 
   const getStatusBadge = (status: Payment['status']) => {
     const statusConfig = {
@@ -84,7 +95,7 @@ export default function PaymentsPage() {
   };
 
   // Loading state
-  if (paymentsLoading) {
+  if (paymentsLoading || invoicesLoading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto space-y-8">
@@ -212,31 +223,32 @@ export default function PaymentsPage() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
 
-                          {payment.status === 'paid' ? (
-                            <InvoiceDownloadButton
-                              invoiceData={createInvoiceData(
-                                {
-                                  name: user?.fullName || user?.firstName || "Zákazník",
-                                  address: "Dodací adresa",
-                                  city: "Praha",
-                                  zipCode: "120 00"
-                                },
-                                [
-                                  {
-                                    id: payment.id,
-                                    description: payment.description,
-                                    quantity: 1,
-                                    unit: "ks",
-                                    unitPrice: payment.amount,
-                                    total: payment.amount
-                                  }
-                                ],
-                                `F${payment.id.slice(-6)}`,
-                                payment.status === 'paid' // Předá informaci o zaplacení
-                              )}
-                              size="sm"
+                          {payment.status === 'paid' && payment.invoiceId ? (
+                            <Button
                               variant="ghost"
-                            />
+                              size="sm"
+                              onClick={() => {
+                                window.open(`/api/invoices/${payment.invoiceId}/pdf`, '_blank');
+                              }}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          ) : payment.status === 'paid' ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled
+                                  className="opacity-50 cursor-not-allowed"
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Faktura se generuje...</p>
+                              </TooltipContent>
+                            </Tooltip>
                           ) : (
                             <Tooltip>
                               <TooltipTrigger asChild>
