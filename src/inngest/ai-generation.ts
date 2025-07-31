@@ -1,4 +1,3 @@
-import { validateExercisesYouTubeUrls } from "@/lib/youtube-backend-utils";
 import OpenAI from "openai";
 import { calculateNutritionTargets, createExerciseData, findExistingExercise } from "./utils";
 import { PLAN_GENERATION_PROMPT } from "@/prompt";
@@ -219,10 +218,10 @@ export async function generateWorkoutWithAI(
 
    DŮLEŽITÉ: VŠECHNY NÁZVY CVIKŮ MUSÍ BÝT V ČEŠTINĚ. Použij POUZE české názvy cviků pro zobrazení.
 
-   PRO HLEDÁNÍ YOUTUBE VIDEÍ POUŽÍVEJ ANGLICKÉ NÁZVY:
-   - Pro hledání videí používej anglické názvy cviků (např. "push-ups", "squats", "planks", "burpees")
+   PRO YOUTUBE URL POUŽÍVEJ ANGLICKÉ NÁZVY:
+   - Pro YouTube URL používej anglické názvy cviků (např. "push-ups", "squats", "planks", "burpees")
    - Názvy cviků v JSON odpovědi zůstávají v češtině
-   - YouTube URL hledej pomocí anglických termínů pro lepší výsledky
+   - YouTube URL generuj pomocí anglických termínů pro lepší výsledky
 
    PROFESIONÁLNÍ CVIKY - SMĚRNICE:
 
@@ -323,7 +322,6 @@ export async function generateWorkoutWithAI(
    - Pro KAŽDÝ cvik přidej youtubeUrl s odkazem na demonstrační video
    - Použij reálné YouTube URL ve formátu: https://www.youtube.com/watch?v=VIDEO_ID
    - Vyber videa, která demonstrují správnou techniku cviku
-   - PRIMÁRNĚ hledej na kanálu "wikiHow" - mají kvalitní instrukční videa pro většinu cviků
    - Používej englishName (anglický název) pro hledávání videí (např. "push-ups", "squats", "planks")
    - Preferuj videa v angličtině s jasnými instrukcemi
    - Pro běžné cviky použij populární videa od renomovaných fitness kanálů
@@ -331,13 +329,7 @@ export async function generateWorkoutWithAI(
    - POUŽÍVEJ POUZE veřejná videa s povoleným vkládáním (embedding)
    - Preferuj kanály: wikiHow, ATHLEAN-X, FitnessBlender, MadFit, HASfit, Popsugar Fitness, Blogilates
    - VYHNI SE videím, která mohou být regionálně omezená nebo soukromá
-   - Příklad formátu: https://www.youtube.com/watch?v=VIDEO_ID (kde VIDEO_ID je skutečné ID videa z wikiHow nebo jiného renomovaného kanálu)
-
-   WIKIHOW KANÁL - SPECIFICKÉ INSTRUKCE:
-   - WikiHow má kvalitní instrukční videa pro většinu cviků
-   - Používej anglické názvy cviků pro hledání na wikiHow (např. "How to Do Push-Ups", "How to Do Squats")
-   - WikiHow videa jsou obvykle krátká, jasná a vhodná pro začátečníky
-   - Pokud nenajdeš vhodné video na wikiHow, použij jiné renomované fitness kanály
+   - Příklad formátu: https://www.youtube.com/watch?v=VIDEO_ID (kde VIDEO_ID je skutečné ID videa)
 
    Zajisti, že cviky jsou bezpečné a vhodné pro úroveň zkušeností a ZDRAVOTNÍ STAV.
 
@@ -505,22 +497,11 @@ export async function generateWorkoutWithAI(
            return exercise;
          });
 
-         // Validate YouTube URLs for all exercises
-         console.log(`Validating YouTube URLs for ${validatedExercises.length} exercises...`);
-         const exercisesWithValidatedUrls = await validateExercisesYouTubeUrls(validatedExercises);
-
-               // Count how many videos were invalidated
-         const invalidVideosCount = validatedExercises.filter((ex: any) => ex.youtubeUrl).length -
-                                   exercisesWithValidatedUrls.filter((ex: any) => ex.youtubeUrl).length;
-         if (invalidVideosCount > 0) {
-           console.log(`Invalidated ${invalidVideosCount} YouTube URLs that were not embeddable`);
-         }
-
          console.log(`Successfully generated workout: ${workout.name}`);
          return {
            name: workout.name,
            description: workout.description,
-           exercises: exercisesWithValidatedUrls
+           exercises: validatedExercises
          };
        } catch (jsonError) {
          console.error(`JSON parsing error:`, jsonError);

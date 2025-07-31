@@ -31,13 +31,12 @@ export const youtubeRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const { exerciseName } = input;
       try {
-        // Import here to avoid circular dependency
-        const { findAlternativeVideo } = await import('@/lib/youtube-search-utils');
-        const alternativeUrl = await findAlternativeVideo(exerciseName);
+        // Return null since we removed YouTube AI generation
+        // Only Google API (oEmbed) is used for validation
         return {
           success: true,
-          url: alternativeUrl,
-          found: !!alternativeUrl
+          url: null,
+          found: false
         };
       } catch (e) {
         console.error('Error finding alternative video:', e);

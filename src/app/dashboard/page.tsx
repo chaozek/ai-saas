@@ -274,10 +274,35 @@ console.log(fitnessProfile, "fitnessProfile")
     // If user has paid but no workout plan yet, continue to dashboard
     // The workout plan will be generating in the background and shown in the appropriate tab
 
+        // Debug logging
+    console.log('Dashboard state:', {
+      hasWorkoutPlan: !!workoutPlan,
+      hasPaidPlan: paidPlanData?.hasPaidPlan,
+      paidPlanLoading,
+      profileLoading
+    });
+
+    // Show loading state while checking payment status
+    if (paidPlanLoading) {
+      return <LoadingState message="Kontrolujeme váš plán..." />;
+    }
+
     // Show assessment prompt if no workout plan and no paid plan
-    if (!workoutPlan && !paidPlanData?.hasPaidPlan) {
+    // But only if we're sure the user hasn't paid (not loading) AND doesn't have a profile
+    // If user has a profile, it means they completed assessment and paid, so show dashboard
+    if (!workoutPlan && !paidPlanData?.hasPaidPlan && !paidPlanLoading && !fitnessProfile) {
       return <NoWorkoutPlanState />;
     }
+
+    // Guard: If user doesn't have a paid plan, show assessment screen
+    if (!paidPlanData?.hasPaidPlan && !paidPlanLoading) {
+      return <NoWorkoutPlanState />;
+    }
+
+    // If user has profile (which means they completed assessment and paid), show dashboard with loading states
+    // The workout plan will be generating in the background and shown in the appropriate tab
+    // This is the main case - user has paid, profile exists, but workout plan is still generating
+    // We show the full dashboard even if paidPlanData is still loading, because having a profile means they paid
   }
 
   const getCurrentWeekWorkouts = () => {

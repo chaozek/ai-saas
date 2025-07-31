@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 import { SignIn, SignInButton, useClerk } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useTRPC } from "@/trcp/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFitnessAssessmentStore } from "@/lib/fitness-assessment-store";
 import { PaymentModal } from "@/components/ui/payment-modal";
 
@@ -155,6 +155,7 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
   const { user } = useClerk();
   const trpc = useTRPC();
   const clerk = useClerk();
+  const queryClient = useQueryClient();
 
   // Use Zustand store instead of local state
   const {
@@ -231,6 +232,13 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
     },
   }));
 
+  // Set payment completed mutation
+  const setPaymentCompleted = useMutation(trpc.fitness.setPaymentCompleted.mutationOptions({
+    onError: (error) => {
+      console.error('Error setting payment completed:', error);
+    },
+  }));
+
   const handleSubmit = useCallback(async () => {
     if (!user) {
       toast.error("Prosím, přihlaste se pro pokračování");
@@ -263,6 +271,16 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
 
     const handlePaymentSuccess = useCallback(async () => {
     try {
+      // Set payment as completed immediately
+      if (paymentClientSecret) {
+        // Extract payment intent ID from client secret
+        const paymentIntentId = paymentClientSecret.split('_secret_')[0];
+        await setPaymentCompleted.mutateAsync({ paymentIntentId });
+
+        // Invalidate hasPaidPlan query to refresh the data
+        queryClient.invalidateQueries(trpc.fitness.hasPaidPlan.queryOptions());
+      }
+
       // Remove current plan before redirecting (if it exists)
       await removeCurrentPlan.mutateAsync();
       await disableMealPlanning.mutateAsync();
@@ -277,7 +295,7 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
       toast.success("Platba byla úspěšná! Váš fitness plán se generuje...");
       router.push('/dashboard');
     }
-  }, [router, removeCurrentPlan, disableMealPlanning]);
+  }, [router, removeCurrentPlan, disableMealPlanning, setPaymentCompleted, paymentClientSecret, queryClient, trpc.fitness.hasPaidPlan]);
 
   // Handle pending submission after authentication
   useEffect(() => {

@@ -12,6 +12,7 @@
     "test:email": "tsx scripts/test-email.ts",
     "test:webhook": "tsx scripts/test-webhook.ts",
     "test:webhook-simple": "tsx scripts/test-webhook-simple.ts",
+    "test:clerk-webhook": "tsx scripts/test-clerk-webhook.ts",
     "studio": "prisma studio",
     "inngest": "inngest-cli@latest dev",
     "postinstall": "prisma generate"

@@ -228,7 +228,7 @@ export const fitnessRouter = createTRPCRouter({
 
   getProfile: protectedProcedure
     .query(async ({ ctx }) => {
-      const profile = await prisma.fitnessProfile.findUnique({
+      let profile = await prisma.fitnessProfile.findUnique({
         where: { userId: ctx.auth.userId },
         include: {
           currentPlan: {
@@ -252,10 +252,74 @@ export const fitnessRouter = createTRPCRouter({
       });
 
       if (!profile) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Fitness profile not found",
+        // Try to find assessment data from payment session
+        const paymentSession = await prisma.paymentSession.findFirst({
+          where: {
+            userId: ctx.auth.userId,
+            status: 'completed'
+          },
+          orderBy: { createdAt: 'desc' }
         });
+
+        if (paymentSession?.assessmentData) {
+          const assessmentData = paymentSession.assessmentData as any;
+
+          // Create fitness profile from assessment data
+          profile = await prisma.fitnessProfile.create({
+            data: {
+              userId: ctx.auth.userId,
+              gender: assessmentData.gender || 'male',
+              fitnessGoal: assessmentData.fitnessGoal || 'GENERAL_FITNESS',
+              age: parseInt(assessmentData.age) || 25,
+              weight: parseFloat(assessmentData.weight) || 70,
+              height: parseFloat(assessmentData.height) || 170,
+              targetWeight: parseFloat(assessmentData.targetWeight) || parseFloat(assessmentData.weight) || 70,
+              experienceLevel: assessmentData.experienceLevel || 'BEGINNER',
+              activityLevel: assessmentData.activityLevel || 'MODERATELY_ACTIVE',
+              targetMuscleGroups: assessmentData.targetMuscleGroups || [],
+              hasInjuries: assessmentData.hasInjuries || false,
+              injuries: assessmentData.injuries || '',
+              medicalConditions: assessmentData.medicalConditions || '',
+              availableDays: JSON.stringify(assessmentData.availableDays || ['monday', 'wednesday', 'friday']),
+              workoutDuration: parseInt(assessmentData.workoutDuration) || 45,
+              preferredExercises: assessmentData.preferredExercises || '',
+              equipment: JSON.stringify(assessmentData.equipment || ['dumbbells']),
+              mealPlanningEnabled: assessmentData.mealPlanningEnabled || false,
+              dietaryRestrictions: assessmentData.dietaryRestrictions || [],
+              allergies: assessmentData.allergies || [],
+              budgetPerWeek: parseFloat(assessmentData.budgetPerWeek) || 1000,
+              mealPrepTime: parseInt(assessmentData.mealPrepTime) || 30,
+              preferredCuisines: assessmentData.preferredCuisines || ['czech'],
+              cookingSkill: assessmentData.cookingSkill || 'BEGINNER',
+            },
+            include: {
+              currentPlan: {
+                include: {
+                  workouts: {
+                    include: {
+                      workoutExercises: {
+                        include: {
+                          exercise: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              progressLogs: {
+                orderBy: { createdAt: "desc" },
+                take: 10,
+              },
+            },
+          });
+
+          console.log('Created fitness profile from assessment data:', profile.id);
+        } else {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Fitness profile not found and no assessment data available",
+          });
+        }
       }
 
       return profile;
@@ -1738,6 +1802,34 @@ export const fitnessRouter = createTRPCRouter({
         data: { mealPlanningEnabled: false },
       });
       return { success: true };
+    }),
+
+  setPaymentCompleted: protectedProcedure
+    .input(z.object({
+      paymentIntentId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Update payment session status to completed
+        await prisma.paymentSession.updateMany({
+          where: {
+            userId: ctx.auth.userId,
+            stripeSessionId: input.paymentIntentId
+          },
+          data: {
+            status: 'completed',
+            paymentIntentId: input.paymentIntentId
+          }
+        });
+
+        return { success: true };
+      } catch (error) {
+        console.error('Error setting payment completed:', error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to set payment completed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
     }),
 
 });
