@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { inngest } from '@/inngest/client';
 import prisma from '@/lib/prisma';
 import { generateAndSaveInvoice, createInvoiceData } from '@/lib/invoice-utils';
+import { EmailService } from '@/lib/email-service';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-06-30.basil',
@@ -173,6 +174,36 @@ export async function POST(req: NextRequest) {
             } catch (inngestError) {
               console.error('Inngest API Error:', inngestError);
               console.log('Inngest not configured properly - plan will be generated via client-side fallback');
+              // Don't throw error, just log it and continue
+            }
+
+            // Send payment confirmation email
+            try {
+              const { clerkClient } = await import('@clerk/nextjs/server');
+              const clerk = await clerkClient();
+              const user = await clerk.users.getUser(userId);
+              const userEmail = user.emailAddresses[0]?.emailAddress;
+              const userName = user.fullName || user.firstName || user.emailAddresses[0]?.emailAddress || "Uživateli";
+
+              if (userEmail) {
+                const success = await EmailService.sendPaymentConfirmationEmail(
+                  userEmail,
+                  userName,
+                  planName || "Fitness plán",
+                  paymentIntent.amount / 100,
+                  paymentIntent.currency.toUpperCase()
+                );
+
+                if (success) {
+                  console.log('Payment confirmation email sent successfully to:', userEmail);
+                } else {
+                  console.error('Failed to send payment confirmation email to:', userEmail);
+                }
+              } else {
+                console.log('No email address found for user:', userId);
+              }
+            } catch (emailError) {
+              console.error('Error sending payment confirmation email:', emailError);
               // Don't throw error, just log it and continue
             }
           } catch (dbError) {

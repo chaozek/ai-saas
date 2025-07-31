@@ -8,6 +8,7 @@ Modern fitness planning platform with AI-generated personalized workout and meal
 - **Custom Workout Plans** - Tailored exercise routines based on goals and equipment
 - **Meal Planning** - Personalized nutrition plans with recipes and shopping lists
 - **Stripe Payment Integration** - Secure one-time payments for premium plans
+- **Email Notifications** - Welcome emails and payment confirmations via Resend
 - **Real-time Progress Tracking** - Monitor your fitness journey
 - **Mobile-Responsive Design** - Works perfectly on all devices
 
@@ -17,6 +18,7 @@ Modern fitness planning platform with AI-generated personalized workout and meal
 - **Backend**: tRPC, Prisma ORM, Inngest (background jobs)
 - **Authentication**: Clerk
 - **Payments**: Stripe (one-time payments)
+- **Email**: Resend
 - **Database**: PostgreSQL
 - **Styling**: Shadcn/ui components
 
@@ -28,6 +30,7 @@ Modern fitness planning platform with AI-generated personalized workout and meal
 - PostgreSQL database
 - Stripe account
 - Clerk account
+- Resend account
 
 ### Installation
 
@@ -55,11 +58,16 @@ DATABASE_URL="postgresql://..."
 # Authentication (Clerk)
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
+CLERK_WEBHOOK_SECRET=whsec_...
 
 # Payments (Stripe)
 STRIPE_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Email (Resend)
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+RESEND_FROM_EMAIL=noreply@your-domain.com
 
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3001

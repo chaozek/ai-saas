@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Download, Search, Eye, Calendar, DollarSign, User, FileText } from "lucide-react";
+import { Download, Search, Eye, Calendar, DollarSign, User, FileText, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import {
@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RestrictedAccess } from "@/components/ui/restricted-access";
+import { EmailTest } from "@/components/ui/email-test";
 
 interface Invoice {
   id: string;
@@ -282,6 +283,22 @@ export default function AdminInvoicesPage() {
                   ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+
+          {/* Email Test Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Test Emailové Funkcionality
+              </CardTitle>
+              <CardDescription>
+                Testování odesílání emailů pomocí Resend
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EmailTest />
             </CardContent>
           </Card>
         </div>

@@ -3,6 +3,7 @@ import { messagesRouter } from '@/modules/messages/server/procedures';
 import { projectsRouter } from '@/modules/projects/server/procedures';
 import { usageRouter } from '@/modules/usage/server/procedures';
 import { fitnessRouter } from '@/modules/fitness/server/procedures';
+import { emailRouter } from '@/modules/email/server/procedures';
 import { youtubeRouter } from './youtube';
 
 export const appRouter = createTRPCRouter({
@@ -10,6 +11,7 @@ export const appRouter = createTRPCRouter({
   projects: projectsRouter,
   usage: usageRouter,
   fitness: fitnessRouter,
+  email: emailRouter,
   youtube: youtubeRouter
 });
 // export type definition of API
