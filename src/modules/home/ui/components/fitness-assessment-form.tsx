@@ -182,6 +182,12 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
 
+  // Check if user has already paid
+  const { data: paymentStatus, isLoading: paymentStatusLoading } = useQuery({
+    ...trpc.fitness.hasPaidPlan.queryOptions(),
+    enabled: !!user, // Only run query if user is logged in
+  });
+
   // Handle highlight state changes
   useEffect(() => {
     if (isHighlighted) {
@@ -947,6 +953,161 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
           <CardContent>
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show loading state while checking payment status
+  if (user && paymentStatusLoading) {
+    return (
+      <div className="relative">
+        <Card className="w-full relative z-10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-slate-400" />
+              </div>
+              <div>
+                <CardTitle>Kontrolujeme váš plán...</CardTitle>
+                <CardDescription>Načítáme informace o vašem fitness plánu</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-slate-600 dark:text-slate-400" />
+              <p className="text-slate-600 dark:text-slate-400">
+                Kontrolujeme, zda máte již zaplacený plán...
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show dashboard button if user has already paid
+  if (user && !paymentStatusLoading && paymentStatus?.hasPaidPlan) {
+    return (
+      <div className="relative">
+        {/* Enhanced Trainer Animation Container */}
+        <div className="absolute -top-20 -right-8 z-0">
+          {/* Floating background elements */}
+          <div className="absolute inset-0">
+            {/* Animated circles */}
+            <div className="absolute top-4 right-4 w-4 h-4 bg-green-400 rounded-full animate-ping opacity-75"></div>
+            <div className="absolute top-8 right-12 w-3 h-3 bg-blue-400 rounded-full animate-ping opacity-75" style={{ animationDelay: '0.5s' }}></div>
+            <div className="absolute top-2 right-20 w-2 h-2 bg-emerald-400 rounded-full animate-ping opacity-75" style={{ animationDelay: '1s' }}></div>
+
+            {/* Floating particles */}
+            <div className="absolute top-6 right-6 w-1 h-1 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="absolute top-12 right-16 w-1 h-1 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.7s' }}></div>
+            <div className="absolute top-8 right-24 w-1 h-1 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '1.2s' }}></div>
+          </div>
+
+          {/* Main trainer image with enhanced animations */}
+          <div className="relative">
+            {/* Glow effect behind trainer */}
+            <div className="absolute inset-0 bg-gradient-to-r from-green-400/30 to-blue-400/30 rounded-full blur-xl scale-150 opacity-80"></div>
+
+            {/* Show both trainers when no gender is selected, or single trainer based on selection */}
+            <div className="relative w-32 h-32">
+              {/* Male trainer - always present but conditionally visible */}
+              <img
+                src="/trainer.png"
+                alt="Male Fitness Trainer"
+                className={`absolute w-24 h-24 object-contain transition-all duration-700 ease-out scale-125 rotate-12 translate-x-2 translate-y-2 drop-shadow-2xl animate-float ${
+                  // Transition based on gender selection
+                  !data.gender
+                    ? 'opacity-100 left-[-8px] top-[4px] z-[2]'
+                    : data.gender === "female"
+                      ? 'opacity-0 left-[-8px] top-[4px] z-[1]'
+                      : 'opacity-100 left-[0px] top-[0px] z-[2] w-32 h-32'
+                }`}
+                style={{
+                  filter: 'brightness(1.2) contrast(1.1)',
+                }}
+              />
+
+              {/* Female trainer - always present but conditionally visible */}
+              <img
+                src="/trainer_lady.png"
+                alt="Female Fitness Trainer"
+                className={`absolute w-24 h-24 object-contain transition-all duration-700 ease-out scale-125 rotate-12 translate-x-2 translate-y-2 drop-shadow-2xl animate-float ${
+                  // Transition based on gender selection
+                  !data.gender
+                    ? 'opacity-100 left-[24px] top-[4px] z-[1]'
+                    : data.gender === "female"
+                      ? 'opacity-100 left-[0px] top-[0px] z-[2] w-32 h-32'
+                      : 'opacity-0 left-[24px] top-[4px] z-[1]'
+                }`}
+                style={{
+                  filter: 'brightness(1.2) contrast(1.1)',
+                  animationDelay: !data.gender ? '0.5s' : '0s',
+                }}
+              />
+            </div>
+
+            {/* Success sparkles */}
+            <>
+              <div className="absolute -top-2 -right-2 w-3 h-3 bg-yellow-400 rounded-full animate-ping"></div>
+              <div className="absolute -bottom-2 -left-2 w-2 h-2 bg-green-400 rounded-full animate-ping" style={{ animationDelay: '0.3s' }}></div>
+              <div className="absolute top-1/2 -right-4 w-2 h-2 bg-blue-400 rounded-full animate-ping" style={{ animationDelay: '0.6s' }}></div>
+            </>
+          </div>
+
+          {/* Motivational text bubble */}
+          <div className="absolute -top-20 -right-2 transition-all duration-500 opacity-100 scale-100 translate-y-0" style={{ zIndex: 2 }}>
+            <div className="relative">
+              {/* Main bubble */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl px-4 py-3 shadow-xl">
+                <div className="text-xs font-medium text-green-600 dark:text-green-400">
+                  Máte již zaplacený plán! 🎉
+                </div>
+              </div>
+              {/* Seamless arrow */}
+              <div className="absolute -bottom-1 left-6 w-2 h-2 bg-white dark:bg-slate-800 transform rotate-45"></div>
+            </div>
+          </div>
+        </div>
+
+        <Card className="w-full relative z-10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                <span className="text-green-600 dark:text-green-400 text-lg">✅</span>
+              </div>
+              <div>
+                <CardTitle>Váš fitness plán je připraven!</CardTitle>
+                <CardDescription>Máte již zaplacený plán a můžete pokračovat na dashboard</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center py-8">
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-green-600 dark:text-green-400 text-2xl">🎯</span>
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                  Vítejte zpět!
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Váš personalizovaný fitness plán čeká na dashboardu. Pokračujte ve své fitness cestě!
+                </p>
+              </div>
+
+              <Button
+                onClick={() => router.push('/dashboard')}
+                size="lg"
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
+              >
+                <Activity className="w-5 h-5 mr-2" />
+                Přejít na Dashboard
+              </Button>
             </div>
           </CardContent>
         </Card>
