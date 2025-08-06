@@ -42,10 +42,7 @@ async function main() {
       mealPlanningEnabled: true,
       dietaryRestrictions: [],
       allergies: [],
-      budgetPerWeek: 1000,
-      mealPrepTime: 30,
       preferredCuisines: ['česká', 'italská', 'asijská'],
-      cookingSkill: ExperienceLevel.INTERMEDIATE,
       isPublic: true,
     },
  /*    {
@@ -65,10 +62,7 @@ async function main() {
       mealPlanningEnabled: true,
       dietaryRestrictions: [],
       allergies: [],
-      budgetPerWeek: 800,
-      mealPrepTime: 20,
       preferredCuisines: ['česká', 'středomořská'],
-      cookingSkill: ExperienceLevel.BEGINNER,
       isPublic: true,
     },
     {
@@ -88,10 +82,7 @@ async function main() {
       mealPlanningEnabled: true,
       dietaryRestrictions: ['vegetariánská'],
       allergies: [],
-      budgetPerWeek: 900,
-      mealPrepTime: 25,
       preferredCuisines: ['česká', 'italská', 'vegetariánská'],
-      cookingSkill: ExperienceLevel.INTERMEDIATE,
       isPublic: true,
     },
     {
@@ -111,10 +102,7 @@ async function main() {
       mealPlanningEnabled: true,
       dietaryRestrictions: [],
       allergies: ['ořechy'],
-      budgetPerWeek: 700,
-      mealPrepTime: 15,
       preferredCuisines: ['česká', 'asijská'],
-      cookingSkill: ExperienceLevel.BEGINNER,
       isPublic: true,
     } */
   ]
@@ -192,10 +180,7 @@ async function main() {
       mealPlanningEnabled: plan.fitnessProfile.mealPlanningEnabled || true,
       dietaryRestrictions: plan.fitnessProfile.dietaryRestrictions || [],
       allergies: plan.fitnessProfile.allergies || [],
-      budgetPerWeek: plan.fitnessProfile.budgetPerWeek || 1000,
-      mealPrepTime: plan.fitnessProfile.mealPrepTime || 30,
       preferredCuisines: plan.fitnessProfile.preferredCuisines || ['česká', 'italská'],
-      cookingSkill: plan.fitnessProfile.cookingSkill || ExperienceLevel.INTERMEDIATE,
     }
 
     try {

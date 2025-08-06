@@ -33,10 +33,10 @@ const assessmentDataSchema = z.object({
   mealPlanningEnabled: z.boolean(),
   dietaryRestrictions: z.array(z.string()),
   allergies: z.array(z.string()),
-  budgetPerWeek: z.string(),
-  mealPrepTime: z.string(),
+
+
   preferredCuisines: z.array(z.string()),
-  cookingSkill: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]),
+
 });
 
 export const fitnessRouter = createTRPCRouter({
@@ -84,10 +84,7 @@ export const fitnessRouter = createTRPCRouter({
           mealPlanningEnabled: input.mealPlanningEnabled,
           dietaryRestrictions: input.dietaryRestrictions,
           allergies: input.allergies,
-          budgetPerWeek: input.budgetPerWeek ? parseFloat(input.budgetPerWeek) : null,
-          mealPrepTime: input.mealPrepTime ? parseInt(input.mealPrepTime) : null,
           preferredCuisines: input.preferredCuisines,
-          cookingSkill: input.cookingSkill,
         },
         create: {
           userId: ctx.auth.userId,
@@ -110,10 +107,7 @@ export const fitnessRouter = createTRPCRouter({
           mealPlanningEnabled: input.mealPlanningEnabled,
           dietaryRestrictions: input.dietaryRestrictions,
           allergies: input.allergies,
-          budgetPerWeek: input.budgetPerWeek ? parseFloat(input.budgetPerWeek) : null,
-          mealPrepTime: input.mealPrepTime ? parseInt(input.mealPrepTime) : null,
           preferredCuisines: input.preferredCuisines,
-          cookingSkill: input.cookingSkill,
         },
       });
 
@@ -244,6 +238,19 @@ export const fitnessRouter = createTRPCRouter({
               },
             },
           },
+          currentMealPlan: {
+            include: {
+              meals: {
+                include: {
+                  recipes: true,
+                },
+                orderBy: [
+                  { dayOfWeek: "asc" },
+                  { mealType: "asc" }
+                ],
+              },
+            },
+          },
           progressLogs: {
             orderBy: { createdAt: "desc" },
             take: 10,
@@ -287,10 +294,7 @@ export const fitnessRouter = createTRPCRouter({
               mealPlanningEnabled: assessmentData.mealPlanningEnabled || false,
               dietaryRestrictions: assessmentData.dietaryRestrictions || [],
               allergies: assessmentData.allergies || [],
-              budgetPerWeek: parseFloat(assessmentData.budgetPerWeek) || 1000,
-              mealPrepTime: parseInt(assessmentData.mealPrepTime) || 30,
               preferredCuisines: assessmentData.preferredCuisines || ['czech'],
-              cookingSkill: assessmentData.cookingSkill || 'BEGINNER',
             },
             include: {
               currentPlan: {
@@ -303,6 +307,19 @@ export const fitnessRouter = createTRPCRouter({
                         },
                       },
                     },
+                  },
+                },
+              },
+              currentMealPlan: {
+                include: {
+                  meals: {
+                    include: {
+                      recipes: true,
+                    },
+                    orderBy: [
+                      { dayOfWeek: "asc" },
+                      { mealType: "asc" }
+                    ],
                   },
                 },
               },
@@ -554,144 +571,7 @@ export const fitnessRouter = createTRPCRouter({
       };
     }),
 
-  generateMealPlanOnly: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      try {
-        await consumeCredits();
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "TOO_MANY_REQUESTS",
-          message: "You do not have enough credits",
-        });
-      }
 
-      // Get the existing fitness profile
-      const fitnessProfile = await prisma.fitnessProfile.findUnique({
-        where: { userId: ctx.auth.userId },
-      });
-
-      if (!fitnessProfile) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Fitness profile not found. Please complete your fitness assessment first.",
-        });
-      }
-
-      if (!fitnessProfile.mealPlanningEnabled) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Meal planning is not enabled in your fitness profile.",
-        });
-      }
-
-      // Kontrola povinných údajů před spuštěním Inngest funkce
-      const missingFields = [];
-      if (!fitnessProfile.age || fitnessProfile.age <= 0) missingFields.push('věk');
-      if (!fitnessProfile.gender || fitnessProfile.gender.trim() === '') missingFields.push('pohlaví');
-      if (!fitnessProfile.height || fitnessProfile.height <= 0) missingFields.push('výška');
-      if (!fitnessProfile.weight || fitnessProfile.weight <= 0) missingFields.push('váha');
-
-      if (missingFields.length > 0) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Nelze vygenerovat jídelní plán - chybí povinné údaje: ${missingFields.join(', ')}. Prosím, vyplňte fitness assessment znovu s kompletními údaji.`,
-        });
-      }
-
-      // Trigger the Inngest function to generate only the meal plan
-      const result = await inngest.send({
-        name: "generate-meal-plan-only/run",
-        data: {
-          userId: ctx.auth.userId,
-          fitnessProfileId: fitnessProfile.id,
-        },
-      });
-
-      return {
-        success: true,
-        message: "Meal plan generation started",
-        eventId: result.ids[0],
-      };
-    }),
-
-  enableMealPlanningAndGenerate: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      try {
-        await consumeCredits();
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "TOO_MANY_REQUESTS",
-          message: "You do not have enough credits",
-        });
-      }
-
-      // Get the existing fitness profile
-      const fitnessProfile = await prisma.fitnessProfile.findUnique({
-        where: { userId: ctx.auth.userId },
-      });
-
-      if (!fitnessProfile) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Fitness profile not found. Please complete your fitness assessment first.",
-        });
-      }
-
-      // Enable meal planning and set default values if not already set
-      const updatedProfile = await prisma.fitnessProfile.update({
-        where: { id: fitnessProfile.id },
-        data: {
-          mealPlanningEnabled: true,
-          dietaryRestrictions: fitnessProfile.dietaryRestrictions.length > 0 ? fitnessProfile.dietaryRestrictions : ["healthy"],
-          allergies: fitnessProfile.allergies.length > 0 ? fitnessProfile.allergies : [],
-          budgetPerWeek: fitnessProfile.budgetPerWeek || 100,
-          mealPrepTime: fitnessProfile.mealPrepTime || 30,
-          preferredCuisines: fitnessProfile.preferredCuisines.length > 0 ? fitnessProfile.preferredCuisines : ["czech", "mediterranean"],
-          cookingSkill: fitnessProfile.cookingSkill || "BEGINNER",
-        },
-      });
-
-      // Kontrola povinných údajů před spuštěním Inngest funkce
-      const missingFields = [];
-      if (!updatedProfile.age || updatedProfile.age <= 0) missingFields.push('věk');
-      if (!updatedProfile.gender || updatedProfile.gender.trim() === '') missingFields.push('pohlaví');
-      if (!updatedProfile.height || updatedProfile.height <= 0) missingFields.push('výška');
-      if (!updatedProfile.weight || updatedProfile.weight <= 0) missingFields.push('váha');
-
-      if (missingFields.length > 0) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Nelze vygenerovat jídelní plán - chybí povinné údaje: ${missingFields.join(', ')}. Prosím, vyplňte fitness assessment znovu s kompletními údaji.`,
-        });
-      }
-
-      // Trigger the Inngest function to generate the meal plan
-      const result = await inngest.send({
-        name: "generate-meal-plan-only/run",
-        data: {
-          userId: ctx.auth.userId,
-          fitnessProfileId: updatedProfile.id,
-        },
-      });
-
-      return {
-        success: true,
-        message: "Meal planning enabled and meal plan generation started",
-        eventId: result.ids[0],
-      };
-    }),
 
   regenerateMeal: protectedProcedure
     .input(z.object({
@@ -777,6 +657,81 @@ export const fitnessRouter = createTRPCRouter({
         message: "Meal regeneration started",
         eventId: result.ids[0],
         mealId: input.mealId, // Return mealId for tracking
+      };
+    }),
+
+  regenerateMealPlan: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      try {
+        await consumeCredits();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "You do not have enough credits",
+        });
+      }
+
+      // Get user's fitness profile
+      const fitnessProfile = await prisma.fitnessProfile.findUnique({
+        where: { userId: ctx.auth.userId },
+      });
+
+      if (!fitnessProfile) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Fitness profile not found. Please complete the fitness assessment first.",
+        });
+      }
+
+      if (!fitnessProfile.mealPlanningEnabled) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Meal planning is not enabled for your profile.",
+        });
+      }
+
+      // Prepare assessment data from fitness profile
+      const assessmentData = {
+        age: fitnessProfile.age?.toString() || "25",
+        gender: fitnessProfile.gender || "male",
+        height: fitnessProfile.height?.toString() || "170",
+        weight: fitnessProfile.weight?.toString() || "70",
+        targetWeight: fitnessProfile.targetWeight?.toString(),
+        fitnessGoal: fitnessProfile.fitnessGoal || "GENERAL_FITNESS",
+        activityLevel: fitnessProfile.activityLevel || "MODERATELY_ACTIVE",
+        experienceLevel: fitnessProfile.experienceLevel || "BEGINNER",
+        targetMuscleGroups: fitnessProfile.targetMuscleGroups || [],
+        hasInjuries: fitnessProfile.hasInjuries || false,
+        injuries: fitnessProfile.injuries || "",
+        medicalConditions: fitnessProfile.medicalConditions || "",
+        availableDays: fitnessProfile.availableDays ? JSON.parse(fitnessProfile.availableDays) : ["Pondělí", "Středa", "Pátek"],
+        workoutDuration: fitnessProfile.workoutDuration?.toString() || "45",
+        preferredExercises: fitnessProfile.preferredExercises || "",
+        equipment: fitnessProfile.equipment ? JSON.parse(fitnessProfile.equipment) : ["Činky"],
+        mealPlanningEnabled: fitnessProfile.mealPlanningEnabled || false,
+        dietaryRestrictions: fitnessProfile.dietaryRestrictions || [],
+        allergies: fitnessProfile.allergies || [],
+        preferredCuisines: fitnessProfile.preferredCuisines || ["česká"],
+      };
+
+      // Trigger meal plan regeneration
+      await inngest.send({
+        name: "regenerate-meal-plan/run",
+        data: {
+          userId: ctx.auth.userId,
+          assessmentData,
+        },
+      });
+
+      return {
+        success: true,
+        message: "Meal plan regeneration started successfully",
       };
     }),
 
@@ -1312,10 +1267,7 @@ export const fitnessRouter = createTRPCRouter({
                 mealPlanningEnabled: true,
                 dietaryRestrictions: true,
                 allergies: true,
-                budgetPerWeek: true,
-                mealPrepTime: true,
                 preferredCuisines: true,
-                cookingSkill: true,
               },
             },
             workouts: {

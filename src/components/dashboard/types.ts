@@ -55,7 +55,6 @@ export interface MealPlan {
   proteinPerDay: number | null;
   carbsPerDay: number | null;
   fatPerDay: number | null;
-  budgetPerWeek?: number | null;
   isActive?: boolean;
   fitnessProfileId?: string;
   activeProfileId?: string | null;
@@ -70,18 +69,22 @@ export interface Meal {
   description: string | null;
   dayOfWeek: number;
   weekNumber: number;
-  mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
+  mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | 'SUPPLEMENT';
   calories: number | null;
   protein: number | null;
   carbs: number | null;
   fat: number | null;
-  prepTime: number | null;
-  cookTime: number | null;
   servings?: number | null;
   mealPlanId?: string;
   createdAt?: Date;
   updatedAt?: Date;
   recipes: Recipe[];
+  // Supplementary meal properties
+  _supplementary?: boolean;
+  _supplementaryType?: string;
+  _regenerated?: boolean;
+  _nutrientsReduced?: boolean;
+  _reductionType?: string;
 }
 
 export interface Recipe {
@@ -90,8 +93,6 @@ export interface Recipe {
   ingredients: string; // JSON string
   instructions: string;
   nutrition?: string | null; // JSON nutrition info
-  prepTime?: number | null;
-  cookTime?: number | null;
   servings?: number | null;
   difficulty?: string | null;
   cuisine?: string | null;

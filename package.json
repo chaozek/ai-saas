@@ -14,7 +14,7 @@
     "test:webhook-simple": "tsx scripts/test-webhook-simple.ts",
     "test:clerk-webhook": "tsx scripts/test-clerk-webhook.ts",
     "studio": "prisma studio",
-    "inngest": "inngest-cli@latest dev",
+    "inngest": "inngest dev",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -64,9 +64,11 @@
     "client-only": "^0.0.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "csv-parse": "^6.1.0",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.1",
     "embla-carousel-react": "^8.6.0",
+    "iconv-lite": "^0.6.3",
     "inngest": "^3.40.1",
     "input-otp": "^1.4.2",
     "jspdf": "^3.0.1",

@@ -72,10 +72,7 @@ model FitnessProfile {
   mealPlanningEnabled Boolean          @default(false)
   dietaryRestrictions String[]         @default([])
   allergies           String[]         @default([])
-  budgetPerWeek       Float?
-  mealPrepTime        Int?
   preferredCuisines   String[]         @default([])
-  cookingSkill        ExperienceLevel?
   isPublic            Boolean          @default(false)
   userId              String           @unique
   user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -175,7 +172,6 @@ model MealPlan {
   proteinPerDay    Float?
   carbsPerDay      Float?
   fatPerDay        Float?
-  budgetPerWeek    Float?
   isActive         Boolean         @default(false)
   isPublic         Boolean         @default(false)
   fitnessProfileId String
@@ -198,8 +194,6 @@ model Meal {
   protein     Float?
   carbs       Float?
   fat         Float?
-  prepTime    Int?
-  cookTime    Int?
   servings    Int?
   mealPlanId  String
   mealPlan    MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
@@ -215,8 +209,6 @@ model Recipe {
   instructions String
   ingredients  String
   nutrition    String?
-  prepTime     Int?
-  cookTime     Int?
   servings     Int?
   difficulty   String?
   cuisine      String?
@@ -300,6 +292,30 @@ enum ExperienceLevel {
   BEGINNER
   INTERMEDIATE
   ADVANCED
+}
+
+model CzechFood {
+  id             String   @id @default(cuid())
+  code           String   @unique // OrigFdCd
+  name           String   // OrigFdNm
+  englishName    String?  // EngFdNam
+  scientificName String?  // SciNam
+  calories       Float    // ENERC [kcal]
+  protein        Float    // PROT [g]
+  carbs          Float    // CHOT [g]
+  fat            Float    // FAT [g]
+  fiber          Float?   // FIBT [g]
+  sugar          Float?   // SUGAR [g]
+  water          Float?   // WATER [g]
+  sodium         Float?   // NA [mg]
+  edible         Float?   // EDIBLE
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("czech_foods")
+  @@index([name])
+  @@index([calories])
+  @@index([protein])
 }
 
 enum MealType {

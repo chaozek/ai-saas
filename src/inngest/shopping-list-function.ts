@@ -22,6 +22,8 @@ type GenerateShoppingListEvent = {
        try {
          // Collect all ingredients from the week's meals with proper quantity calculation
          const allIngredients: any[] = [];
+         let totalCost = 0;
+
          weekMeals.forEach(meal => {
            meal.recipes?.forEach((recipe: any) => {
              try {
@@ -33,13 +35,17 @@ type GenerateShoppingListEvent = {
                  );
 
                  if (existingIndex >= 0) {
-                   // Add quantities
+                   // Add quantities and costs
                    const existing = allIngredients[existingIndex];
                    const existingAmount = parseFloat(existing.amount) || 0;
                    const newAmount = parseFloat(ingredient.amount) || 0;
+                   const existingCost = parseFloat(existing.estimatedCost) || 0;
+                   const newCost = parseFloat(ingredient.estimatedCost) || 0;
+
                    allIngredients[existingIndex] = {
                      ...existing,
                      amount: (existingAmount + newAmount).toString(),
+                     estimatedCost: (existingCost + newCost).toString(),
                      count: (existing.count || 1) + 1
                    };
                  } else {
@@ -48,6 +54,9 @@ type GenerateShoppingListEvent = {
                      count: 1
                    });
                  }
+
+                 // Add to total cost
+                 totalCost += parseFloat(ingredient.estimatedCost) || 0;
                });
              } catch (e) {
                console.error("Error parsing ingredients:", e);
@@ -65,7 +74,9 @@ type GenerateShoppingListEvent = {
 
            const prompt = `Vytvoř realistický a dobře organizovaný nákupní seznam pro týden ${weekNumber}. Zde jsou potřebné surové ingredience:
 
-   ${allIngredients.map(ing => `- ${ing.amount} ${ing.unit} ${ing.name} (použito v ${ing.count} receptech)`).join('\n')}
+   ${allIngredients.map(ing => `- ${ing.amount} ${ing.unit} ${ing.name} (použito v ${ing.count} receptech, cena: ${ing.estimatedCost} Kč)`).join('\n')}
+
+   CELKOVÁ ODHADOVANÁ CENA: ${totalCost.toFixed(0)} Kč
 
    DŮLEŽITÉ INSTRUKCE:
    1. NENÁSOB množství - použij přesné poskytnuté množství

@@ -10,6 +10,7 @@ import { MealPlan, Meal } from "./types";
 import { useTRPC } from "@/trcp/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useRegenerateMealPlan } from "@/hooks/useRegenerateMealPlan";
 
 interface MealsTabProps {
   fitnessProfile: any;
@@ -38,114 +39,9 @@ export function MealsTab({
   const [shoppingListContent, setShoppingListContent] = useState<string>('');
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-
-    const enableMealPlanningAndGenerate = useMutation(trpc.fitness.enableMealPlanningAndGenerate.mutationOptions({
-    onSuccess: (data) => {
-      toast.success("Jídelní plánování povoleno a generování zahájeno!");
-      // NENASTAVUJEME setGeneratingMealPlan(false) - necháme loading pokračovat
-
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries(trpc.fitness.getProfile.queryOptions());
-      queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
-      queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
-
-      // Start polling for updates and errors
-      const interval = setInterval(async () => {
-        try {
-          // Check for error projects using TRPC
-          const projects = await queryClient.fetchQuery(trpc.projects.getmany.queryOptions());
-
-          // Check for error messages
-          const errorProject = projects?.find((p: any) =>
-            p.name?.includes('Error') &&
-            p.messages?.some((m: any) => m.type === 'ERROR')
-          );
-
-          if (errorProject) {
-            const errorMessage = errorProject.messages.find((m: any) => m.type === 'ERROR')?.content;
-            if (errorMessage) {
-              toast.error(errorMessage);
-              clearInterval(interval);
-              setGeneratingMealPlan(false);
-              return;
-            }
-          }
-
-          // Check if meal plan has been generated with meals
-          // Použijeme invalidateQueries místo fetchQuery pro fresh data
-          queryClient.invalidateQueries(trpc.fitness.getProfile.queryOptions());
-          queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
-          queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
-
-          // Počkáme chvilku a pak zkontrolujeme fresh data
-          setTimeout(async () => {
-            try {
-              const currentMealPlan = await queryClient.fetchQuery(trpc.fitness.getCurrentMealPlan.queryOptions());
-              if (currentMealPlan && currentMealPlan.meals && currentMealPlan.meals.length > 0) {
-                // Meal plan has been generated successfully
-                toast.success("Jídelní plán byl úspěšně vygenerován!");
-                clearInterval(interval);
-                setGeneratingMealPlan(false);
-                return;
-              }
-            } catch (error) {
-              console.error("Error checking meal plan:", error);
-            }
-          }, 1000); // Počkáme 1 sekundu po invalidaci
-        } catch (error) {
-          console.error("Error polling for updates:", error);
-        }
-      }, 3000); // Check every 3 seconds
-
-      // Stop polling after 2 minutes
-      setTimeout(() => {
-        clearInterval(interval);
-        setGeneratingMealPlan(false);
-       /*  toast.error("Generování jídelního plánu trvalo příliš dlouho. Zkuste to prosím znovu."); */
-      }, 120000);
-    },
-    onError: (error: any) => {
-      // Zobraz konkrétní chybovou zprávu pouze pokud se nejedná o úspěšné spuštění
-      const errorMessage = error.message || "Nepodařilo se povolit jídelní plánování. Zkuste to prosím znovu.";
-
-      // Pokud se jedná o úspěšné spuštění Inngest funkce, nezobrazuj chybu
-      if (errorMessage.includes("Meal planning enabled and meal plan generation started") || errorMessage.includes("success")) {
-        console.log("Meal planning enabled and generation started successfully");
-        return;
-      }
-
-      toast.error(errorMessage);
-      setGeneratingMealPlan(false);
-      console.error("Meal planning enable error:", error);
-    }
-  }));
-
-  const generateMealPlanOnly = useMutation(trpc.fitness.generateMealPlanOnly.mutationOptions({
-    onSuccess: (data) => {
-      toast.success("Generování jídelního plánu zahájeno!");
-      // NENASTAVUJEME setGeneratingMealPlan(false) - necháme loading pokračovat
-
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
-      queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
+  const { regenerateMealPlan, isLoading: isRegeneratingMealPlan } = useRegenerateMealPlan();
 
 
-    },
-    onError: (error: any) => {
-      // Zobraz konkrétní chybovou zprávu pouze pokud se nejedná o úspěšné spuštění
-      const errorMessage = error.message || "Nepodařilo se vygenerovat jídelní plán. Zkuste to prosím znovu.";
-
-      // Pokud se jedná o úspěšné spuštění Inngest funkce, nezobrazuj chybu
-      if (errorMessage.includes("Meal plan generation started") || errorMessage.includes("success")) {
-        console.log("Meal plan generation started successfully");
-        return;
-      }
-
-      toast.error(errorMessage);
-      setGeneratingMealPlan(false);
-      console.error("Meal plan generation error:", error);
-    }
-  }));
 
   const regenerateMeal = useMutation(trpc.fitness.regenerateMeal.mutationOptions({
     onSuccess: (data) => {
@@ -282,12 +178,11 @@ export function MealsTab({
   };
 
   const handleGenerateMealPlan = () => {
-    setGeneratingMealPlan(true);
-    if (!fitnessProfile?.mealPlanningEnabled) {
-      enableMealPlanningAndGenerate.mutate();
-    } else {
-      generateMealPlanOnly.mutate();
-    }
+    setGeneratingMealPlan(true); // Loader ihned po kliknutí
+    // TODO: Implementovat novou logiku pro generování jídelníčku
+    // Prozatím jen zobrazíme loading stav
+    toast.info("Funkce pro generování jídelníčku je ve vývoji");
+    setGeneratingMealPlan(false);
   };
 
   const handleRegenerateMeal = (mealId: string) => {
@@ -323,20 +218,55 @@ export function MealsTab({
 
   const handleRegenerateFullMealPlan = () => {
     setGeneratingMealPlan(true);
-    generateMealPlanOnly.mutate();
+    regenerateMealPlan();
   };
 
-  // Automatické refreshování když meal plan existuje ale nemá jídla (podobně jako v dashboardu)
+  // === POLLING FOR MEAL PLAN GENERATION ===
   useEffect(() => {
-    if (mealPlan && (!mealPlan.meals || mealPlan.meals.length === 0) && !generatingMealPlan) {
+    if (
+      fitnessProfile?.mealPlanningEnabled &&
+      (!mealPlan || mealPlan.isActive === false)
+    ) {
+      // Start polling every 3s
       const interval = setInterval(() => {
-        queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
-        queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
-      }, 3000); // Refresh every 3 seconds
+        try {
+          queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
+          queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
+          queryClient.invalidateQueries(trpc.fitness.getProfile.queryOptions());
+        } catch (error) {
+          // Ignore CancelledError when component unmounts
+          if (error?.name !== 'CancelledError') {
+            console.error('Error during polling:', error);
+          }
+        }
+      }, 3000);
 
+      // Cleanup function to clear interval on unmount
       return () => clearInterval(interval);
     }
-  }, [mealPlan?.meals?.length, generatingMealPlan, queryClient, trpc.fitness.getCurrentMealPlan, trpc.fitness.getMealPlans]);
+  }, [fitnessProfile?.mealPlanningEnabled, mealPlan?.isActive, queryClient, trpc.fitness.getCurrentMealPlan, trpc.fitness.getMealPlans, trpc.fitness.getProfile]);
+
+  // === POLLING FOR MEAL PLAN REGENERATION ===
+  useEffect(() => {
+    if (isRegeneratingMealPlan) {
+      // Start polling every 3s during regeneration
+      const interval = setInterval(() => {
+        try {
+          queryClient.invalidateQueries(trpc.fitness.getCurrentMealPlan.queryOptions());
+          queryClient.invalidateQueries(trpc.fitness.getMealPlans.queryOptions());
+          queryClient.invalidateQueries(trpc.fitness.getProfile.queryOptions());
+        } catch (error) {
+          // Ignore CancelledError when component unmounts
+          if (error?.name !== 'CancelledError') {
+            console.error('Error during regeneration polling:', error);
+          }
+        }
+      }, 3000);
+
+      // Cleanup function to clear interval on unmount
+      return () => clearInterval(interval);
+    }
+  }, [isRegeneratingMealPlan, queryClient, trpc.fitness.getCurrentMealPlan, trpc.fitness.getMealPlans, trpc.fitness.getProfile]);
 
   if (!fitnessProfile?.mealPlanningEnabled) {
     return (
@@ -371,12 +301,7 @@ export function MealsTab({
   // Check if meal plan is still generating - this should be checked FIRST
   // V demo režimu nepoužíváme loading stav
   // Only show loading if meal planning is enabled
-  const isMealPlanGenerating = !isDemoMode && fitnessProfile?.mealPlanningEnabled && (
-    generatingMealPlan ||
-    shouldShowLoading ||
-    (currentMealPlanLoading && !currentMealPlan) ||
-    (mealPlan && mealPlan.isActive === false)
-  );
+  const isMealPlanGenerating = generatingMealPlan || (fitnessProfile?.mealPlanningEnabled && (!mealPlan || mealPlan.isActive === false));
 console.log(fitnessProfile, "fitnessProfile")
   if (isMealPlanGenerating) {
     return (
@@ -385,7 +310,7 @@ console.log(fitnessProfile, "fitnessProfile")
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
           <h3 className="text-lg font-medium">Generuji jídelní plán...</h3>
           <p className="text-sm text-muted-foreground">Vytvářím personalizovaná jídla a recepty pro vaše nutriční cíle</p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center text-center">
             <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
             <span>Může to trvat několik minut</span>
           </div>
@@ -501,7 +426,7 @@ console.log(fitnessProfile, "fitnessProfile")
       <MealPlanHeader
         mealPlan={mealPlan}
         onRegenerateMealPlan={handleRegenerateFullMealPlan}
-        isRegenerating={generatingMealPlan}
+        isRegenerating={isRegeneratingMealPlan}
       />
 
       {/* Compact Weekly Organization */}
@@ -515,8 +440,8 @@ console.log(fitnessProfile, "fitnessProfile")
             if (a.dayOfWeek !== b.dayOfWeek) {
               return a.dayOfWeek - b.dayOfWeek;
             }
-            // Then sort by meal type (Breakfast, Lunch, Dinner)
-            const mealTypeOrder = { 'BREAKFAST': 1, 'LUNCH': 2, 'DINNER': 3 };
+            // Then sort by meal type (Breakfast, Lunch, Dinner, Supplement)
+            const mealTypeOrder = { 'BREAKFAST': 1, 'LUNCH': 2, 'DINNER': 3, 'SUPPLEMENT': 4 };
             return (mealTypeOrder[a.mealType as keyof typeof mealTypeOrder] || 0) -
                    (mealTypeOrder[b.mealType as keyof typeof mealTypeOrder] || 0);
           }) || [];

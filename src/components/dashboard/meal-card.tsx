@@ -9,7 +9,7 @@ import { Meal, Recipe } from "./types";
 
 interface MealCardProps {
   meal: Meal;
-  mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER';
+  mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SUPPLEMENT' | 'SNACK';
   isExpanded: boolean;
   onToggleExpansion: () => void;
   onRegenerateMeal?: (mealId: string) => void;
@@ -38,46 +38,87 @@ export function MealCard({
     fatType: typeof meal.fat
   });
 
-  const getMealTypeLabel = (type: string) => {
-    switch (type) {
-      case 'BREAKFAST': return 'SNÍDANĚ';
-      case 'LUNCH': return 'OBĚD';
-      case 'DINNER': return 'VEČEŘE';
-      case 'SNACK': return 'SVAČINA';
-      default: return type;
+  function getMealTypeLabel(meal: Meal): string {
+    if (meal._supplementaryType) {
+      switch (meal._supplementaryType) {
+        case 'morning_snack':
+          return 'Ranní svačina';
+        case 'afternoon_snack':
+          return 'Odpolední svačina';
+        default:
+          return 'Doplňující svačina';
+      }
     }
-  };
+
+    switch (meal.mealType) {
+      case 'BREAKFAST':
+        return 'Snídaně';
+      case 'LUNCH':
+        return 'Oběd';
+      case 'DINNER':
+        return 'Večeře';
+      case 'SUPPLEMENT':
+      case 'SNACK':
+        return 'Doplňující svačina';
+      default:
+        return meal.mealType || 'Jídlo';
+    }
+  }
 
   const getMealTypeVariant = (type: string) => {
+    if (meal._supplementaryType) {
+      switch (meal._supplementaryType) {
+        case 'morning_snack':
+          return 'secondary';
+        case 'afternoon_snack':
+          return 'destructive';
+        default:
+          return 'destructive';
+      }
+    }
+
     switch (type) {
-      case 'BREAKFAST': return 'default';
-      case 'LUNCH': return 'secondary';
-      case 'DINNER': return 'outline';
-      case 'SNACK': return 'secondary';
-      default: return 'secondary';
+      case 'BREAKFAST':
+        return 'default';
+      case 'LUNCH':
+        return 'secondary';
+      case 'DINNER':
+        return 'outline';
+      case 'SUPPLEMENT':
+      case 'SNACK':
+        return 'destructive';
+      default:
+        return 'default';
     }
   };
 
   const getMealTypeColors = (type: string) => {
+    if (meal._supplementaryType) {
+      switch (meal._supplementaryType) {
+        case 'morning_snack':
+          return 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200';
+        case 'afternoon_snack':
+          return 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200';
+        default:
+          return 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200';
+      }
+    }
+
     switch (type) {
       case 'BREAKFAST':
-        return 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400 hover:from-orange-600 hover:to-amber-600';
+        return 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200';
       case 'LUNCH':
-        return 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-blue-400 hover:from-blue-600 hover:to-indigo-600';
+        return 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200';
       case 'DINNER':
-        return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-purple-400 hover:from-purple-600 hover:to-pink-600';
-      case 'SNACK':
-        return 'bg-gradient-to-r from-green-500 to-emerald-500 text-white border-green-400 hover:from-green-600 hover:to-emerald-600';
+        return 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200';
+      case 'SUPPLEMENT':
+        return 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200';
       default:
-        return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white border-gray-400 hover:from-gray-600 hover:to-slate-600';
+        return 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200';
     }
   };
 
-  const getTotalTime = () => {
-    const prepTime = meal.prepTime || 0;
-    const cookTime = meal.cookTime || 0;
-    return prepTime + cookTime;
-  };
+
 
   const getNutritionValue = (value: number | null) => {
     const numValue = value || 0;
@@ -87,12 +128,31 @@ export function MealCard({
   const renderIngredients = (recipe: Recipe) => {
     try {
       const ingredients = JSON.parse(recipe.ingredients);
-      return ingredients.map((ingredient: any, idx: number) => (
-        <div key={idx} className="text-xs text-muted-foreground flex items-center gap-1">
-          <div className="w-1 h-1 rounded-full bg-muted-foreground"></div>
-          {ingredient.amount} {ingredient.unit} {ingredient.name}
+      const totalCost = ingredients.reduce((sum: number, ingredient: any) => {
+        return sum + (parseFloat(ingredient.estimatedCost) || 0);
+      }, 0);
+
+      return (
+        <div className="space-y-1">
+          {ingredients.map((ingredient: any, idx: number) => (
+            <div key={idx} className="text-xs text-muted-foreground flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <div className="w-1 h-1 rounded-full bg-muted-foreground"></div>
+                {ingredient.amount} {ingredient.unit} {ingredient.name}
+              </div>
+              {ingredient.estimatedCost && (
+                <span className="text-green-600 dark:text-green-400 font-medium">
+                  {ingredient.estimatedCost} Kč
+                </span>
+              )}
+            </div>
+          ))}
+          <div className="text-xs font-semibold text-green-700 dark:text-green-300 flex items-center justify-between pt-1 border-t border-border">
+            <span>Odhadovaná cena:</span>
+            <span>{totalCost.toFixed(0)} Kč</span>
+          </div>
         </div>
-      ));
+      );
     } catch (e) {
       return <div className="text-xs text-muted-foreground">Suroviny nejsou k dispozici</div>;
     }
@@ -149,16 +209,14 @@ export function MealCard({
                 </Button>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {getTotalTime()} min
-            </p>
+
           </div>
           <div className="flex items-center gap-2">
             <Badge
               variant="outline"
               className={`text-xs flex-shrink-0 font-semibold border-2 transition-all duration-200 ${getMealTypeColors(mealType)}`}
             >
-              {getMealTypeLabel(mealType)}
+              {getMealTypeLabel(meal)}
             </Badge>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="sm" className="h-6 w-6 p-0">

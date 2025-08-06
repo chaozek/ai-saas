@@ -52,6 +52,20 @@ export function WeekMeals({
     mealsByDay[meal.dayOfWeek].push(meal);
   });
 
+  // Debug: Log all meals to see what we're working with
+  console.log('=== WEEK MEALS DEBUG ===');
+  console.log('Total week meals:', weekMeals.length);
+  weekMeals.forEach((meal, index) => {
+    console.log(`Meal ${index + 1}:`, {
+      name: meal.name,
+      mealType: meal.mealType,
+      dayOfWeek: meal.dayOfWeek,
+      recipes: meal.recipes?.map(r => ({ tags: r.tags })),
+      _supplementaryType: (meal as any)._supplementaryType
+    });
+  });
+  console.log('=== END DEBUG ===');
+
   const toggleDayExpansion = (day: number) => {
     setExpandedDays(prev => {
       const newSet = new Set(prev);
@@ -143,6 +157,43 @@ export function WeekMeals({
                   const lunch = dayMeals.find((m) => m.mealType === 'LUNCH');
                   const dinner = dayMeals.find((m) => m.mealType === 'DINNER');
 
+                  // Filtrovat svačiny - hledat jak SUPPLEMENT tak SNACK
+                  const morningSnack = dayMeals.find(m =>
+                    (m.mealType === 'SUPPLEMENT' || m.mealType === 'SNACK') &&
+                    (m._supplementaryType === 'morning_snack' || m.recipes?.[0]?.tags?.includes('morning_snack'))
+                  );
+                  const afternoonSnack = dayMeals.find(m =>
+                    (m.mealType === 'SUPPLEMENT' || m.mealType === 'SNACK') &&
+                    (m._supplementaryType === 'afternoon_snack' || m.recipes?.[0]?.tags?.includes('afternoon_snack'))
+                  );
+
+                  // Najít všechny suplementy/snacky
+                  const allSnacks = dayMeals.filter(m =>
+                    m.mealType === 'SUPPLEMENT' || m.mealType === 'SNACK'
+                  );
+
+                  // Pokud nemáme specifické ranní/odpolední svačiny, použít první snack jako doplňující
+                  const supplementarySnack = allSnacks.find(m =>
+                    m._supplementaryType === 'nutrition_supplement' ||
+                    m.name?.includes('Doplňující')
+                  );
+
+                  // Debug logging
+                  console.log(`Day ${day} meals:`, {
+                    totalMeals: dayMeals.length,
+                    breakfast: breakfast?.name,
+                    morningSnack: morningSnack?.name,
+                    lunch: lunch?.name,
+                    afternoonSnack: afternoonSnack?.name,
+                    dinner: dinner?.name,
+                    allSupplements: dayMeals.filter(m => m.mealType === 'SUPPLEMENT').map(m => ({
+                      name: m.name,
+                      type: m._supplementaryType,
+                      tags: m.recipes?.[0]?.tags,
+                      mealType: m.mealType
+                    }))
+                  });
+
                   return (
                     <Collapsible
                       key={day}
@@ -161,8 +212,11 @@ export function WeekMeals({
                               <div className="font-semibold">Den {day}</div>
                               <div className="text-xs text-muted-foreground">
                                 {breakfast ? 'Snídaně' : ''}
-                                {lunch ? (breakfast ? ', ' : '') + 'Oběd' : ''}
-                                {dinner ? ((breakfast || lunch) ? ', ' : '') + 'Večeře' : ''}
+                                {morningSnack ? ((breakfast ? ', ' : '') + 'Ranní svačina') : ''}
+                                {lunch ? ((breakfast || morningSnack ? ', ' : '') + 'Oběd') : ''}
+                                {afternoonSnack ? ((breakfast || morningSnack || lunch ? ', ' : '') + 'Odpolední svačina') : ''}
+                                {supplementarySnack && !morningSnack && !afternoonSnack ? ((breakfast || morningSnack || lunch || afternoonSnack ? ', ' : '') + 'Doplňující svačina') : ''}
+                                {dinner ? ((breakfast || morningSnack || lunch || afternoonSnack || (supplementarySnack && !morningSnack && !afternoonSnack) ? ', ' : '') + 'Večeře') : ''}
                               </div>
                             </div>
                           </div>
@@ -171,7 +225,8 @@ export function WeekMeals({
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="px-4 pb-4 pt-4 space-y-3">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {/* Všechna jídla v jednom řádku podle pořadí */}
+                          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                             {/* Breakfast */}
                             {breakfast && (
                               <MealCard
@@ -184,6 +239,19 @@ export function WeekMeals({
                               />
                             )}
 
+                            {/* Morning Snack */}
+                            {morningSnack && (
+                              <MealCard
+                                key={morningSnack.id}
+                                meal={morningSnack}
+                                mealType="SUPPLEMENT"
+                                isExpanded={expandedMeals.has(morningSnack.id)}
+                                onToggleExpansion={() => onToggleMealExpansion(morningSnack.id)}
+                                onRegenerateMeal={onRegenerateMeal}
+                                isRegenerating={regeneratingMeals?.has(morningSnack.id)}
+                              />
+                            )}
+
                             {/* Lunch */}
                             {lunch && (
                               <MealCard
@@ -193,6 +261,32 @@ export function WeekMeals({
                                 onToggleExpansion={() => onToggleMealExpansion(lunch.id)}
                                 onRegenerateMeal={onRegenerateMeal}
                                 isRegenerating={regeneratingMeals?.has(lunch.id)}
+                              />
+                            )}
+
+                            {/* Afternoon Snack */}
+                            {afternoonSnack && (
+                              <MealCard
+                                key={afternoonSnack.id}
+                                meal={afternoonSnack}
+                                mealType="SUPPLEMENT"
+                                isExpanded={expandedMeals.has(afternoonSnack.id)}
+                                onToggleExpansion={() => onToggleMealExpansion(afternoonSnack.id)}
+                                onRegenerateMeal={onRegenerateMeal}
+                                isRegenerating={regeneratingMeals?.has(afternoonSnack.id)}
+                              />
+                            )}
+
+                            {/* Supplementary Snack */}
+                            {supplementarySnack && !morningSnack && !afternoonSnack && (
+                              <MealCard
+                                key={supplementarySnack.id}
+                                meal={supplementarySnack}
+                                mealType="SNACK"
+                                isExpanded={expandedMeals.has(supplementarySnack.id)}
+                                onToggleExpansion={() => onToggleMealExpansion(supplementarySnack.id)}
+                                onRegenerateMeal={onRegenerateMeal}
+                                isRegenerating={regeneratingMeals?.has(supplementarySnack.id)}
                               />
                             )}
 

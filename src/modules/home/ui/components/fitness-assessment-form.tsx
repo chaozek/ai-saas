@@ -48,10 +48,7 @@ interface AssessmentData {
   mealPlanningEnabled: boolean;
   dietaryRestrictions: string[];
   allergies: string[];
-  budgetPerWeek: string;
-  mealPrepTime: string;
   preferredCuisines: string[];
-  cookingSkill: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 
   // Consent
   consent: boolean;
@@ -128,11 +125,7 @@ const CUISINE_OPTIONS = [
   { value: "french", label: "Francouzské" },
 ];
 
-const COOKING_SKILLS = [
-  { value: "BEGINNER", label: "Začátečník (základní kuchařské dovednosti)" },
-  { value: "INTERMEDIATE", label: "Střední (může následovat recepty)" },
-  { value: "ADVANCED", label: "Pokročilý (zkušený kuchař)" },
-];
+
 
 const getMuscleGroups = (gender?: string) => {
   const isFemale = gender === "female";
@@ -846,41 +839,7 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-4">
-                    <Label>Týdenní rozpočet jídla (CZK)</Label>
-                    <Select value={data.budgetPerWeek} onValueChange={(value) => updateData("budgetPerWeek", value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="500">500 Kč</SelectItem>
-                        <SelectItem value="750">750 Kč</SelectItem>
-                        <SelectItem value="1000">1000 Kč</SelectItem>
-                        <SelectItem value="1500">1500 Kč</SelectItem>
-                        <SelectItem value="2000">2000 Kč</SelectItem>
-                        <SelectItem value="2500">2500 Kč</SelectItem>
-                        <SelectItem value="3000">3000+ Kč</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
 
-                  <div className="space-y-4">
-                    <Label>Čas přípravy jídla (minut na den)</Label>
-                    <Select value={data.mealPrepTime} onValueChange={(value) => updateData("mealPrepTime", value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 minut</SelectItem>
-                        <SelectItem value="30">30 minut</SelectItem>
-                        <SelectItem value="45">45 minut</SelectItem>
-                        <SelectItem value="60">60 minut</SelectItem>
-                        <SelectItem value="90">90+ minut</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
 
                 <div className="space-y-4">
                   <Label>Preferované kulinářské směny</Label>
@@ -904,21 +863,7 @@ export const FitnessAssessmentForm = ({ isHighlighted = false }: { isHighlighted
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <Label>Úroveň kuchařských dovedností</Label>
-                  <Select value={data.cookingSkill} onValueChange={(value) => updateData("cookingSkill", value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COOKING_SKILLS.map((skill) => (
-                        <SelectItem key={skill.value} value={skill.value}>
-                          {skill.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+
               </>
             )}
 

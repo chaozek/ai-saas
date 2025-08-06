@@ -32,10 +32,7 @@ interface AssessmentData {
   mealPlanningEnabled: boolean;
   dietaryRestrictions: string[];
   allergies: string[];
-  budgetPerWeek: string;
-  mealPrepTime: string;
   preferredCuisines: string[];
-  cookingSkill: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 
   // Consent
   consent: boolean;
@@ -81,10 +78,7 @@ const initialData: AssessmentData = {
   mealPlanningEnabled: false,
   dietaryRestrictions: [],
   allergies: [],
-  budgetPerWeek: "1000",
-  mealPrepTime: "30",
   preferredCuisines: [],
-  cookingSkill: "BEGINNER",
   consent: false,
 };
 

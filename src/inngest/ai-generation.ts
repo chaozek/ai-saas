@@ -1,8 +1,22 @@
 import OpenAI from "openai";
-import { calculateNutritionTargets, createExerciseData, findExistingExercise } from "./utils";
-import { PLAN_GENERATION_PROMPT } from "@/prompt";
+import { createExerciseData, findExistingExercise } from "./utils";
 import { inngest } from "./client";
 import { PrismaClient } from "../generated/prisma";
+import {
+  ensureUserExists,
+  getFitnessProfile,
+  getOrCreateWorkoutPlan,
+  generateWorkoutPlanDetails,
+  generateWorkouts,
+  updateFitnessProfile,
+  activateWorkoutPlan,
+  createFitnessProject,
+  generateMealPlan
+} from "./steps";
+import {
+  createWorkoutGenerationPrompt,
+  WORKOUT_GENERATION_SYSTEM_PROMPT
+} from "./prompts";
 // Helper functions for AI generation
 export async function generateWorkoutWithAI(
      weekNumber: number,
@@ -30,351 +44,31 @@ export async function generateWorkoutWithAI(
      try {
        console.log(`Generating workout for ${dayOfWeek}...`);
 
-       const prompt = `Vygeneruj PROFESIONÁLNÍ trénink pro ${dayOfWeek} na základě těchto parametrů:
-
-   KRITICKÉ: MUSÍŠ STRICTNĚ respektovat fitness cíl "${fitnessGoal}" a generovat cviky, které jsou SPECIFICKY pro tento cíl. NEPOUŽÍVEJ generické cviky, které neodpovídají cíli!
-
-   OSOBNÍ INFORMACE:
-   - Věk: ${age} let
-   - Pohlaví: ${gender}
-   - Výška: ${height} cm
-   - Aktuální váha: ${weight} kg
-   - Cílová váha: ${targetWeight || 'není specifikována'} kg
-
-   FITNESS CÍLE A ZKUŠENOSTI:
-   - Fitness cíl: ${fitnessGoal}
-   - Cílové partie: ${targetMuscleGroups.length > 0 ? targetMuscleGroups.join(', ') : 'Všechny partie'}
-   - Úroveň aktivity: ${activityLevel}
-   - Úroveň zkušeností: ${experienceLevel}
-   - Preferované cviky: ${preferredExercises || 'není specifikováno'}
-
-   TECHNICKÉ PARAMETRY:
-   - Dostupné vybavení: ${availableEquipment.join(', ')}
-   - Doba trvání tréninku: ${workoutDuration} minut
-
-   ZDRAVOTNÍ STAV:
-   - Má zranění: ${hasInjuries ? 'ANO' : 'NE'}
-   - Zranění: ${injuries || 'žádná'}
-   - Zdravotní stav: ${medicalConditions || 'žádný'}
-
-   KRITICKÉ: Pokud uživatel NEMÁ žádná zranění nebo zdravotní omezení, POUŽÍVEJ POUZE PROFESIONÁLNÍ CVIKY odpovídající jeho fitness cíli a dostupnému vybavení. NEPOUŽÍVEJ alternativní cviky pro omezení, pokud nejsou potřeba!
-
-   KRITICKÉ PRAVIDLA PRO ZDRAVOTNÍ OMEZENÍ:
-   1. Pokud má uživatel zranění nebo zdravotní omezení, MUSÍŠ je striktně respektovat
-   2. Pro uživatele na vozíku: NIKDY nedoporučuj cviky na nohy, chůzi, běh, skákání, dřepy, výpady nebo jakékoliv cviky vyžadující použití nohou
-   3. Pro uživatele s bolestmi zad: NIKDY nedoporučuj mrtvý tah, předklony, těžké zvedání
-   4. Pro uživatele s bolestmi ramen: NIKDY nedoporučuj shyby, tlaky ramen, bench press
-   5. Pro uživatele s bolestmi kolen: NIKDY nedoporučuj dřepy, výpady, skákání
-   6. Pro uživatele s kardiovaskulárními problémy: NIKDY nedoporučuj intenzivní kardio, pouze lehké aerobní cviky
-   7. Pro diabetiky: NIKDY nedoporučuj dlouhé intenzivní tréninky bez přestávek
-   8. Pro těhotné: NIKDY nedoporučuj cviky na břicho, ležení na zádech, skákání
-
-   DETEKCE ZDRAVOTNÍCH OMEZENÍ:
-   - Pokud v textu zranění nebo zdravotního stavu vidíš slova jako "vozík", "invalidní", "paraplegie", "tetraplegie", "ochrnutí", "nohy", "nožní" - uživatel je na vozíku
-   - Pokud vidíš slova jako "záda", "páteř", "hernie", "vyhřezlá ploténka", "ischias" - uživatel má problémy se zády
-   - Pokud vidíš slova jako "ramena", "rotátor", "impingement", "tendinitida" - uživatel má problémy s rameny
-   - Pokud vidíš slova jako "kolena", "meniskus", "ACL", "PCL", "artritida" - uživatel má problémy s koleny
-   - Pokud vidíš slova jako "srdce", "kardiovaskulární", "hypertenze", "arytmie" - uživatel má kardiovaskulární problémy
-   - Pokud vidíš slova jako "diabetes", "cukrovka" - uživatel má diabetes
-   - Pokud vidíš slova jako "těhotenství", "těhotná" - uživatelka je těhotná
-
-   PRAVIDLA PRO VĚK A POHLAVÍ:
-   - Pro uživatele 18-25 let: můžeš použít intenzivnější cviky s rychlejší progresí
-   - Pro uživatele 26-40 let: standardní intenzita s postupnou progresí
-   - Pro uživatele 41-55 let: mírnější intenzita s opatrnou progresí
-   - Pro uživatele 56+ let: velmi opatrná intenzita, zaměření na bezpečnost
-   - Pro ženy: zohledni hormonální cyklus a menší svalovou hmotu
-   - Pro muže: můžeš použít těžší váhy a intenzivnější cviky
-   - Pro jiné pohlaví: použij střední intenzitu
-
-   Vytvoř progresivní trénink, který STRICTNĚ respektuje VŠECHNY parametry:
-
-   1. OSOBNÍ PARAMETRY:
-   - Přizpůsob cviky věku (mladší = intenzivnější, starší = opatrnější)
-   - Zohledni pohlaví při výběru cviků a intenzity
-   - Zohledni aktuální a cílovou váhu pro správnou intenzitu
-
-   2. FITNESS CÍLE A CÍLOVÉ PARTIE - PROFESIONÁLNÍ PŘÍSTUP:
-
-   CÍLOVÉ PARTIE:
-   ${targetMuscleGroups.length > 0 ?
-     `- Uživatel se zaměřuje na tyto partie: ${targetMuscleGroups.join(', ')}
-   - KRITICKÉ: V každém tréninku musí být alespoň 60% cviků zaměřených na cílové partie
-   - Zbytek cviků může být pro podpůrné partie nebo celkové kondice` :
-     `- Uživatel se zaměřuje na všechny partie rovnoměrně
-   - Vytvoř vyvážený trénink pro celé tělo`}
-
-   - WEIGHT_LOSS (Hubnutí):
-     * KRITICKÉ: Kombinace silových cviků a KARDIO aktivit
-     * KARDIO: Běh na pásu, jízda na kole, eliptical, rowing, stair climber, HIIT
-     * SILOVÉ: Compound cviky s vyššími opakováními (12-20)
-     * Supersety a circuit training pro maximální spalování kalorií
-     * Kratší přestávky (30-60s) pro udržení vysoké srdeční frekvence
-     * Celkový trénink: 60-70% kardio, 30-40% silové cviky
-     * Pokud má gym access: stroje na kardio + silové stroje
-     * Pokud má home equipment: jumping jacks, burpees, mountain climbers, high knees
-
-   - MUSCLE_GAIN (Nabírání svalů):
-     * Používej těžké silové cviky s progresivním přetížením
-     * 4-6 cviků na hlavní svalové skupiny
-     * 3-4 série, 8-12 opakování pro hypertrofii
-     * Krátké přestávky (60-90s) pro metabolický stres
-     * Compound cviky (bench press, dřepy, mrtvý tah, shyby)
-     * Izolované cviky pro detailní rozvoj svalů
-     * Pokud má plný přístup do gymu, použij stroje, činky, tyče
-     * Minimální kardio (5-10 min warm-up)
-
-   - STRENGTH (Síla):
-     * Těžké compound cviky s maximálním zatížením
-     * 3-5 série, 1-5 opakování pro maximální sílu
-     * Dlouhé přestávky (3-5 minut) pro kompletní regeneraci
-     * Progresivní přetížení s těžkými váhami
-     * Zaměření na: dřepy, mrtvý tah, bench press, shyby, tlaky ramen
-     * Pokud má gym access: barbell cviky, power rack, těžké stroje
-     * Minimální kardio (5-10 min warm-up)
-
-   - ENDURANCE (Vytrvalost):
-     * Circuit training, AMRAP, EMOM, Tabata protokoly
-     * Funkční cviky s vlastní váhou a lehkými činkami
-     * Kratší přestávky (15-45s) pro budování vytrvalosti
-     * Více opakování (15-30) s nižší váhou
-     * Kombinace silových a kardio cviků v rychlém tempu
-     * Pokud má gym access: rowing, cycling, running intervals
-     * Pokud má home equipment: burpees, mountain climbers, jumping jacks
-
-   - FLEXIBILITY (Flexibilita):
-     * Mobilita cviky, dynamický strečink, jóga pozice
-     * Dlouhé výdrže (30-60s) v pozicích
-     * Pilates cviky pro core strength a flexibilitu
-     * Foam rolling a self-myofascial release
-     * Pokud má gym access: jóga studio, foam rollers, mobility tools
-     * Pokud má home equipment: jóga podložka, foam roller, odporové pásy
-
-   - GENERAL_FITNESS (Obecná fitness):
-     * Vyvážený mix silových, kardio a flexibility cviků
-     * 40% silové cviky, 40% kardio, 20% flexibility
-     * Střední intenzita s postupným zvyšováním
-     * Různorodé cviky pro celkové zdraví a kondici
-     * Pokud má gym access: mix strojů, kardio a mobility
-     * Pokud má home equipment: bodyweight cviky, kardio, strečink
-
-   3. ÚROVEŇ AKTIVITY A ZKUŠENOSTÍ:
-   - Sedentární: velmi lehké cviky, postupný nárůst
-   - Lehce aktivní: mírné cviky s postupným zvyšováním
-   - Středně aktivní: standardní cviky s dobrou progresí
-   - Velmi aktivní: náročnější cviky s rychlejší progresí
-   - Extrémně aktivní: velmi náročné cviky
-
-   4. PREFEROVANÉ CVIKY:
-   - Pokud uživatel uvedl preferované cviky, ZAŘAĎ je do tréninku
-   - Přizpůsob trénink jejich preferencím
-
-   5. TECHNICKÉ PARAMETRY - DOSTUPNÉ VYBAVENÍ:
-   - POUŽÍVEJ POUZE dostupné vybavení: ${availableEquipment.join(', ')}
-   - Pokud má "gym_access" nebo "plný přístup do gymu":
-     * KARDIO STROJE: běhací pás, rotoped, eliptical, rowing, stair climber, spinning bike
-     * SILOVÉ STROJE: leg press, chest press, lat pulldown, shoulder press, leg extension, leg curl
-     * VOLNÉ VÁHY: činky (dumbbells), tyče (barbells), kettlebelly
-     * FUNKČNÍ: TRX, battle ropes, plyometric box
-   - Pokud má "home_equipment" nebo "domácí vybavení":
-     * KARDIO: jumping jacks, burpees, mountain climbers, high knees, jumping rope
-     * SILOVÉ: činky, odporové pásy, kettlebelly, pull-up bar
-     * BODYWEIGHT: kliky, dřepy, výpady, plank, dips
-   - Pokud má "dumbbells", "resistance_bands", "kettlebell":
-     * Kombinace volných vah a odporových pásů
-     * Funkční cviky s dostupným vybavením
-   - Pokud má "none" nebo "žádné vybavení":
-     * POUZE bodyweight cviky: kliky, dřepy, výpady, plank, burpees
-     * KARDIO: jumping jacks, mountain climbers, high knees, jumping rope
-   - Dodržuj přesnou dobu trvání tréninku: ${workoutDuration} minut
-   - Obsahuje 4-6 cviků s řádnou progresí
-
-   6. ZDRAVOTNÍ OMEZENÍ:
-   - STRICTNĚ respektuj všechna zdravotní omezení
-   - NIKDY nedoporučuj cviky, které by mohly zhoršit stav
-
-   KRITICKÉ: Musíš odpovědět POUZE platným JSON v tomto přesném formátu. Žádný další text, žádná vysvětlení, žádné markdown formátování:
-
-   {
-     "name": "Název tréninku",
-     "description": "Stručný popis zaměření tréninku a jeho přínosů",
-     "exercises": [
-       {
-         "name": "Název cviku",
-         "description": "Stručný popis cviku a správné techniky",
-         "category": "strength|cardio|flexibility",
-         "muscleGroups": ["chest", "back", "legs", "core", "arms", "shoulders"],
-         "equipment": ["dumbbells", "resistance bands", "bodyweight"],
-         "difficulty": "BEGINNER|INTERMEDIATE|ADVANCED",
-         "sets": 3,
-         "reps": 12,
-         "duration": null,
-         "restTime": 90,
-         "weight": 10.0,
-         "youtubeUrl": "https://www.youtube.com/watch?v=VIDEO_ID"
-       }
-     ]
-   }
-
-   DŮLEŽITÉ: VŠECHNY NÁZVY CVIKŮ MUSÍ BÝT V ČEŠTINĚ. Použij POUZE české názvy cviků pro zobrazení.
-
-   PRO YOUTUBE URL POUŽÍVEJ ANGLICKÉ NÁZVY:
-   - Pro YouTube URL používej anglické názvy cviků (např. "push-ups", "squats", "planks", "burpees")
-   - Názvy cviků v JSON odpovědi zůstávají v češtině
-   - YouTube URL generuj pomocí anglických termínů pro lepší výsledky
-
-   PROFESIONÁLNÍ CVIKY - SMĚRNICE:
-
-   POUŽÍVEJ JAKÉKOLI PROFESIONÁLNÍ CVIKY, které odpovídají:
-   1. FITNESS CÍLI uživatele
-   2. DOSTUPNÉMU VYBAVENÍ
-   3. ÚROVNI ZKUŠENOSTÍ
-   4. ČASOVÉMU LIMITU
-
-   PŘÍKLADY PROFESIONÁLNÍCH CVIKŮ PODLE FITNESS CÍLE:
-
-   WEIGHT_LOSS - KARDIO A SPALOVÁNÍ:
-   - KARDIO: Běh na pásu, jízda na kole, eliptical, rowing, stair climber, HIIT, jumping jacks, burpees
-   - SILOVÉ: Compound cviky s vyššími opakováními (bench press, dřepy, shyby, výpady)
-
-   MUSCLE_GAIN - SILOVÉ CVIKY:
-   - COMPOUND: Dřepy, mrtvý tah, bench press, shyby, tlaky ramen, přítahy, clean & jerk
-   - IZOLOVANÉ: Bicepsové curl, tricepsové extenze, leg press, lat pulldown, chest press, shoulder press
-
-   STRENGTH - MAXIMÁLNÍ SÍLA:
-   - TĚŽKÉ COMPOUND: Dřepy, mrtvý tah, bench press, shyby, tlaky ramen, power clean
-   - POMOCNÉ: Good mornings, Romanian deadlifts, pause squats
-
-   ENDURANCE - VYTRVALOST:
-   - FUNKČNÍ: Výpady, kliky, dips, burpee, mountain climbers, kettlebell swings
-   - KARDIO: Rowing intervals, cycling sprints, running intervals
-
-   FLEXIBILITY - MOBILITA:
-   - MOBILITA: Dynamic stretching, foam rolling, yoga poses, mobility drills
-   - PILATES: Core exercises, flexibility work, balance training
-
-   GENERAL_FITNESS - VYVÁŽENÝ MIX:
-   - Kombinace všech typů cviků podle dostupného vybavení
-   - Postupné zvyšování intenzity a složitosti
-
-   DŮLEŽITÉ: Vyber cviky na základě parametrů uživatele, ne na základě předem daného seznamu!
-
-   KARDIO CVIKY (pouze pokud nejsou vyloučeny zdravotním stavem):
-   - Skákání přes švihadlo (místo Jump Rope) - POUZE pokud nemá problémy s nohama nebo kardiovaskulárními problémy
-   - Burpee (místo Burpee) - POUZE pokud nemá problémy s nohama, zády nebo kardiovaskulárními problémy
-   - Skákací dřepy (místo Jump Squats) - POUZE pokud nemá problémy s nohama nebo koleny
-   - Mountain climbers (místo Mountain Climbers) - POUZE pokud nemá problémy s nohama nebo zády
-   - Skákání na místě (místo Jumping Jacks) - POUZE pokud nemá problémy s nohama nebo kardiovaskulárními problémy
-
-   CORE CVIKY (pouze pokud nejsou vyloučeny zdravotním stavem):
-   - Plank (místo Plank) - POUZE pokud nemá problémy se zády
-   - Prkno na boku (místo Side Plank) - POUZE pokud nemá problémy se zády
-   - Ruské twisty (místo Russian Twists) - POUZE pokud nemá problémy se zády nebo břichem
-   - Crunchy (místo Crunches) - POUZE pokud nemá problémy se zády nebo břichem
-   - Nůžky (místo Scissors) - POUZE pokud nemá problémy s nohama
-
-   ALTERNATIVNÍ CVIKY PRO OMEZENÍ:
-   - Pro uživatele na vozíku: cviky na ruce, ramena, hrudník, záda (sedící pozice)
-     * Bicepsové curl s činkami (sedící)
-     * Tricepsové extenze s činkami (sedící)
-     * Tlaky ramen s činkami (sedící)
-     * Přítahy s odporovými gumami (sedící)
-     * Rotace trupu (sedící)
-     * Stlačování míče mezi koleny (pokud je to možné)
-   - Pro uživatele s bolestmi zad: cviky na ruce, ramena, hrudník (stojící nebo sedící)
-     * Bicepsové curl s činkami
-     * Tricepsové extenze s činkami
-     * Tlaky ramen s činkami
-     * Přítahy s odporovými gumami
-     * Rotace ramen
-     * Stlačování míče mezi rukama
-   - Pro uživatele s bolestmi ramen: cviky na nohy, core, kardio bez rukou
-     * Dřepy (pokud nemá problémy s nohama)
-     * Výpady (pokud nemá problémy s nohama)
-     * Plank (pokud nemá problémy se zády)
-     * Ruské twisty (pokud nemá problémy se zády)
-     * Chůze na místě
-     * Lehké aerobní cviky
-   - Pro uživatele s bolestmi kolen: cviky na ruce, ramena, hrudník, záda, core (bez nohou)
-     * Bicepsové curl s činkami
-     * Tricepsové extenze s činkami
-     * Tlaky ramen s činkami
-     * Přítahy s odporovými gumami
-     * Plank (pokud nemá problémy se zády)
-     * Ruské twisty (pokud nemá problémy se zády)
-
-   PREFEROVANÉ CVIKY:
-   - Pokud uživatel uvedl preferované cviky, MUSÍŠ je zařadit do tréninku
-   - Přizpůsob trénink jejich preferencím
-   - Kombinuj preferované cviky s dalšími cviky pro vyvážený trénink
-
-   CVIKY MUSÍ MÍT OBA NÁZVY:
-   - name: český název cviku (pro zobrazení uživateli)
-   - englishName: anglický název cviku (pro vyhledávání YouTube videí)
-   - Příklad: "name": "kliky", "englishName": "push-ups"
-
-   Pro silové cviky použij série a opakování. Pro kardio/flexibilitu použij dobu trvání v sekundách.
-   KRITICKÉ: Použij POUZE tyto přesné hodnoty obtížnosti s VELKÝMI písmeny: "BEGINNER", "INTERMEDIATE", "ADVANCED".
-   NEPOUŽÍVEJ malá písmena ani žádné jiné variace.
-   Pro pole weight použij POUZE čísla (např. 5.0, 10.0, 20.0) nebo null. NEPOUŽÍVEJ řetězce jako "light", "medium", "heavy".
-
-   YOUTUBE URL PRO CVIKY:
-   - Pro KAŽDÝ cvik přidej youtubeUrl s odkazem na demonstrační video
-   - Použij reálné YouTube URL ve formátu: https://www.youtube.com/watch?v=VIDEO_ID
-   - Vyber videa, která demonstrují správnou techniku cviku
-   - Používej englishName (anglický název) pro hledávání videí (např. "push-ups", "squats", "planks")
-   - Preferuj videa v angličtině s jasnými instrukcemi
-   - Pro běžné cviky použij populární videa od renomovaných fitness kanálů
-   - Pro specializované cviky použij videa od certifikovaných trenérů
-   - POUŽÍVEJ POUZE veřejná videa s povoleným vkládáním (embedding)
-   - Preferuj kanály: wikiHow, ATHLEAN-X, FitnessBlender, MadFit, HASfit, Popsugar Fitness, Blogilates
-   - VYHNI SE videím, která mohou být regionálně omezená nebo soukromá
-   - Příklad formátu: https://www.youtube.com/watch?v=VIDEO_ID (kde VIDEO_ID je skutečné ID videa)
-
-   Zajisti, že cviky jsou bezpečné a vhodné pro úroveň zkušeností a ZDRAVOTNÍ STAV.
-
-   PŘÍKLAD SPRÁVNÉHO JSON FORMÁTU:
-   {
-     "name": "Trénink pro nabírání svalů",
-     "description": "Tento trénink se zaměřuje na silové cviky s cílem nabrat svalovou hmotu.",
-     "exercises": [
-       {
-         "name": "kliky",
-         "englishName": "push-ups",
-         "description": "Základní cvik na hrudník a triceps",
-         "category": "strength",
-         "muscleGroups": ["chest", "triceps", "shoulders"],
-         "equipment": ["bodyweight"],
-         "difficulty": "BEGINNER",
-         "sets": 3,
-         "reps": 10,
-         "restTime": 60,
-         "weight": null,
-         "youtubeUrl": "https://www.youtube.com/watch?v=VIDEO_ID"
-       },
-       {
-         "name": "dřepy",
-         "englishName": "squats",
-         "description": "Compound cvik na nohy",
-         "category": "strength",
-         "muscleGroups": ["quadriceps", "glutes", "hamstrings"],
-         "equipment": ["bodyweight"],
-         "difficulty": "BEGINNER",
-         "sets": 3,
-         "reps": 15,
-         "restTime": 90,
-         "weight": null,
-         "youtubeUrl": "https://www.youtube.com/watch?v=VIDEO_ID"
-       }
-     ]
-   }`;
+       const prompt = createWorkoutGenerationPrompt({
+         dayOfWeek,
+         fitnessGoal,
+         age,
+         gender,
+         height,
+         weight,
+         targetWeight,
+         targetMuscleGroups,
+         activityLevel,
+         experienceLevel,
+         preferredExercises,
+         availableEquipment,
+         workoutDuration,
+         hasInjuries,
+         injuries,
+         medicalConditions
+       });
 
              const completion = await openaiClient.chat.completions.create({
            model: "gpt-4o-mini",
            messages: [
                              {
              role: "system",
-             content: "Jsi PROFESIONÁLNÍ fitness trenér s certifikací a zkušenostmi v posilovně. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. KRITICKÉ: KAŽDÝ CVIK MUSÍ MÍT OBA NÁZVY - český (name) a anglický (englishName). NEJDŮLEŽITĚJŠÍ: STRICTNĚ respektuj fitness cíl uživatele a generuj cviky SPECIFICKY pro tento cíl. WEIGHT_LOSS = kardio + silové cviky s vyššími opakováními, MUSCLE_GAIN = těžké silové cviky, STRENGTH = maximální síla s těžkými váhami, ENDURANCE = vytrvalostní cviky, FLEXIBILITY = mobilita a strečink, GENERAL_FITNESS = vyvážený mix. Vyber cviky na základě parametrů uživatele (fitness cíl, vybavení, zkušenosti), ne na základě předem daného seznamu. Pokud uživatel NEMÁ zdravotní omezení, POUŽÍVEJ PROFESIONÁLNÍ CVIKY odpovídající jeho cíli. MÁŠ VOLNOST ve výběru cviků, ale MUSÍŠ respektovat parametry uživatele. Pokud má uživatel zranění, NIKDY nedoporučuj cviky, které by mohly zhoršit jejich stav."
+             content: WORKOUT_GENERATION_SYSTEM_PROMPT
            },
            { role: "user", content: prompt }
          ],
@@ -533,417 +227,6 @@ export async function generateWorkoutWithAI(
    }
 
 
-   export async function generateMealWithAI(day: number, mealType: string, fitnessGoal: string, dietaryRestrictions: string[], preferredCuisines: string[], cookingSkill: string, calories: number, protein: number, carbs: number, fat: number, budgetPerWeek: number, dailyPrepTime: number, avoidRecipeName?: string, suggestedIngredients?: {protein?: string, carb?: string, veg?: string, fruit?: string}): Promise<{name: string, description: string, calories: number, protein: number, carbs: number, fat: number, instructions: string, ingredients: any[], prepTime: number, cookTime: number}> {
-     const openaiClient = new OpenAI({
-       apiKey: process.env.OPENAI_API_KEY,
-     });
-
-     try {
-       console.log(`Generating meal for ${mealType}...`);
-
-       // Determine if we should generate natural nutrition values or use provided targets
-       const useNaturalValues = calories === 0 && protein === 0 && carbs === 0 && fat === 0;
-
-       let nutritionGuidance = '';
-       if (useNaturalValues) {
-         nutritionGuidance = `Vytvoř jídlo s přirozenými a realistickými výživovými hodnotami vhodnými pro ${mealType.toLowerCase()}. Použij standardní porce a přirozené poměry živin.`;
-       } else {
-         nutritionGuidance = `Cílová výživa: ${calories} kalorií, ${protein}g bílkovin, ${carbs}g sacharidů, ${fat}g tuků`;
-       }
-
-       // Calculate time constraints for this meal type
-       const maxTotalTimePerMeal = Math.floor(dailyPrepTime / 3); // Divide daily time by 3 meals
-       const maxCookTimePerMeal = Math.floor(maxTotalTimePerMeal * 0.7); // 70% of total time for cooking
-       const maxPrepTimePerMeal = Math.floor(maxTotalTimePerMeal * 0.3); // 30% of total time for prep
-
-       // Calculate budget constraints
-       const dailyBudget = budgetPerWeek / 7;
-       const maxMealBudget = dailyBudget / 3; // Divide daily budget by 3 meals
-
-       // Calculate calorie distribution based on meal type
-       let caloriePercentage = 0.33; // Default equal distribution
-       let mealTypeGuidance = '';
-
-       switch (mealType) {
-         case 'BREAKFAST':
-           caloriePercentage = 0.25; // 25% of daily calories
-           mealTypeGuidance = 'SNÍDANĚ (25% denních kalorií): Lehké, výživné jídlo na start dne. Zaměř se na komplexní sacharidy a bílkoviny.';
-           break;
-         case 'LUNCH':
-           caloriePercentage = 0.40; // 40% of daily calories
-           mealTypeGuidance = 'OBĚD (40% denních kalorií): Hlavní jídlo dne s vyváženým poměrem všech živin.';
-           break;
-         case 'DINNER':
-           caloriePercentage = 0.35; // 35% of daily calories
-           mealTypeGuidance = 'VEČEŘE (35% denních kalorií): Lehčí jídlo než oběd, zaměř se na bílkoviny a zeleninu. Vyhni se těžkým jídlům a velkým porcím.';
-           break;
-       }
-
-       const prompt = `Vygeneruj jídlo pro ${mealType.toLowerCase()} s těmito požadavky:
-   - Fitness cíl: ${fitnessGoal}
-   - Stravovací omezení: ${dietaryRestrictions.join(', ') || 'žádná'}
-   - Preferované kuchyně: ${preferredCuisines.join(', ')}
-   - Kuchařské dovednosti: ${cookingSkill}
-   - Maximální čas na přípravu: ${maxPrepTimePerMeal} minut
-   - Maximální čas na vaření: ${maxCookTimePerMeal} minut
-   - Maximální rozpočet na jídlo: ${maxMealBudget.toFixed(0)} Kč
-   - ${mealTypeGuidance}
-   - ${nutritionGuidance}
-   ${avoidRecipeName ? `- KRITICKÉ: NEGENERUJ recept "${avoidRecipeName}" - vytvoř úplně jiný recept!` : ''}
-   ${avoidRecipeName ? `- KRITICKÉ: VYHNI SE těmto jídlům: ${avoidRecipeName} - vytvoř úplně jiný recept s jinými surovinami!` : ''}
-   - KRITICKÉ: KAŽDÉ JÍDLO MUSÍ BÝT UNIKÁTNÍ! Používej různé kombinace surovin, různé způsoby přípravy, různé kuchyně
-   - KRITICKÉ: NIKDY neopakuj stejné jídlo nebo velmi podobné jídlo
-   - KRITICKÉ: Používej různé hlavní suroviny a kombinace
-   - KRITICKÉ: Používej různé přílohy a způsoby přípravy
-   - KRITICKÉ: Používej různé zeleniny, ovoce, koření a bylinky
-   - KRITICKÉ: Buď kreativní v kombinacích a způsobech přípravy
-   ${suggestedIngredients ? `- KRITICKÉ: PRO TENTO DEN SE VYHNI těmto surovinám (aby se neopakovaly):
-     * Vyhni se: ${suggestedIngredients.protein || 'kuřecí prsa'} jako hlavní bílkovině
-     * Vyhni se: ${suggestedIngredients.carb || 'ovesné vločky'} jako hlavnímu sacharidu
-     * Vyhni se: ${suggestedIngredients.veg || 'brokolice'} jako hlavní zelenině
-     * Vyhni se: ${suggestedIngredients.fruit || 'jablka'} jako hlavnímu ovoci
-   - KRITICKÉ: Použij JINÉ suroviny než tyto, aby se jídla neopakovala! Buď kreativní a vymysli něco jiného!` : ''}
-
-   KRITICKÉ POŽADAVKY PRO FITNESS STRAVU:
-   - POUŽÍVEJ VYSOKOKVALITNÍ BÍLKOVINY: kuřecí prsa, krůtí prsa, ryby (losos, tuňák, treska, makrela, sardinky, pstruh), vejce, tvaroh, řecký jogurt, proteinový prášek, libové hovězí, králík, tofu, tempeh, seitan, čočka, fazole, cizrna
-   - ZAHRNUJ KOMPLEXNÍ SACHARIDY: ovesné vločky, quinoa, hnědá rýže, celozrnné těstoviny, sladké brambory, pohanka, ječmen, bulgur, celozrnný chléb, kuskus, amarant, teff, proso
-   - POUŽÍVEJ ZDRAVÉ TUKY: avokádo, ořechy (mandle, vlašské, kešu, para, pekanové), semínka (chia, lněná, dýňová, slunečnicová, sezamová), olivový olej, rybí tuk, kokosový olej, arašídové máslo
-   - ZAHRNUJ ZELENINU: brokolice, špenát, kapusta, mrkev, paprika, rajčata, okurka, cuketa, lilek, cibule, česnek, zázvor, kedlubna, celer, řepa, dýně, batáty, chřest, artyčoky, růžičková kapusta
-   - ZAHRNUJ OVOCE: jablka, banány, borůvky, maliny, jahody, pomeranče, kiwi, ananas, mango, hrušky, hrozny, meruňky, broskve, nektarinky, švestky, třešně, višně, rybíz, angrešt
-   - VYHNI SE: rafinovaným cukrům, bílému pečivu, smaženým jídlům, sladkým nápojům, průmyslově zpracovaným potravinám
-   - POUŽÍVEJ RŮZNÉ SUROVINY: Neopakuj stejné ingredience v každém jídle, vytvářej pestrou stravu
-   - BUĎ KREATIVNÍ: Používej různé kombinace, koření, bylinky a způsoby přípravy
-
-   SPECIFICKÉ POŽADAVKY PODLE FITNESS CÍLE:
-   ${fitnessGoal === 'WEIGHT_LOSS' ? '- HUBNUTÍ: Zaměř se na vysoký obsah bílkovin (min 30g na jídlo), nízký obsah sacharidů, hodně zeleniny. Používej libové maso, vejce, tvaroh.' : ''}
-   ${fitnessGoal === 'MUSCLE_GAIN' ? '- NABÍRÁNÍ SVALŮ: Vysoký obsah bílkovin (min 40g na jídlo), střední obsah sacharidů pro energii, zdravé tuky. Používej proteinový prášek, kuřecí prsa, tvaroh, vejce.' : ''}
-   ${fitnessGoal === 'STRENGTH' ? '- SÍLA: Vysoký obsah bílkovin (min 35g na jídlo), komplexní sacharidy pro energii, zdravé tuky. Zaměř se na kvalitní maso, vejce, tvaroh.' : ''}
-   ${fitnessGoal === 'ENDURANCE' ? '- VYTRVALOST: Vyvážený poměr bílkovin a sacharidů, komplexní sacharidy pro energii. Používej ovesné vločky, quinoa, libové maso.' : ''}
-   ${fitnessGoal === 'FLEXIBILITY' ? '- MOBILITA: Lehká, protizánětlivá strava s omega-3 mastnými kyselinami. Ryby, avokádo, ořechy, zelenina.' : ''}
-   ${fitnessGoal === 'GENERAL_FITNESS' ? '- OBECNÁ KONDICE: Vyvážený poměr všech živin, pestrá strava s kvalitními surovinami.' : ''}
-
-   Vytvoř chutné, výživné jídlo, které:
-   - Podporuje fitness cíl (hubnutí = méně kalorií, nabírání svalů = více bílkovin, atd.)
-   - Respektuje stravovací omezení
-   - Používá preferované kuchyně, když je to možné
-   - Je vhodné pro úroveň kuchařských dovedností
-   - Respektuje časové omezení (max ${maxPrepTimePerMeal} min příprava + ${maxCookTimePerMeal} min vaření)
-   - Respektuje rozpočet (max ${maxMealBudget.toFixed(0)} Kč na jídlo)
-   - Respektuje správné rozložení kalorií během dne (${mealType} = ${(caloriePercentage * 100).toFixed(0)}% denních kalorií)
-   ${useNaturalValues ? '- Má přirozené a realistické výživové hodnoty odpovídající typu jídla' : '- Splňuje cílové výživové hodnoty'}
-   - Je praktické a proveditelné
-   - POUŽÍVÁ PESTROU STRAVU s různými surovinami (neopakuj stejné ingredience)
-   - VYTVÁŘÍ ROZMANITOST: Každé jídlo má být jiné, používej různé kombinace surovin a způsoby přípravy
-   - RESPEKTUJE DENNÍ ROZLOŽENÍ: Snídaně = lehké, oběd = hlavní jídlo, večeře = lehčí než oběd
-   - BUĎ KREATIVNÍ: Vymysli originální kombinace a recepty, které jsou chutné a výživné
-
-   KRITICKÉ: Musíš odpovědět POUZE platným JSON v tomto přesném formátu. Žádný další text, žádná vysvětlení, žádné markdown formátování:
-
-   {
-     "name": "Kreativní název jídla",
-     "description": "Stručný popis jídla a jeho přínosů",
-     "calories": ${useNaturalValues ? 'realistické množství pro ' + mealType.toLowerCase() : calories},
-     "protein": ${useNaturalValues ? 'realistické množství pro ' + mealType.toLowerCase() : protein},
-     "carbs": ${useNaturalValues ? 'realistické množství pro ' + mealType.toLowerCase() : carbs},
-     "fat": ${useNaturalValues ? 'realistické množství pro ' + mealType.toLowerCase() : fat},
-     "prepTime": ${maxPrepTimePerMeal},
-     "cookTime": ${maxCookTimePerMeal},
-     "instructions": "1. Krok první\\n2. Krok druhý\\n3. Krok třetí\\n4. Krok čtvrtý\\n5. Krok pátý",
-     "ingredients": [
-       {"name": "Název ingredience", "amount": "200", "unit": "g", "estimatedCost": "50"},
-       {"name": "Další ingredience", "amount": "30", "unit": "ml", "estimatedCost": "20"}
-     ]
-   }
-
-   Zahrň 4-8 ingrediencí s realistickými množstvími v evropských jednotkách (gramy, mililitry, kusy) a odhadovanými náklady v Kč. Použij levné, dostupné ingredience, které respektují rozpočet. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - žádné cups, tablespoons, ounces atd.
-
-            ${!useNaturalValues ? `KRITICKÉ: Musíš PŘESNĚ spočítat živiny z porcí surovin a upravit porce tak, aby celkový součet živin PŘESNĚ odpovídal cílovým hodnotám!
-
-   CÍLOVÉ HODNOTY: ${calories} kalorií, ${protein}g bílkovin, ${carbs}g sacharidů, ${fat}g tuků
-
-   POVINNÝ POSTUP:
-   1. Vyber suroviny pro recept
-   2. Spočti živiny každé suroviny: množství × živiny na 100g ÷ 100
-   3. Sečti všechny živiny
-   4. Pokud součet ≠ cíl → UPRAV porce surovin
-   5. Opakuj kroky 2-4 až dosáhneš PŘESNÝCH cílových hodnot
-
-   KRITICKÉ PRAVIDLA PRO NÁZEV JÍDLA:
-   - Pokud je v názvu "proteinový" → MUSÍŠ zahrnout proteinový prášek nebo vysokoproteinové suroviny
-   - Pokud je v názvu "s tvarohem" → MUSÍŠ zahrnout tvaroh
-   - Pokud je v názvu "s avokádem" → MUSÍŠ zahrnout avokádo
-   - Pokud je v názvu "s ovocem" → MUSÍŠ zahrnout ovoce
-   - Název jídla musí odpovídat surovinám!
-
-   REÁLNÉ ŽIVINY SUROVIN (používej tyto hodnoty):
-   - Ovesné vločky: 389 kcal/100g, 13.5g bílkovin/100g, 66g sacharidů/100g, 6.9g tuků/100g
-   - Nízkotučný jogurt: 59 kcal/100g, 10g bílkovin/100g, 3.6g sacharidů/100g, 0.4g tuků/100g
-   - Banán: 89 kcal/100g, 1.1g bílkovin/100g, 23g sacharidů/100g, 0.3g tuků/100g
-   - Jahody: 32 kcal/100g, 0.7g bílkovin/100g, 8g sacharidů/100g, 0.3g tuků/100g
-   - Med: 304 kcal/100g, 0.3g bílkovin/100g, 82g sacharidů/100g, 0g tuků/100g
-   - Kuřecí prsa: 165 kcal/100g, 31g bílkovin/100g, 0g sacharidů/100g, 3.6g tuků/100g
-   - Tvaroh: 98 kcal/100g, 11g bílkovin/100g, 3.4g sacharidů/100g, 4.3g tuků/100g
-   - Vejce: 155 kcal/100g, 13g bílkovin/100g, 1.1g sacharidů/100g, 11g tuků/100g
-   - Olivový olej: 884 kcal/100g, 0g bílkovin/100g, 0g sacharidů/100g, 100g tuků/100g
-   - Proteinový prášek: 375 kcal/100g, 80g bílkovin/100g, 8g sacharidů/100g, 3g tuků/100g
-   - Avokádo: 160 kcal/100g, 2g bílkovin/100g, 9g sacharidů/100g, 15g tuků/100g
-
-   PŘÍKLAD PRO "PROTEINOVÝ SMOOTHIE" s cílem ${calories} kcal, ${protein}g bílkovin:
-   - Proteinový prášek: 30g × 375/100 = 112.5 kcal, 30g × 80/100 = 24g bílkovin
-   - Banán: 100g × 89/100 = 89 kcal, 100g × 1.1/100 = 1.1g bílkovin
-   - Jogurt: 150g × 59/100 = 88.5 kcal, 150g × 10/100 = 15g bílkovin
-   - Celkem: 290 kcal, 40.1g bílkovin
-   - Cíl: ${calories} kcal, ${protein}g bílkovin
-   - ROZDÍL: ${calories - 290} kcal, ${protein - 40.1}g bílkovin
-   - AKCE: Zvětši porce surovin!
-
-   KRITICKÉ: NIKDY neodhaduj živiny - vždy je počítej z porcí surovin!` : ''}`;
-
-                const completion = await openaiClient.chat.completions.create({
-           model: "gpt-4o-mini",
-           messages: [
-                       {
-               role: "system",
-               content: "Jsi profesionální výživový poradce a fitness trenér. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. POUŽÍVEJ POUZE EVROPSKÉ JEDNOTKY - gramy, mililitry, kusy, žádné cups, tablespoons, ounces. KRITICKÉ: VŽDY respektuj časové omezení, rozpočet a správné rozložení kalorií během dne. Snídaně = 25%, Oběd = 40%, Večeře = 35% denních kalorií. Večeře musí být lehčí než oběd. Používej levné, dostupné ingredience a jednoduché recepty, které se dají připravit v daném čase. KDYŽ JSOU ZADÁNY CÍLOVÉ ŽIVINY: Musíš SKUTEČNĚ POČÍTAT živiny z porcí surovin a upravit porce tak, aby celkový součet živin PŘESNĚ odpovídal cílovým hodnotám. Používej reálné živiny surovin a správně počítej: množství v gramech × živiny na 100g ÷ 100. KRITICKÉ: Součet živin všech surovin musí být PŘESNĚ roven cílovým hodnotám - ne méně, ne více! NIKDY neodhaduj živiny - vždy je počítej z porcí surovin! KRITICKÉ: Název jídla musí odpovídat surovinám - pokud je v názvu proteinové, musí obsahovat dostatek bílkovin. Všechny suroviny z názvu musí být v ingrediencích! KRITICKÉ: VŽDY vytvářej FITNESS JÍDLA bohatá na bílkoviny, používej kvalitní suroviny, vyhni se nezdravým potravinám. Vytvářej pestrou stravu s různými surovinami! BUĎ KREATIVNÍ a vymysli originální kombinace!"
-             },
-               { role: "user", content: prompt }
-             ],
-           temperature: 0.3, // Lower temperature for more consistent and precise output
-           max_tokens: 2000, // More tokens for detailed calculations and precise responses
-         });
-
-         const content = completion.choices[0]?.message?.content;
-         if (!content) {
-           console.error(`No content received from OpenAI`);
-           throw new Error(`No content received from OpenAI`);
-         }
-
-         console.log(`Raw AI response:`, content);
-
-         // Try to extract JSON from the response
-         let jsonContent = content.trim();
-
-         // Remove any markdown formatting
-         jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
-
-         // Find JSON object in the response
-         const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
-         if (jsonMatch) {
-           jsonContent = jsonMatch[0];
-         }
-
-         console.log(`Extracted JSON:`, jsonContent);
-
-         try {
-           const meal = JSON.parse(jsonContent);
-
-           // Validate the meal structure
-           if (!meal.name || !meal.description || !meal.calories || !meal.protein || !meal.carbs || !meal.fat || !meal.instructions || !Array.isArray(meal.ingredients)) {
-             throw new Error(`Invalid meal structure from AI. Expected: name, description, calories, protein, carbs, fat, instructions, and ingredients array. Got: ${JSON.stringify(meal)}`);
-           }
-
-           if (meal.ingredients.length === 0) {
-             throw new Error(`AI returned empty ingredients array for meal. Expected at least 4-8 ingredients.`);
-           }
-
-           // Validate each ingredient
-           meal.ingredients.forEach((ingredient: any, index: number) => {
-             if (!ingredient.name || !ingredient.amount || !ingredient.unit) {
-               throw new Error(`Invalid ingredient structure at index ${index}. Expected: name, amount, unit. Got: ${JSON.stringify(ingredient)}`);
-             }
-           });
-
-           console.log(`Successfully generated meal: ${meal.name}`);
-           return {
-             name: meal.name,
-             description: meal.description,
-             calories: meal.calories,
-             protein: meal.protein,
-             carbs: meal.carbs,
-             fat: meal.fat,
-             instructions: meal.instructions,
-             ingredients: meal.ingredients,
-             prepTime: meal.prepTime || maxPrepTimePerMeal,
-             cookTime: meal.cookTime || maxCookTimePerMeal
-           };
-         } catch (jsonError) {
-           console.error(`JSON parsing error:`, jsonError);
-           console.error(`Raw AI response:`, content);
-
-           throw new Error(`Failed to parse JSON after 3 attempts for ${mealType}. Last error: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}. Raw response: ${content.substring(0, 200)}...`);
-         }
-       } catch (error) {
-         console.error(`Error generating meal with OpenAI:`, error);
-
-         throw new Error(`Failed to generate meal for ${mealType} after 3 attempts. Last error: ${error instanceof Error ? error.message : String(error)}`);
-       }
-     }
-
-
-     // Helper function to generate personalized nutrition requirements using AI
-     export async function generateNutritionRequirementsWithAI(
-       age: string,
-       gender: string,
-       height: string,
-       weight: string,
-       targetWeight: string,
-       fitnessGoal: string,
-       activityLevel: string,
-       experienceLevel: string,
-       hasInjuries: boolean,
-       injuries: string,
-       medicalConditions: string
-     ): Promise<{caloriesPerDay: number, proteinPerDay: number, carbsPerDay: number, fatPerDay: number}> {
-       const openaiClient = new OpenAI({
-         apiKey: process.env.OPENAI_API_KEY,
-       });
-
-       try {
-         console.log(`Generating personalized nutrition requirements...`);
-
-         const prompt = `Vypočítej personalizované denní potřeby živin na základě těchto parametrů:
-
-     OSOBNÍ INFORMACE:
-     - Věk: ${age} let
-     - Pohlaví: ${gender}
-     - Výška: ${height} cm
-     - Aktuální váha: ${weight} kg
-     - Cílová váha: ${targetWeight || 'není specifikována'} kg
-
-     FITNESS CÍLE A AKTIVITA:
-     - Fitness cíl: ${fitnessGoal}
-     - Úroveň aktivity: ${activityLevel}
-     - Úroveň zkušeností: ${experienceLevel}
-
-     ZDRAVOTNÍ STAV:
-     - Má zranění: ${hasInjuries ? 'ANO' : 'NE'}
-     - Zranění: ${injuries || 'žádná'}
-     - Zdravotní stav: ${medicalConditions || 'žádný'}
-
-     VYPOČÍTEJ přesné denní potřeby živin pomocí vědeckých vzorců:
-
-     1. BAZÁLNÍ METABOLISMUS (BMR):
-     - Pro muže: BMR = 88.362 + (13.397 × váha v kg) + (4.799 × výška v cm) - (5.677 × věk)
-     - Pro ženy: BMR = 447.593 + (9.247 × váha v kg) + (3.098 × výška v cm) - (4.330 × věk)
-
-     2. CELKOVÝ DENNÍ VÝDEJ ENERGIE (TDEE):
-     - Sedentární: BMR × 1.2
-     - Lehce aktivní: BMR × 1.375
-     - Středně aktivní: BMR × 1.55
-     - Velmi aktivní: BMR × 1.725
-     - Extrémně aktivní: BMR × 1.9
-
-     3. ÚPRAVA PODLE FITNESS CÍLE:
-     - Hubnutí: TDEE - 300 až 500 kalorií (mírný deficit)
-     - Nabírání svalů: TDEE + 200 až 400 kalorií (mírný surplus)
-     - Endurance: TDEE + 100 až 200 kalorií
-     - Síla: TDEE + 150 až 300 kalorií
-     - Flexibilita: TDEE (udržení váhy)
-     - Obecná fitness: TDEE (udržení váhy)
-
-     4. ROZDĚLENÍ MAKROŽIVIN:
-     - Bílkoviny: 1.6-2.2g na kg tělesné váhy (vyšší pro nabírání svalů)
-     - Tuky: 20-35% z celkových kalorií
-     - Sacharidy: zbytek kalorií
-
-     5. ÚPRAVY PRO ZDRAVOTNÍ STAV:
-     - Pro diabetiky: nižší sacharidy, vyšší bílkoviny
-     - Pro kardiovaskulární problémy: nižší tuky, vyšší bílkoviny
-     - Pro těhotné: +300 kalorií, vyšší bílkoviny
-
-     KRITICKÉ: Musíš odpovědět POUZE platným JSON v tomto přesném formátu. Žádný další text, žádná vysvětlení, žádné markdown formátování:
-
-     {
-       "caloriesPerDay": 2000,
-       "proteinPerDay": 120.5,
-       "carbsPerDay": 200.0,
-       "fatPerDay": 66.7
-     }
-
-     Použij přesné výpočty a zaokrouhli na 1 desetinné místo pro bílkoviny, sacharidy a tuky. Kalorie zaokrouhli na celé číslo.`;
-
-         const completion = await openaiClient.chat.completions.create({
-           model: "gpt-4o-mini",
-           messages: [
-             {
-               role: "system",
-               content: "Jsi profesionální výživový poradce a sportovní dietolog. MUSÍŠ odpovědět POUZE platným JSON v požadovaném formátu. Nezahrnuj žádný další text, vysvětlení nebo markdown formátování mimo JSON objekt. Používej přesné vědecké vzorce pro výpočet BMR, TDEE a makroživin. Vždy zaokrouhli kalorie na celé číslo a makroživiny na 1 desetinné místo."
-             },
-             { role: "user", content: prompt }
-           ],
-           temperature: 0.3, // Low temperature for consistent calculations
-           max_tokens: 1500,
-         });
-
-         const content = completion.choices[0]?.message?.content;
-         if (!content) {
-           console.error(`No content received from OpenAI`);
-           throw new Error(`No content received from OpenAI`);
-         }
-
-         console.log(`Raw AI nutrition response:`, content);
-
-         // Try to extract JSON from the response
-         let jsonContent = content.trim();
-
-         // Remove any markdown formatting
-         jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
-
-         // Find JSON object in the response
-         const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
-         if (jsonMatch) {
-           jsonContent = jsonMatch[0];
-         }
-
-         console.log(`Extracted nutrition JSON:`, jsonContent);
-
-         try {
-           const nutrition = JSON.parse(jsonContent);
-
-           // Validate the nutrition structure
-           if (!nutrition.caloriesPerDay || !nutrition.proteinPerDay || !nutrition.carbsPerDay || !nutrition.fatPerDay) {
-             throw new Error(`Invalid nutrition structure from AI. Expected: caloriesPerDay, proteinPerDay, carbsPerDay, fatPerDay. Got: ${JSON.stringify(nutrition)}`);
-           }
-
-           // Validate reasonable ranges
-           if (nutrition.caloriesPerDay < 1200 || nutrition.caloriesPerDay > 5000) {
-             throw new Error(`Invalid calories value: ${nutrition.caloriesPerDay}. Expected between 1200-5000.`);
-           }
-
-           if (nutrition.proteinPerDay < 50 || nutrition.proteinPerDay > 300) {
-             throw new Error(`Invalid protein value: ${nutrition.proteinPerDay}. Expected between 50-300g.`);
-           }
-
-           if (nutrition.carbsPerDay < 50 || nutrition.carbsPerDay > 600) {
-             throw new Error(`Invalid carbs value: ${nutrition.carbsPerDay}. Expected between 50-600g.`);
-           }
-
-           if (nutrition.fatPerDay < 30 || nutrition.fatPerDay > 150) {
-             throw new Error(`Invalid fat value: ${nutrition.fatPerDay}. Expected between 30-150g.`);
-           }
-
-           console.log(`Successfully generated nutrition requirements:`, nutrition);
-           return {
-             caloriesPerDay: Math.round(nutrition.caloriesPerDay),
-             proteinPerDay: Math.round(nutrition.proteinPerDay * 10) / 10,
-             carbsPerDay: Math.round(nutrition.carbsPerDay * 10) / 10,
-             fatPerDay: Math.round(nutrition.fatPerDay * 10) / 10
-           };
-         } catch (jsonError) {
-           console.error(`JSON parsing error for nutrition:`, jsonError);
-           console.error(`Raw AI response:`, content);
-
-           throw new Error(`Failed to parse nutrition JSON. Last error: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}. Raw response: ${content.substring(0, 200)}...`);
-         }
-       } catch (error) {
-         console.error(`Error generating nutrition requirements with OpenAI:`, error);
-
-         throw new Error(`Failed to generate nutrition requirements. Last error: ${error instanceof Error ? error.message : String(error)}`);
-       }
-     }
-
-
-
 
            type GenerateFitnessPlanEvent = {
         name: "generate-fitness-plan/run";
@@ -964,105 +247,23 @@ export async function generateWorkoutWithAI(
          console.log("Starting fitness plan generation for user:", userId);
          console.log("Assessment data:", assessmentData);
          console.log("Using existing workout plan ID:", workoutPlanId);
+         console.log("DEBUG: assessmentData.dietaryRestrictions:", assessmentData.dietaryRestrictions);
+         console.log("DEBUG: assessmentData keys:", Object.keys(assessmentData));
 
          try {
 
            // Ensure user exists in database
            await step.run("ensure-user-exists", async () => {
-             const existingUser = await prisma.user.findUnique({
-               where: { id: userId }
-             });
-
-             console.log(userId, "userIduserIduserId")
-             if (!existingUser) {
-               console.log("Creating user in database:", userId);
-               await prisma.user.create({
-                 data: { id: userId }
-               });
-             } else {
-               console.log("User already exists in database:", userId);
-             }
+             await ensureUserExists(prisma, userId);
            });
            // Get the existing fitness profile
            const fitnessProfile = await step.run("get-fitness-profile", async () => {
-             let profile = await prisma.fitnessProfile.findUnique({
-               where: { userId },
-               include: {
-                 currentPlan: true
-               }
-             });
-
-             if (!profile) {
-               // Create fitness profile from assessment data
-               console.log("Creating new fitness profile for user:", userId);
-               profile = await prisma.fitnessProfile.create({
-                 data: {
-                   userId: userId,
-                   gender: assessmentData.gender || 'male',
-                   fitnessGoal: assessmentData.fitnessGoal || 'GENERAL_FITNESS',
-                   age: parseInt(assessmentData.age) || 25,
-                   weight: parseFloat(assessmentData.weight) || 70,
-                   height: parseFloat(assessmentData.height) || 170,
-                   targetWeight: parseFloat(assessmentData.targetWeight) || parseFloat(assessmentData.weight) || 70,
-                   experienceLevel: assessmentData.experienceLevel || 'BEGINNER',
-                   activityLevel: assessmentData.activityLevel || 'MODERATELY_ACTIVE',
-                   targetMuscleGroups: assessmentData.targetMuscleGroups || [],
-                   hasInjuries: assessmentData.hasInjuries || false,
-                   injuries: assessmentData.injuries || '',
-                   medicalConditions: assessmentData.medicalConditions || '',
-                   availableDays: JSON.stringify(assessmentData.availableDays || ['Pondělí', 'Středa', 'Pátek']),
-                   workoutDuration: parseInt(assessmentData.workoutDuration) || 45,
-                   preferredExercises: assessmentData.preferredExercises || '',
-                   equipment: JSON.stringify(assessmentData.equipment || ['Činky']),
-                   mealPlanningEnabled: assessmentData.mealPlanningEnabled || false,
-                   dietaryRestrictions: assessmentData.dietaryRestrictions || [],
-                   allergies: assessmentData.allergies || [],
-                   budgetPerWeek: parseFloat(assessmentData.budgetPerWeek) || 1000,
-                   mealPrepTime: parseInt(assessmentData.mealPrepTime) || 30,
-                   preferredCuisines: assessmentData.preferredCuisines || ['česká'],
-                   cookingSkill: assessmentData.cookingSkill || 'BEGINNER',
-                 },
-                 include: {
-                   currentPlan: true
-                 }
-               });
-               console.log("Created new fitness profile:", profile.id);
-             } else {
-               console.log("Found existing fitness profile:", profile.id);
-             }
-
-             return profile;
+             return await getFitnessProfile(prisma, userId, assessmentData);
            });
 
            // Get or create the workout plan
            const workoutPlan = await step.run("get-or-create-workout-plan", async () => {
-             if (workoutPlanId) {
-               // Try to find existing workout plan
-               const plan = await prisma.workoutPlan.findUnique({
-                 where: { id: workoutPlanId }
-               });
-
-               if (!plan) {
-                 throw new Error("Workout plan not found");
-               }
-
-               console.log("Using existing workout plan:", plan.id);
-               return plan;
-             } else {
-               // Create new workout plan
-               const newPlan = await prisma.workoutPlan.create({
-                 data: {
-                   fitnessProfileId: fitnessProfile.id,
-                   name: "Generování...",
-                   description: "Váš personalizovaný fitness plán se připravuje",
-                   duration: 8,
-                   difficulty: assessmentData.experienceLevel || "BEGINNER"
-                 }
-               });
-
-               console.log("Created new workout plan:", newPlan.id);
-               return newPlan;
-             }
+             return await getOrCreateWorkoutPlan(prisma, workoutPlanId, fitnessProfile.id, assessmentData);
            });
 
            console.log("Workout plan ready for use:", {
@@ -1073,586 +274,43 @@ export async function generateWorkoutWithAI(
 
            // Generate workout plan details using AI
            const planData = await step.run("generate-workout-plan-details", async () => {
-             // Use direct OpenAI call instead of createAgent to avoid nested step tooling
-             const openaiClient = new OpenAI({
-               apiKey: process.env.OPENAI_API_KEY,
-             });
-
-             const assessmentPrompt = `
-               Fitness Assessment Data:
-               - Age: ${assessmentData.age}
-               - Gender: ${assessmentData.gender}
-               - Height: ${assessmentData.height} cm
-               - Weight: ${assessmentData.weight} kg
-               - Target Weight: ${assessmentData.targetWeight || 'Not specified'} kg
-               - Fitness Goal: ${assessmentData.fitnessGoal}
-               - Activity Level: ${assessmentData.activityLevel}
-               - Experience Level: ${assessmentData.experienceLevel}
-               - Target Muscle Groups: ${assessmentData.targetMuscleGroups?.join(', ') || 'All muscle groups'}
-               - Has Injuries: ${assessmentData.hasInjuries}
-               - Injuries: ${assessmentData.injuries || 'None'}
-               - Medical Conditions: ${assessmentData.medicalConditions || 'None'}
-                               - Available Days: ${assessmentData.availableDays?.join(', ') || 'None'}
-                - Workout Duration: ${assessmentData.workoutDuration || 'Not specified'} minutes
-                - Preferred Exercises: ${assessmentData.preferredExercises || 'None specified'}
-                - Available Equipment: ${assessmentData.equipment?.join(', ') || 'None'}
-
-               DŮLEŽITÉ: Vygeneruj pouze přehledový popis 8-týdenního tréninkového plánu. NEGENERUJ konkrétní cviky, série, opakování nebo technické detaily - ty se generují automaticky pro každý trénink zvlášť. Zaměř se na:
-               - Obecný přehled plánu a jeho cíle
-               - Vysvětlení postupu během 8 týdnů
-               - Jak plán podporuje jejich fitness cíle a cílové partie
-               - Obecné tipy pro úspěch a bezpečnost
-               - Motivující závěr
-             `;
-
-             const completion = await openaiClient.chat.completions.create({
-               model: "gpt-4o-mini",
-               messages: [
-                 { role: "system", content: PLAN_GENERATION_PROMPT },
-                 { role: "user", content: assessmentPrompt }
-               ],
-               temperature: 0.7,
-             });
-
-             const planContent = completion.choices[0]?.message?.content || "Plan generation failed";
-
-             // Generate Czech plan name based on fitness goal
-             const getCzechPlanName = (fitnessGoal: string) => {
-               switch (fitnessGoal) {
-                 case 'WEIGHT_LOSS': return 'Plán na hubnutí';
-                 case 'MUSCLE_GAIN': return 'Plán na nabírání svalů';
-                 case 'ENDURANCE': return 'Plán na vytrvalost';
-                 case 'STRENGTH': return 'Plán na sílu';
-                 case 'FLEXIBILITY': return 'Plán na flexibilitu';
-                 case 'GENERAL_FITNESS': return 'Obecný fitness plán';
-                 default: return 'Personalizovaný fitness plán';
-               }
-             };
-
-             const getCzechExperienceLevel = (level: string) => {
-               switch (level) {
-                 case 'BEGINNER': return 'začátečník';
-                 case 'INTERMEDIATE': return 'střední';
-                 case 'ADVANCED': return 'pokročilý';
-                 default: return 'začátečník';
-               }
-             };
-
-             // Update the existing workout plan with Czech names and plan content
-             const updatedWorkoutPlan = await prisma.workoutPlan.update({
-               where: { id: workoutPlan.id },
-               data: {
-                 name: getCzechPlanName(assessmentData.fitnessGoal),
-                 description: `Personalizovaný ${getCzechPlanName(assessmentData.fitnessGoal).toLowerCase()} navržený pro ${getCzechExperienceLevel(assessmentData.experienceLevel)} úroveň`,
-                 planContent: planContent,
-               },
-             });
-
-             return {
-               name: updatedWorkoutPlan.name,
-               description: updatedWorkoutPlan.description,
-               duration: 8,
-               difficulty: assessmentData.experienceLevel,
-               planContent: updatedWorkoutPlan.planContent,
-             };
+             return await generateWorkoutPlanDetails(prisma, workoutPlan.id, assessmentData);
            });
 
            // Generate workouts for each week using AI (optimized to reduce API calls)
            await step.run("generate-workouts", async () => {
-             console.log("Starting workout generation step...");
-
-             // Parse availableDays - it might be a JSON string from the database
-             let availableDays = assessmentData.availableDays;
-             if (typeof availableDays === 'string') {
-               try {
-                 availableDays = JSON.parse(availableDays);
-               } catch (error) {
-                 console.error('Failed to parse availableDays:', error);
-                 throw new Error(`Failed to parse availableDays: ${availableDays}`);
-               }
-             }
-
-             const workoutDuration = parseInt(assessmentData.workoutDuration);
-
-             console.log(`Available days:`, availableDays);
-             console.log(`Generating ${availableDays.length} workout templates for days: ${availableDays.join(', ')}`);
-
-             // Generate workout templates for each day (only once, not per week)
-             const workoutTemplates: { [day: string]: any } = {};
-
-             for (let dayIndex = 0; dayIndex < availableDays.length; dayIndex++) {
-               const day = availableDays[dayIndex];
-
-               // Generate workout template using AI (only once per day)
-               const aiWorkout = await generateWorkoutWithAI(
-                 1, // Use week 1 as template
-                 day,
-                 assessmentData.fitnessGoal,
-                 assessmentData.experienceLevel,
-                 assessmentData.equipment,
-                 workoutDuration,
-                 assessmentData.hasInjuries,
-                 assessmentData.injuries,
-                 assessmentData.medicalConditions,
-                 assessmentData.age,
-                 assessmentData.gender,
-                 assessmentData.height,
-                 assessmentData.weight,
-                 assessmentData.targetWeight,
-                 assessmentData.activityLevel,
-                 assessmentData.preferredExercises,
-                 assessmentData.targetMuscleGroups
-               );
-
-               workoutTemplates[day] = aiWorkout;
-               console.log(`Generated template for ${day}: ${aiWorkout.name} with ${aiWorkout.exercises?.length || 0} exercises`);
-             }
-
-                     // Create workouts for each week using the templates
-             let totalExercises = 0;
-             let reusedExercises = 0;
-             let newExercises = 0;
-             let sessionExercises = 0;
-
-                     // Track exercises created in this session to prevent duplicates within the same generation
-             const sessionExerciseMap = new Map<string, any>();
-
-             // Create workouts sequentially to ensure proper session-level deduplication
-             const createdWorkouts = [];
-
-             for (let week = 1; week <= 8; week++) {
-               for (let dayIndex = 0; dayIndex < availableDays.length; dayIndex++) {
-                 const day = availableDays[dayIndex];
-                 const dayIndexNum = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].indexOf(day);
-                 const template = workoutTemplates[day];
-
-                 // Create the workout first
-                 const workout = await prisma.workout.create({
-                   data: {
-                     name: `Week ${week} - ${template.name}`,
-                     description: template.description,
-                     dayOfWeek: dayIndexNum,
-                     weekNumber: week,
-                     duration: workoutDuration,
-                     workoutPlanId: workoutPlan.id,
-                   },
-                 });
-
-                 console.log(`Created workout: ${workout.name} (ID: ${workout.id}) for plan ${workoutPlan.id} with ${template.exercises?.length || 0} exercises`);
-
-                 // Process exercises with many-to-many relationship
-                 for (const exercise of template.exercises) {
-                   totalExercises++;
-
-                   // Create a simple key based on exercise name only
-                   const exerciseKey = exercise.name.toLowerCase().trim();
-
-                   let exerciseRecord;
-
-                   // First check if we already created this exercise in this session
-                   if (sessionExerciseMap.has(exerciseKey)) {
-                     sessionExercises++;
-                     exerciseRecord = sessionExerciseMap.get(exerciseKey);
-                     console.log(`Reusing exercise from this session: "${exercise.name}" (ID: ${exerciseRecord.id})`);
-                   } else {
-                     // Check if exercise already exists in database
-                     const existingExercise = await findExistingExercise(prisma, exercise.name, exercise.englishName);
-
-                     if (existingExercise) {
-                       reusedExercises++;
-                       console.log(`Reusing existing exercise from database: "${exercise.name}" (ID: ${existingExercise.id}) - skipping YouTube validation`);
-                       exerciseRecord = existingExercise;
-                     } else {
-                       newExercises++;
-                       console.log(`Creating new exercise: "${exercise.name}" (English: "${exercise.englishName}") - will validate YouTube URL`);
-
-                       // Create new exercise (without workoutId - it's now separate)
-                       const exerciseData = createExerciseData(exercise);
-                       exerciseRecord = await prisma.exercise.create({
-                         data: {
-                           name: exerciseData.name,
-                           englishName: exerciseData.englishName,
-                           description: exerciseData.description,
-                           category: exerciseData.category,
-                           muscleGroups: exerciseData.muscleGroups,
-                           equipment: exerciseData.equipment,
-                           difficulty: exerciseData.difficulty,
-                           youtubeUrl: exerciseData.youtubeUrl,
-                         }
-                       });
-                     }
-
-                     // Store in session map for future reuse
-                     sessionExerciseMap.set(exerciseKey, exerciseRecord);
-                   }
-
-                   // Create the workout-exercise relationship with workout-specific parameters
-                   await prisma.workoutExercise.create({
-                     data: {
-                       workoutId: workout.id,
-                       exerciseId: exerciseRecord.id,
-                       sets: exercise.sets || null,
-                       reps: exercise.reps || null,
-                       duration: exercise.duration || null,
-                       restTime: exercise.restTime || null,
-                       weight: exercise.weight || null,
-                     }
-                   });
-                 }
-
-                 createdWorkouts.push(workout);
-               }
-             }
-             console.log(`Created ${createdWorkouts.length} workouts using ${availableDays.length} AI-generated templates for plan ${workoutPlan.id}`);
-
-             // Log exercise deduplication statistics
-             console.log(`Exercise deduplication summary:`);
-             console.log(`  Total exercises processed: ${totalExercises}`);
-             console.log(`  Reused existing exercises from database: ${reusedExercises} (${((reusedExercises / totalExercises) * 100).toFixed(1)}%)`);
-             console.log(`  Reused exercises from this session: ${sessionExercises} (${((sessionExercises / totalExercises) * 100).toFixed(1)}%)`);
-             console.log(`  Created new exercises: ${newExercises} (${((newExercises / totalExercises) * 100).toFixed(1)}%)`);
-             console.log(`  Total deduplication savings: ${reusedExercises + sessionExercises} exercises (${(((reusedExercises + sessionExercises) / totalExercises) * 100).toFixed(1)}%)`);
-             console.log(`  YouTube API calls saved: ${reusedExercises + sessionExercises} (reused exercises already have validated URLs)`);
-
-             // Verify workouts were created
-             const workoutCount = await prisma.workout.count({
-               where: { workoutPlanId: workoutPlan.id }
-             });
-             console.log(`Total workouts in database for plan ${workoutPlan.id}: ${workoutCount}`);
-
-             // Verify the workout plan has workouts
-             const finalWorkoutPlan = await prisma.workoutPlan.findUnique({
-               where: { id: workoutPlan.id },
-               include: {
-                 workouts: {
-                   include: {
-                     workoutExercises: {
-                       include: {
-                         exercise: true
-                       }
-                     }
-                   }
-                 }
-               }
-             });
-             console.log(`Final workout plan state:`, {
-               id: finalWorkoutPlan?.id,
-               name: finalWorkoutPlan?.name,
-               workoutCount: finalWorkoutPlan?.workouts?.length || 0,
-               totalExercises: finalWorkoutPlan?.workouts?.reduce((total, w) => total + (w.workoutExercises?.length || 0), 0) || 0
-             });
+             await generateWorkouts(prisma, workoutPlan.id, assessmentData);
            });
 
-                      // Calculate nutrition requirements using scientific formulas
-           const nutritionRequirements = await step.run("calculate-nutrition-requirements", async () => {
-             try {
-               const result = calculateNutritionTargets({
-                 age: parseInt(assessmentData.age),
-                 gender: assessmentData.gender,
-                 height: parseInt(assessmentData.height),
-                 weight: parseFloat(assessmentData.weight),
-                 targetWeight: assessmentData.targetWeight ? parseFloat(assessmentData.targetWeight) : undefined,
-                 fitnessGoal: assessmentData.fitnessGoal,
-                 activityLevel: assessmentData.activityLevel
-               });
-
-               // Kontrola, že výsledky nejsou null nebo 0
-               if (!result || !result.caloriesPerDay || result.caloriesPerDay <= 0) {
-                 throw new Error("Nelze vypočítat nutriční požadavky - chybí povinné údaje");
-               }
-
-               return result;
-             } catch (error) {
-               console.error("Error calculating nutrition requirements:", error);
-               // Vytvoř projekt s chybovou zprávou
-               await prisma.project.create({
-                 data: {
-                   name: `Fitness Plan Error - ${new Date().toLocaleDateString()}`,
-                   userId: userId,
-                   messages: {
-                     create: {
-                       content: `Chyba při generování fitness plánu: ${error instanceof Error ? error.message : 'Neznámá chyba'}. Prosím, vyplňte fitness assessment znovu s kompletními údaji.`,
-                       role: "ASSISTANT",
-                       type: "ERROR",
-                     }
-                   }
-                 },
-               });
-               throw error; // Předaj chybu dál, aby se Inngest funkce zastavila
-             }
-           });
-
-           // Kontrola, že nutritionRequirements jsou validní před pokračováním
-           if (!nutritionRequirements || !nutritionRequirements.caloriesPerDay || nutritionRequirements.caloriesPerDay <= 0) {
-             throw new Error("Nelze pokračovat - chybí nutriční požadavky");
-           }
-
-           // Generate meal plan if enabled
+           // Generate meal plan if meal planning is enabled
+           let mealPlanData = null;
            if (assessmentData.mealPlanningEnabled) {
-             console.log("Meal planning is enabled, generating meal plan...");
-             await step.run("generate-meal-plan", async () => {
-               console.log("Deactivating existing meal plans for profile:", fitnessProfile.id);
-               // First, deactivate any existing active meal plans for this profile
-               await prisma.mealPlan.updateMany({
-                 where: {
-                   OR: [
-                     { fitnessProfileId: fitnessProfile.id },
-                     { activeProfileId: fitnessProfile.id }
-                   ]
-                 },
-                 data: {
-                   isActive: false,
-                   activeProfileId: null
-                 },
-               });
-
-               console.log("Creating new meal plan...");
-               // Create the new meal plan
-               const mealPlan = await prisma.mealPlan.create({
-                 data: {
-                   name: `${assessmentData.fitnessGoal.replace('_', ' ')} Monthly Meal Plan`,
-                   description: `Personalized ${assessmentData.fitnessGoal.toLowerCase().replace('_', ' ')} meal plan for 30 days`,
-                   duration: 30, // 30 days (entire month)
-                   caloriesPerDay: nutritionRequirements.caloriesPerDay,
-                   proteinPerDay: nutritionRequirements.proteinPerDay,
-                   carbsPerDay: nutritionRequirements.carbsPerDay,
-                   fatPerDay: nutritionRequirements.fatPerDay,
-                   budgetPerWeek: parseFloat(assessmentData.budgetPerWeek),
-                   isActive: true,
-                   isPublic: fitnessProfile.isPublic || false, // Set isPublic based on profile
-                   activeProfileId: fitnessProfile.id,
-                   fitnessProfileId: fitnessProfile.id,
-                 },
-               });
-
-               // Generate meals with variety for each day
-               const mealTypes = ['BREAKFAST', 'LUNCH', 'DINNER'];
-               const mealPromises: Promise<any>[] = [];
-
-                              // TESTING: Nastav počet dní pro generování
-               // TESTING_DAYS = 2: Generuje 2 dny - velmi rychlé testování
-               // TESTING_DAYS = 7: Generuje 1 týden - rychlé testování
-               // TESTING_DAYS = 14: Generuje 2 týdny - střední testování
-               // TESTING_DAYS = 28: Generuje 4 týdny - téměř plný měsíc
-               // TESTING_DAYS = 0: Generuje plný měsíc (30 dní) - produkční režim
-               const TESTING_DAYS = 2; // Změň podle potřeby testování
-               const totalDays = TESTING_DAYS > 0 ? TESTING_DAYS : 30;
-
-               console.log(`Generating unique meals for ${totalDays} days (${TESTING_DAYS > 0 ? TESTING_DAYS + ' days' : 'full month'}) with types: ${mealTypes.join(', ')}`);
-
-               // PŘED GENEROVÁNÍM MEAL TEMPLATES
-               console.log('DEBUG: nutritionRequirements před generováním jídel:', nutritionRequirements);
-
-                         // Create meals for each day with variety - generate different meals for each day
-               console.log(`Creating meals for ${totalDays} days with variety...`);
-
-               // Track used meal names to avoid repetition
-               const usedMealNames: { [key: string]: string[] } = { BREAKFAST: [], LUNCH: [], DINNER: [] };
-
-               // Arrays for rotating ingredients to ensure variety
-               const proteinSources = ['kuřecí prsa', 'krůtí prsa', 'losos', 'tuňák', 'treska', 'vejce', 'tvaroh', 'libové hovězí', 'tofu', 'tempeh', 'králík', 'proteinový prášek'];
-               const carbSources = ['ovesné vločky', 'quinoa', 'hnědá rýže', 'celozrnné těstoviny', 'sladké brambory', 'pohanka', 'ječmen', 'bulgur', 'celozrnný chléb'];
-               const vegetables = ['brokolice', 'špenát', 'kapusta', 'mrkev', 'paprika', 'rajčata', 'okurka', 'cuketa', 'lilek', 'cibule', 'česnek', 'zázvor', 'kedlubna', 'celer'];
-               const fruits = ['jablka', 'banány', 'borůvky', 'maliny', 'jahody', 'pomeranče', 'kiwi', 'ananas', 'mango', 'hrušky', 'hrozny'];
-
-               for (let day = 1; day <= totalDays; day++) {
-                 // Calculate week number
-                 const weekNumber = Math.ceil(day / 7);
-
-                 console.log(`Day ${day}: Week ${weekNumber}`);
-
-                 for (const mealType of mealTypes) {
-                   // Calculate target nutrition for this meal type
-                   let targetCalories = 0;
-                   let targetProtein = 0;
-                   let targetCarbs = 0;
-                   let targetFat = 0;
-
-                   switch (mealType) {
-                     case 'BREAKFAST':
-                       targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.25);
-                       targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.25 * 10) / 10;
-                       targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.25 * 10) / 10;
-                       targetFat = Math.round(nutritionRequirements.fatPerDay * 0.25 * 10) / 10;
-                       break;
-                     case 'LUNCH':
-                       targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.40);
-                       targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.40 * 10) / 10;
-                       targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.40 * 10) / 10;
-                       targetFat = Math.round(nutritionRequirements.fatPerDay * 0.40 * 10) / 10;
-                       break;
-                     case 'DINNER':
-                       targetCalories = Math.round(nutritionRequirements.caloriesPerDay * 0.35);
-                       targetProtein = Math.round(nutritionRequirements.proteinPerDay * 0.35 * 10) / 10;
-                       targetCarbs = Math.round(nutritionRequirements.carbsPerDay * 0.35 * 10) / 10;
-                       targetFat = Math.round(nutritionRequirements.fatPerDay * 0.35 * 10) / 10;
-                       break;
-                   }
-
-                   // Generate unique meal for this day and meal type
-                                  // Track ingredients to avoid repetition
-               const dayIndex = day - 1;
-               const proteinIndex = dayIndex % proteinSources.length;
-               const carbIndex = dayIndex % carbSources.length;
-               const vegIndex = dayIndex % vegetables.length;
-               const fruitIndex = dayIndex % fruits.length;
-
-               const avoidProtein = proteinSources[proteinIndex];
-               const avoidCarb = carbSources[carbIndex];
-               const avoidVeg = vegetables[vegIndex];
-               const avoidFruit = fruits[fruitIndex];
-
-               console.log(`Day ${day}, ${mealType}: Avoid these ingredients - Protein: ${avoidProtein}, Carb: ${avoidCarb}, Veg: ${avoidVeg}, Fruit: ${avoidFruit}`);
-
-                   const aiMeal = await generateMealWithAI(
-                     day,
-                     mealType,
-                     fitnessProfile.fitnessGoal || 'GENERAL_FITNESS',
-                     assessmentData.dietaryRestrictions,
-                     assessmentData.preferredCuisines,
-                     assessmentData.cookingSkill,
-                     targetCalories,
-                     targetProtein,
-                     targetCarbs,
-                     targetFat,
-                     assessmentData.budgetPerWeek,
-                     parseInt(assessmentData.mealPrepTime),
-                     usedMealNames[mealType].join(', '), // Avoid previously used meal names
-                     {
-                       protein: avoidProtein,
-                       carb: avoidCarb,
-                       veg: avoidVeg,
-                       fruit: avoidFruit
-                     }
-                   );
-
-                   // Verify that we got a unique meal name
-                   if (usedMealNames[mealType].includes(aiMeal.name)) {
-                     console.warn(`WARNING: Duplicate meal name generated for ${mealType}: ${aiMeal.name}`);
-                   }
-
-                   // Add to used names to avoid repetition
-                   usedMealNames[mealType].push(aiMeal.name);
-
-                   const mealPromise = prisma.meal.create({
-                     data: {
-                       name: `Day ${day} - ${aiMeal.name}`,
-                       description: aiMeal.description,
-                       mealType: mealType as any,
-                       dayOfWeek: day, // Use actual day number (1-30), not day of week (0-6)
-                       weekNumber: weekNumber,
-                       calories: aiMeal.calories,
-                       protein: aiMeal.protein,
-                       carbs: aiMeal.carbs,
-                       fat: aiMeal.fat,
-                       prepTime: aiMeal.prepTime,
-                       cookTime: aiMeal.cookTime,
-                       servings: 1,
-                       mealPlanId: mealPlan.id,
-                       recipes: {
-                         create: {
-                           name: `Day ${day} - ${aiMeal.name}`,
-                           description: aiMeal.description,
-                           instructions: aiMeal.instructions,
-                           ingredients: JSON.stringify(aiMeal.ingredients),
-                           nutrition: JSON.stringify({
-                             calories: aiMeal.calories,
-                             protein: aiMeal.protein,
-                             carbs: aiMeal.carbs,
-                             fat: aiMeal.fat,
-                             fiber: Math.floor(Math.random() * 8) + 3,
-                             sugar: Math.floor(Math.random() * 15) + 5
-                           }),
-                           prepTime: aiMeal.prepTime,
-                           cookTime: aiMeal.cookTime,
-                           servings: 1,
-                           difficulty: assessmentData.cookingSkill,
-                           cuisine: assessmentData.preferredCuisines[day % assessmentData.preferredCuisines.length] || "american",
-                           tags: assessmentData.dietaryRestrictions.length > 0 ? assessmentData.dietaryRestrictions : ["healthy", "balanced"],
-                         }
-                       }
-                     },
-                   });
-
-                   // Add debug logging for nutrition values
-                   console.log(`Creating meal for Day ${day}, ${mealType}:`, {
-                     name: `Day ${day} - ${aiMeal.name}`,
-                     calories: aiMeal.calories,
-                     protein: aiMeal.protein,
-                     carbs: aiMeal.carbs,
-                     fat: aiMeal.fat
-                   });
-
-                   mealPromises.push(mealPromise);
-                 }
-               }
-
-               // Wait for all meals to be created
-               const createdMeals = await Promise.all(mealPromises);
-               console.log(`Created ${createdMeals.length} unique meals for meal plan ${mealPlan.id}`);
-
-               // Update the fitness profile to point to the new current meal plan
-               await prisma.fitnessProfile.update({
-                 where: { id: fitnessProfile.id },
-                 data: { currentMealPlan: { connect: { id: mealPlan.id } } }
-               });
-
-               // Verify meal plan was created
-               const mealPlanCount = await prisma.mealPlan.count({
-                 where: { fitnessProfileId: fitnessProfile.id }
-               });
-               console.log(`Total meal plans in database for profile ${fitnessProfile.id}: ${mealPlanCount}`);
-
-               return mealPlan;
+             mealPlanData = await step.run("generate-meal-plan", async () => {
+               return await generateMealPlan(prisma, fitnessProfile.id, assessmentData);
              });
            }
 
            // Update the fitness profile to set the current workout plan (always do this)
            await step.run("update-fitness-profile", async () => {
-             await prisma.fitnessProfile.update({
-               where: { id: fitnessProfile.id },
-               data: { currentPlan: { connect: { id: workoutPlan.id } } }
-             });
-             console.log(`Updated fitness profile ${fitnessProfile.id} to set current plan to ${workoutPlan.id}`);
+             await updateFitnessProfile(prisma, fitnessProfile.id, workoutPlan.id);
            });
 
            // Set the workout plan as active after successful generation
            await step.run("activate-workout-plan", async () => {
-             await prisma.workoutPlan.update({
-               where: { id: workoutPlan.id },
-               data: {
-                 isActive: true,
-                 activeProfileId: fitnessProfile.id,
-               }
-             });
-             console.log(`Activated workout plan ${workoutPlan.id} - set isActive to true`);
+             await activateWorkoutPlan(prisma, workoutPlan.id, fitnessProfile.id);
            });
 
            // Create fitness plan project and success message
            await step.run("create-fitness-project", async () => {
-             // Create a project for the fitness plan
-             const project = await prisma.project.create({
-               data: {
-                 name: `${planData.name} - ${new Date().toLocaleDateString()}`,
-                 userId: userId,
-                 messages: {
-                   create: {
-                     content: `Your personalized ${planData.name} has been created! The plan includes ${assessmentData.availableDays.length} AI-generated workouts per week for 8 weeks, tailored to your ${assessmentData.fitnessGoal.toLowerCase().replace('_', ' ')} goals and ${assessmentData.experienceLevel.toLowerCase()} experience level.${assessmentData.mealPlanningEnabled ? ` Plus, you now have a complete 30-day AI-generated meal plan with ${assessmentData.availableDays.length * 3} personalized recipes per week!` : ''}`,
-                     role: "ASSISTANT",
-                     type: "PLAN_GENERATED",
-                   }
-                 }
-               },
-             });
-
-             return project;
+             return await createFitnessProject(prisma, userId, planData, assessmentData);
            });
 
            console.log("Fitness plan generation completed successfully:", {
              planId: workoutPlan.id,
              planName: planData.name,
              userId,
-             fitnessProfileId: fitnessProfile.id
+             fitnessProfileId: fitnessProfile.id,
+             mealPlanId: mealPlanData?.mealPlanId || null
            });
 
            console.log("All steps completed, returning success...");
@@ -1661,6 +319,8 @@ export async function generateWorkoutWithAI(
              success: true,
              planId: workoutPlan.id,
              planName: planData.name,
+             mealPlanId: mealPlanData?.mealPlanId || null,
+             mealCount: mealPlanData?.mealCount || 0,
              message: "Fitness plan generated successfully",
            };
 
@@ -1673,3 +333,56 @@ export async function generateWorkoutWithAI(
          }
        },
      );
+
+
+type RegenerateMealPlanEvent = {
+  name: "regenerate-meal-plan/run";
+  data: {
+    userId: string;
+    assessmentData: any;
+  };
+};
+
+export const regenerateMealPlanFunction = inngest.createFunction(
+  { id: "regenerate-meal-plan" },
+  { event: "regenerate-meal-plan/run" },
+  async ({ event, step }: { event: RegenerateMealPlanEvent, step: any }) => {
+    const prisma = new PrismaClient();
+    const { userId, assessmentData } = event.data;
+
+    console.log("Starting meal plan regeneration for user:", userId);
+
+    try {
+      // Get the fitness profile
+      const fitnessProfile = await step.run("get-fitness-profile", async () => {
+        return await getFitnessProfile(prisma, userId, assessmentData);
+      });
+
+      // Generate new meal plan
+      const mealPlanData = await step.run("generate-meal-plan", async () => {
+        return await generateMealPlan(prisma, fitnessProfile.id, assessmentData);
+      });
+
+      console.log("Meal plan regeneration completed successfully:", {
+        mealPlanId: mealPlanData.mealPlanId,
+        mealCount: mealPlanData.mealCount,
+        userId,
+        fitnessProfileId: fitnessProfile.id
+      });
+
+      return {
+        success: true,
+        mealPlanId: mealPlanData.mealPlanId,
+        mealCount: mealPlanData.mealCount,
+        message: "Meal plan regenerated successfully",
+      };
+
+    } catch (error: any) {
+      console.error("Error in regenerateMealPlan function:", error);
+      throw error;
+    } finally {
+      await prisma.$disconnect();
+    }
+  },
+);
+
