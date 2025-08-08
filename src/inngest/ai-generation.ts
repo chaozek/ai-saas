@@ -379,10 +379,10 @@ export const regenerateMealPlanFunction = inngest.createFunction(
 
     } catch (error: any) {
       console.error("Error in regenerateMealPlan function:", error);
-      throw error;
-    } finally {
-      await prisma.$disconnect();
-    }
-  },
-);
+           throw error;
+         } finally {
+           await prisma.$disconnect();
+         }
+       },
+     );
 

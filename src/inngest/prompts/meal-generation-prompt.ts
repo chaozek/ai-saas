@@ -1,116 +1,81 @@
-export function createMealGenerationPrompt(params: {
-  age: string;
-  gender: string;
-  weight: string;
-  height: string;
-  fitnessGoal: string;
-  activityLevel: string;
-  preferredCuisines: string[];
-  dietaryRestrictions: string[];
-  allergies: string[];
-  mealsPerDay: number;
-}) {
+export function createMealGenerationPrompt(assessmentData: any, nutritionTargets: any): string {
   const {
     age,
     gender,
     weight,
     height,
     fitnessGoal,
-    activityLevel,
     preferredCuisines,
     dietaryRestrictions,
     allergies,
-    mealsPerDay
-  } = params;
+    activityLevel
+  } = assessmentData;
 
-  // Convert fitness goal to meal planning goal
-  const getMealGoal = (fitnessGoal: string) => {
-    switch (fitnessGoal) {
-      case 'WEIGHT_LOSS': return 'hubnutí';
-      case 'MUSCLE_GAIN': return 'nabrání svalové hmoty';
-      case 'STRENGTH': return 'nabrání svalové hmoty a síly';
-      case 'ENDURANCE': return 'udržení váhy a vytrvalost';
-      case 'FLEXIBILITY': return 'udržení váhy a zdraví';
-      case 'GENERAL_FITNESS': return 'udržení váhy a celkové zdraví';
-      default: return 'udržení váhy';
-    }
-  };
+  const cuisineText = preferredCuisines?.length > 0 ? preferredCuisines.join(', ') : 'česká';
+  const restrictionsText = dietaryRestrictions?.length > 0 ? dietaryRestrictions.join(', ') : 'žádná';
+  const allergiesText = allergies?.length > 0 ? allergies.join(', ') : 'žádné';
 
-  // Convert activity level to Czech
-  const getActivityLevelCzech = (activityLevel: string) => {
-    switch (activityLevel) {
-      case 'SEDENTARY': return 'sedavý způsob života';
-      case 'LIGHTLY_ACTIVE': return 'lehce aktivní';
-      case 'MODERATELY_ACTIVE': return 'středně aktivní';
-      case 'VERY_ACTIVE': return 'velmi aktivní';
-      case 'EXTREMELY_ACTIVE': return 'extrémně aktivní';
-      default: return 'středně aktivní';
-    }
-  };
+  const nutritionInfo = `
+CÍLOVÉ NUTRIČNÍ HODNOTY PRO CELÝ DEN:
+- Kalorie: ${nutritionTargets.calories} kcal
+- Bílkoviny: ${nutritionTargets.protein}g
+- Sacharidy: ${nutritionTargets.carbs}g
+- Tuky: ${nutritionTargets.fat}g
 
-  return `Vytvoř denní jídelníček pro:
-- ${gender === 'male' ? 'Muž' : gender === 'female' ? 'Žena' : 'Osoba'}, ${age} let, ${weight} kg, ${height} cm
-- Cíl: ${getMealGoal(fitnessGoal)}
-- Úroveň aktivity: ${getActivityLevelCzech(activityLevel)}
-- Preferované kuchyně: ${preferredCuisines.length > 0 ? preferredCuisines.join(', ') : 'žádné preference'}
-- Dietní omezení: ${dietaryRestrictions.length > 0 ? dietaryRestrictions.join(', ') : 'žádná'}
-- Alergie: ${allergies.length > 0 ? allergies.join(', ') : 'žádné'}
-- Počet jídel denně: ${mealsPerDay}
+ROZDĚL ŽIVINY MEZI 3-5 JÍDEL PODLE POTŘEBY.
+KAŽDÉ JÍDLO BY MĚLO MÍT 100-800 KCAL.
+KAŽDÉ JÍDLO BY MĚLO OBSAHOVAT 20-40G BÍLKOVIN.`;
 
-KRITICKÉ PRAVIDLA:
-1. Všechna jídla MUSÍ být v češtině
-2. Používej pouze ingredience dostupné v českých obchodech
-3. Respektuj všechna dietní omezení a alergie
-4. Jídla musí být chutná a praktická pro přípravu
-5. Zohledni fitness cíl při výběru ingrediencí a porcí
+  const prompt = `
+Vytvoř denní jídelníček pro:
+- ${gender === 'male' ? 'Muž' : 'Žena'}, ${age} let, ${weight} kg, ${height} cm
+- Cíl: ${fitnessGoal.toLowerCase().replace('_', ' ')}
+- Kuchyně: ${cuisineText}
+- Omezení: ${restrictionsText}
+- Alergie: ${allergiesText}
+- Úroveň aktivity: ${activityLevel}
 
-PRO KAŽDÉ JÍDLO UVEĎ:
-1. Název jídla (v češtině)
-2. Seznam ingrediencí s přesnými množstvími v gramech
-3. Nutriční hodnoty (kalorie, bílkoviny, sacharidy, tuky)
-4. Doba přípravy v minutách
-5. Návod na přípravu (stručný, v češtině)
+${nutritionInfo}
 
-FORMÁT ODPOVĚDI - POUZE JSON:
+PRAVIDLA:
+1. VYGENERUJ 3-5 JÍDEL PRO CELÝ DEN
+2. ROZHODNI SI KOLIK JÍDEL - 3-5 jídel podle potřeby
+3. KAŽDÉ JÍDLO MUSÍ MÍT INGREDIENCE S MNOŽSTVÍM V GRAMECH
+4. CELKOVĚ MUSÍŠ DOSÁHNOUT ${nutritionTargets.protein}g BÍLKOVIN, ${nutritionTargets.calories} kcal
+5. NESMÍŠ PŘESÁHNOUT ŽÁDNÝ Z DENNÍCH CÍLŮ - kalorie, bílkoviny, sacharidy, tuky
+6. KONTROLA TUKŮ: Používej minimum olejů a tuků - maximálně 1-5g oleje na jídlo, preferuj libové maso
+7. POUŽÍVEJ ČESKÉ NÁZVY INGREDIENCÍ - pro kompatibilitu s českou databází!
+
+ROZMANITÉ INGREDIENCE:
+- Používej jakékoliv ingredience, které jsou dostupné a chutné
+- Buď kreativní s kombinacemi a recepty
+- Používej české názvy ingrediencí pro kompatibilitu s českou databází
+- Názvy jídel mohou být v češtině
+
+DŮLEŽITÉ PRO ČESKOU DATABÁZI:
+- Používej české názvy ingrediencí pro kompatibilitu s českou databází
+- Buď specifický s názvy - např. "kuřecí prsa" místo jen "kuřecí"
+- Vyhni se obecným názvům - např. "hovězí steak" místo jen "hovězí"
+- Názvy jídel mohou být v češtině
+- Příklad: "name": "Kuřecí prsa s rýží", "ingredients": [{"name": "kuřecí prsa", "amount": 150}]
+- Příklad: "name": "Tofu s quinoou", "ingredients": [{"name": "tofu", "amount": 100}, {"name": "quinoa", "amount": 50}]
+- Příklad: "name": "Cizrnový salát", "ingredients": [{"name": "cizrna", "amount": 150}, {"name": "olivový olej", "amount": 10}]
+
+⚠️ KRITICKÉ: Používej české názvy ingrediencí pro kompatibilitu s českou databází!
+
+Vrátit JSON s touto strukturou:
 {
   "meals": [
     {
       "name": "Název jídla",
-      "type": "snídaně|oběd|večeře|svačina",
+      "type": "snídaně/oběd/večeře/svačina",
       "ingredients": [
-        {
-          "name": "Název ingredience",
-          "amount": 100,
-          "unit": "g"
-        }
+        {"name": "Ingredience", "amount": 100, "unit": "g"}
       ],
-      "nutrition": {
-        "calories": 350,
-        "protein": 25,
-        "carbs": 45,
-        "fat": 12,
-        "fiber": 8
-      },
-      "prepTime": 15,
-      "instructions": "Stručný návod na přípravu v češtině"
+      "instructions": "Postup přípravy"
     }
-  ],
-  "dailyNutrition": {
-    "totalCalories": 2000,
-    "totalProtein": 150,
-    "totalCarbs": 200,
-    "totalFat": 70,
-    "totalFiber": 30
-  }
-}
+  ]
+}`;
 
-DŮLEŽITÉ:
-- Všechny názvy jídel a ingrediencí MUSÍ být v češtině
-- Používej pouze reálné ingredience dostupné v českých obchodech
-- Respektuj dietní omezení (bezlepková, vegetariánská, veganská, atd.)
-- Vyhni se alergenům uvedeným uživatelem
-- Jídla musí být vyvážená a odpovídat fitness cíli
-- Pro hubnutí: nižší kalorie, více bílkovin a vlákniny
-- Pro nabrání: vyšší kalorie, více bílkovin a sacharidů
-- Pro udržení: vyvážené makroživiny`;
+  return prompt;
 }

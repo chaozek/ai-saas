@@ -440,8 +440,8 @@ console.log(fitnessProfile, "fitnessProfile")
             if (a.dayOfWeek !== b.dayOfWeek) {
               return a.dayOfWeek - b.dayOfWeek;
             }
-            // Then sort by meal type (Breakfast, Lunch, Dinner, Supplement)
-            const mealTypeOrder = { 'BREAKFAST': 1, 'LUNCH': 2, 'DINNER': 3, 'SUPPLEMENT': 4 };
+            // Then sort by meal type (Breakfast, Lunch, Dinner, Snack)
+            const mealTypeOrder = { 'BREAKFAST': 1, 'LUNCH': 2, 'DINNER': 3, 'SNACK': 4 };
             return (mealTypeOrder[a.mealType as keyof typeof mealTypeOrder] || 0) -
                    (mealTypeOrder[b.mealType as keyof typeof mealTypeOrder] || 0);
           }) || [];

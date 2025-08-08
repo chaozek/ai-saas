@@ -147,10 +147,6 @@ export function MealCard({
               )}
             </div>
           ))}
-          <div className="text-xs font-semibold text-green-700 dark:text-green-300 flex items-center justify-between pt-1 border-t border-border">
-            <span>Odhadovaná cena:</span>
-            <span>{totalCost.toFixed(0)} Kč</span>
-          </div>
         </div>
       );
     } catch (e) {
