@@ -84,8 +84,46 @@ export async function generateWorkoutWithAI(
 
        console.log(`Raw AI response:`, content);
 
+       // Check if AI returned an apologetic response
+       let finalContent = content;
+       if (content.toLowerCase().includes("i'm sorry") ||
+           content.toLowerCase().includes("omlouvám se") ||
+           content.toLowerCase().includes("bohužel") ||
+           content.toLowerCase().includes("nemohu") ||
+           content.toLowerCase().includes("nelze") ||
+           content.toLowerCase().includes("cannot") ||
+           content.toLowerCase().includes("unable")) {
+
+         console.log("AI returned apologetic response, trying with fallback prompt...");
+
+         // Try again with a more explicit fallback prompt
+         const fallbackPrompt = `VYGENERUJ TRÉNINK ZÁSADNĚ! Použij základní dostupné cviky. Pokud něco nejde, použij alternativy. NIKDY SE NEOMLOUVEJ - vždy generuj co nejlepší řešení v JSON formátu!`;
+
+         const fallbackCompletion = await openaiClient.chat.completions.create({
+           model: "gpt-4o-mini",
+           messages: [
+             {
+               role: "system",
+               content: WORKOUT_GENERATION_SYSTEM_PROMPT
+             },
+             { role: "user", content: prompt },
+             { role: "user", content: fallbackPrompt }
+           ],
+           temperature: 0.1, // Lower temperature for more consistent output
+           max_tokens: 2000,
+         });
+
+         const fallbackContent = fallbackCompletion.choices[0]?.message?.content;
+         if (fallbackContent && !fallbackContent.toLowerCase().includes("i'm sorry")) {
+           console.log("Fallback prompt successful, using fallback response");
+           finalContent = fallbackContent;
+         } else {
+           throw new Error(`AI consistently returns apologetic responses. Raw response: ${content}`);
+         }
+       }
+
        // Try to extract JSON from the response
-       let jsonContent = content.trim();
+       let jsonContent = finalContent.trim();
 
        // Remove any markdown formatting
        jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
@@ -191,33 +229,50 @@ export async function generateWorkoutWithAI(
            return exercise;
          });
 
-         console.log(`Successfully generated workout: ${workout.name}`);
          return {
            name: workout.name,
            description: workout.description,
            exercises: validatedExercises
          };
-       } catch (jsonError) {
-         console.error(`JSON parsing error:`, jsonError);
-         console.error(`Raw AI response:`, content);
-         console.error(`Extracted JSON content:`, jsonContent);
 
-         // Try to identify the specific issue
-         let errorDetails = '';
-         if (jsonError instanceof Error) {
-           const message = jsonError.message;
-           if (message.includes('Expected')) {
-             errorDetails = `JSON syntax error: ${message}`;
-           } else if (message.includes('Unexpected')) {
-             errorDetails = `JSON structure error: ${message}`;
-           } else {
-             errorDetails = `JSON parsing error: ${message}`;
+       } catch (parseError: unknown) {
+         console.error("JSON parse error:", parseError);
+         console.error("Failed to parse content:", jsonContent);
+
+         // Try to extract just the JSON part more aggressively
+         const jsonStart = jsonContent.indexOf('{');
+         const jsonEnd = jsonContent.lastIndexOf('}');
+
+         if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+           const extractedJson = jsonContent.substring(jsonStart, jsonEnd + 1);
+           try {
+             const workout = JSON.parse(extractedJson);
+             console.log("Successfully parsed extracted JSON");
+
+             // Validate the workout structure
+             if (!workout.name || !workout.description || !Array.isArray(workout.exercises)) {
+               throw new Error(`Invalid workout structure from AI. Expected: name, description, and exercises array. Got: ${JSON.stringify(workout)}`);
+             }
+
+             if (workout.exercises.length === 0) {
+               throw new Error(`AI returned empty exercises array for workout. Expected at least 4-6 exercises.`);
+             }
+
+             // Return the extracted workout
+             return {
+               name: workout.name,
+               description: workout.description,
+               exercises: workout.exercises
+             };
+
+           } catch (extractError) {
+             const errorMessage = parseError instanceof Error ? parseError.message : String(parseError);
+             throw new Error(`Failed to parse JSON even after extraction. Original error: ${errorMessage}. Content: ${finalContent.substring(0, 200)}...`);
            }
          } else {
-           errorDetails = `Unknown JSON error: ${String(jsonError)}`;
+           const errorMessage = parseError instanceof Error ? parseError.message : String(parseError);
+           throw new Error(`Failed to parse JSON: ${errorMessage}. Content: ${finalContent.substring(0, 200)}...`);
          }
-
-         throw new Error(`Failed to parse JSON for ${dayOfWeek}. ${errorDetails}. Raw response preview: ${content.substring(0, 300)}...`);
        }
      } catch (error) {
        console.error(`Error generating workout with OpenAI:`, error);

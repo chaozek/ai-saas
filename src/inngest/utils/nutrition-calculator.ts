@@ -16,7 +16,7 @@ export interface MealNutrition {
   fiber: number;
 }
 
-// BMR calculation using Mifflin-St Jeor equation
+// Simple BMR calculation
 export function calculateBMR(weight: number, height: number, age: number, gender: string): number {
   if (gender.toLowerCase() === 'male') {
     return 10 * weight + 6.25 * height - 5 * age + 5;
@@ -25,7 +25,7 @@ export function calculateBMR(weight: number, height: number, age: number, gender
   }
 }
 
-// TDEE calculation based on activity level
+// Simple TDEE calculation
 export function calculateTDEE(bmr: number, activityLevel: string): number {
   const multipliers = {
     'SEDENTARY': 1.2,
@@ -38,7 +38,7 @@ export function calculateTDEE(bmr: number, activityLevel: string): number {
   return Math.round(bmr * (multipliers[activityLevel as keyof typeof multipliers] || 1.2));
 }
 
-// Calculate nutrition targets based on fitness goals
+// Simple nutrition targets
 export function calculateNutritionTargets(
   weight: number,
   height: number,
@@ -51,35 +51,21 @@ export function calculateNutritionTargets(
   const tdee = calculateTDEE(bmr, activityLevel);
 
   let targetCalories = tdee;
-  let proteinRatio = 0.15; // Default 15% of calories
+  let proteinRatio = 0.2; // 20% protein
 
-  // Adjust based on fitness goal
-  switch (fitnessGoal) {
-    case 'MUSCLE_GAIN':
-      targetCalories = tdee + 300; // Surplus for muscle gain
-      proteinRatio = 0.25; // 25% of calories for protein
-      break;
-    case 'WEIGHT_LOSS':
-      targetCalories = tdee - 500; // Deficit for weight loss
-      proteinRatio = 0.30; // Higher protein to preserve muscle
-      break;
-    case 'ENDURANCE':
-      targetCalories = tdee + 200;
-      proteinRatio = 0.20;
-      break;
-    case 'STRENGTH':
-      targetCalories = tdee + 250;
-      proteinRatio = 0.25;
-      break;
-    default:
-      // General fitness - maintain weight
-      break;
+  // Simple goal adjustments
+  if (fitnessGoal === 'MUSCLE_GAIN') {
+    targetCalories = tdee + 300;
+    proteinRatio = 0.25;
+  } else if (fitnessGoal === 'WEIGHT_LOSS') {
+    targetCalories = tdee - 500;
+    proteinRatio = 0.3;
   }
 
-  const targetProtein = Math.round((targetCalories * proteinRatio) / 4); // 4 calories per gram of protein
-  const targetFat = Math.round((targetCalories * 0.25) / 9); // 25% fat, 9 calories per gram
-  const targetCarbs = Math.round((targetCalories - (targetProtein * 4) - (targetFat * 9)) / 4); // Remaining calories as carbs
-  const targetFiber = Math.round(targetCalories / 1000 * 14); // 14g fiber per 1000 calories
+  const targetProtein = Math.round((targetCalories * proteinRatio) / 4);
+  const targetFat = Math.round((targetCalories * 0.25) / 9);
+  const targetCarbs = Math.round((targetCalories - (targetProtein * 4) - (targetFat * 9)) / 4);
+  const targetFiber = Math.round(targetCalories / 1000 * 14);
 
   return {
     calories: targetCalories,
@@ -90,16 +76,13 @@ export function calculateNutritionTargets(
   };
 }
 
-// Check if meals meet nutrition targets and suggest supplements
+// Simple nutrition gap check
 export function checkNutritionGaps(
   meals: any[],
   targets: NutritionTargets
 ): { gaps: NutritionTargets; needsSupplements: boolean } {
   const totalNutrition = meals.reduce((total: any, meal: any) => {
-    if (!meal.nutrition) {
-      console.warn(`Meal ${meal.name} missing nutrition data in gap calculation`);
-      return total;
-    }
+    if (!meal.nutrition) return total;
 
     const nutrition = meal.nutrition;
     return {
@@ -119,26 +102,27 @@ export function checkNutritionGaps(
     fiber: Math.max(0, targets.fiber - totalNutrition.fiber),
   };
 
-  const needsSupplements = gaps.protein > 15 || gaps.calories > 200;
+  // Check if we need supplements for any major nutrient gaps
+  const needsSupplements = gaps.protein > 30 || gaps.carbs > 60 || gaps.calories > 400;
 
   return { gaps, needsSupplements };
 }
 
-// Generate supplement suggestions to meet nutrition gaps
+// Enhanced supplement suggestions that balance all macronutrients
 export function generateSupplementSuggestions(gaps: NutritionTargets): any[] {
   const supplements: any[] = [];
 
-  // Add protein shake if protein gap is significant
-  if (gaps.protein > 15) {
+  // Only add supplements for significant gaps to avoid over-supplementation
+  // Priority 1: Protein gap (most important for muscle building)
+  if (gaps.protein > 30) { // Increased threshold from 20g to 30g
+    const proteinAmount = Math.min(gaps.protein, 40); // Max 40g protein per supplement
     supplements.push({
       name: "Proteinový nápoj",
       type: "svačina",
-      ingredients: [
-        { name: "Whey protein", amount: 30, unit: "g" }
-      ],
+      ingredients: [{ name: "Whey protein", amount: proteinAmount, unit: "g" }],
       nutrition: {
-        calories: 120,
-        protein: 30,
+        calories: proteinAmount * 4,
+        protein: proteinAmount,
         carbs: 2,
         fat: 1,
         fiber: 0
@@ -148,55 +132,63 @@ export function generateSupplementSuggestions(gaps: NutritionTargets): any[] {
     });
   }
 
-  // Add gainer if calorie gap is significant and protein is met
-  if (gaps.calories > 200 && gaps.protein <= 10) {
+  // Priority 2: Carbohydrate gap (important for energy and recovery)
+  if (gaps.carbs > 60) { // Increased threshold from 50g to 60g
+    const carbsAmount = Math.min(gaps.carbs, 80); // Max 80g carbs per supplement
     supplements.push({
       name: "Gainer nápoj",
       type: "svačina",
-      ingredients: [
-        { name: "Gainer prášek", amount: 50, unit: "g" }
-      ],
+      ingredients: [{ name: "Gainer prášek", amount: 60, unit: "g" }],
       nutrition: {
-        calories: 200,
-        protein: 10,
-        carbs: 30,
-        fat: 2,
-        fiber: 0
+        calories: carbsAmount * 4,
+        protein: 15,
+        carbs: carbsAmount,
+        fat: 3,
+        fiber: 2
       },
       prepTime: 1,
       instructions: "Smíchejte gainer s vodou nebo mlékem."
     });
   }
 
-  // Add nuts for calorie gap if protein and carbs are met
-  if (gaps.calories > 100 && gaps.protein <= 10 && gaps.carbs <= 20) {
+  // Priority 3: Calorie gap (if still needed after protein and carbs)
+  if (gaps.calories > 400 && gaps.protein <= 30 && gaps.carbs <= 60) { // Increased threshold from 300 to 400
     supplements.push({
-      name: "Ořechová směs",
+      name: "Gainer nápoj",
       type: "svačina",
-      ingredients: [
-        { name: "Směs ořechů", amount: 30, unit: "g" }
-      ],
+      ingredients: [{ name: "Gainer prášek", amount: 50, unit: "g" }],
+      nutrition: { calories: 200, protein: 10, carbs: 30, fat: 2, fiber: 0 },
+      prepTime: 1,
+      instructions: "Smíchejte gainer s vodou nebo mlékem."
+    });
+  }
+
+  // Priority 4: Balanced supplement if multiple gaps exist (only for significant gaps)
+  if (gaps.protein > 25 && gaps.carbs > 40) { // Increased thresholds
+    supplements.push({
+      name: "Vyvážený gainer",
+      type: "svačina",
+      ingredients: [{ name: "Gainer prášek", amount: 70, unit: "g" }],
       nutrition: {
-        calories: 180,
-        protein: 6,
-        carbs: 8,
-        fat: 16,
-        fiber: 3
+        calories: 350,
+        protein: 25,
+        carbs: 55,
+        fat: 4,
+        fiber: 2
       },
       prepTime: 1,
-      instructions: "Dejte si hrst ořechů jako svačinu."
+      instructions: "Smíchejte gainer s vodou nebo mlékem."
     });
   }
 
   return supplements;
 }
 
-// Czech Food Database functions
+// Simple Czech food search with basic fuzzy matching
 export async function searchCzechFood(prisma: PrismaClient, query: string): Promise<any[]> {
   try {
     console.log(`Searching Czech food database for: ${query}`);
 
-    // Clean and normalize query
     const cleanQuery = query.toLowerCase().trim();
 
     // Try exact match first
@@ -213,11 +205,10 @@ export async function searchCzechFood(prisma: PrismaClient, query: string): Prom
       }
     });
 
-    // If no exact matches, try fuzzy search
+    // If no exact matches, try word-based search
     if (foods.length === 0) {
-      console.log(`No exact matches for "${cleanQuery}", trying fuzzy search...`);
+      console.log(`No exact matches for "${cleanQuery}", trying word search...`);
 
-      // Split query into words and search for each
       const words = cleanQuery.split(/\s+/).filter(word => word.length > 2);
 
       for (const word of words) {
@@ -237,17 +228,15 @@ export async function searchCzechFood(prisma: PrismaClient, query: string): Prom
         foods = [...foods, ...wordResults];
       }
 
-      // Remove duplicates and limit results
+      // Remove duplicates
       foods = foods.filter((food, index, self) =>
         index === self.findIndex(f => f.id === food.id)
       ).slice(0, 20);
     }
 
-    // Score and sort results by relevance
+    // Better scoring for Czech foods
     const scoredFoods = foods.map(food => {
       const foodName = food.name.toLowerCase();
-      const queryWords = cleanQuery.split(/\s+/);
-
       let score = 0;
 
       // Exact match gets highest score
@@ -255,42 +244,95 @@ export async function searchCzechFood(prisma: PrismaClient, query: string): Prom
         score += 1000;
       }
 
-      // Starts with query gets high score
+      // Starts with query gets very high score
       if (foodName.startsWith(cleanQuery)) {
         score += 500;
       }
 
-      // Contains all query words gets good score
-      const containsAllWords = queryWords.every(word => foodName.includes(word));
-      if (containsAllWords) {
+      // Contains query as substring gets high score
+      if (foodName.includes(cleanQuery)) {
         score += 300;
       }
 
-      // Contains most query words gets medium score
-      const matchingWords = queryWords.filter(word => foodName.includes(word)).length;
-      score += matchingWords * 100;
+      // Query words in correct order gets good score
+      const queryWords = cleanQuery.split(/\s+/);
+      const foodWords = foodName.split(/\s+/);
 
-      // Penalize foods that contain extra words that might be wrong
-      const extraWords = foodName.split(/\s+/).filter(word =>
-        !queryWords.includes(word) && word.length > 2
+      // Check if query words appear in food name in similar order
+      let orderScore = 0;
+      let lastIndex = -1;
+      for (const queryWord of queryWords) {
+        const wordIndex = foodWords.findIndex(word => word.includes(queryWord));
+        if (wordIndex > lastIndex) {
+          orderScore += 50;
+          lastIndex = wordIndex;
+        }
+      }
+      score += orderScore;
+
+      // Contains all query words gets bonus
+      const containsAllWords = queryWords.every(word =>
+        foodWords.some(foodWord => foodWord.includes(word))
       );
-      score -= extraWords.length * 50;
-
-      // Penalize processed/weird foods
-      if (foodName.includes('sušený') || foodName.includes('prášek') ||
-          foodName.includes('acidofilní') || foodName.includes('baobab')) {
-        score -= 200;
+      if (containsAllWords) {
+        score += 200;
       }
 
-      // Prefer raw/fresh foods
+      // Count matching words
+      const matchingWords = queryWords.filter(queryWord =>
+        foodWords.some(foodWord => foodWord.includes(queryWord))
+      ).length;
+      score += matchingWords * 100;
+
+      // HEAVY PENALTIES for wrong food types
+      if (query.includes('jablko') && (foodName.includes('závin') || foodName.includes('koláč') || foodName.includes('dort'))) {
+        score -= 1000; // Heavy penalty for baked goods when searching for raw fruit
+      }
+
+      if (query.includes('sojová') && !foodName.includes('sojová')) {
+        score -= 1000; // Heavy penalty for non-soy when searching for soy sauce
+      }
+
+      if (query.includes('rýže') && !foodName.includes('rýže')) {
+        score -= 1000; // Heavy penalty for non-rice when searching for rice
+      }
+
+      if (query.includes('mrkev') && !foodName.includes('mrkev')) {
+        score -= 1000; // Heavy penalty for non-carrot when searching for carrot
+      }
+
+      // Penalize processed foods when searching for raw ingredients
+      if (query.includes('jablko') && (foodName.includes('konzerva') || foodName.includes('sterilovaný') || foodName.includes('mražený'))) {
+        score -= 800;
+      }
+
+      if (query.includes('okurka') && (foodName.includes('konzerva') || foodName.includes('sterilovaný') || foodName.includes('mražený'))) {
+        score -= 800;
+      }
+
+      // Penalize foods with too many extra words
+      const extraWords = foodWords.filter(word =>
+        !queryWords.some(queryWord => word.includes(queryWord)) && word.length > 2
+      );
+      if (extraWords.length > 3) {
+        score -= extraWords.length * 200; // Heavy penalty for foods with many extra words
+      }
+
+      // Prefer raw/fresh foods over processed ones
       if (foodName.includes('čerstvý') || foodName.includes('syrový')) {
         score += 100;
       }
 
+      // Bonus for exact word matches
+      const exactWordMatches = queryWords.filter(queryWord =>
+        foodWords.some(foodWord => foodWord === queryWord)
+      ).length;
+      score += exactWordMatches * 150;
+
       return { ...food, score };
     });
 
-    // Sort by score (highest first) and take top 5
+    // Sort by score and take top 5
     const sortedFoods = scoredFoods
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
@@ -303,36 +345,24 @@ export async function searchCzechFood(prisma: PrismaClient, query: string): Prom
   }
 }
 
-// Function to get nutrition for ingredients from Czech database
+// Simple ingredient nutrition
 export async function getIngredientNutrition(prisma: PrismaClient, ingredientName: string): Promise<{ calories: number; protein: number; carbs: number; fat: number } | null> {
   try {
-    console.log(`Getting Czech nutrition for: ${ingredientName}`);
-
     const foods = await searchCzechFood(prisma, ingredientName);
 
     if (foods.length > 0) {
-      // Select the best match (first result)
       const selectedFood = foods[0];
-      console.log(`Selected Czech food: ${selectedFood.name} (${selectedFood.calories} kcal, ${selectedFood.protein}g protein)`);
-
-      // Use more precise nutrition data from Czech database
       return {
-        // Use exact calories from database (ENERC field)
         calories: selectedFood.calories || 0,
-        // Use protein from database (PROT field)
         protein: selectedFood.protein || 0,
-        // Use usable carbs (CHO field) instead of total carbs (CHOT field)
-        // This excludes fiber which is not digestible
         carbs: selectedFood.usableCarbs || selectedFood.carbs || 0,
-        // Use total fat from database (FAT field)
         fat: selectedFood.fat || 0
       };
     }
 
-    console.warn(`No Czech food found for: ${ingredientName}`);
     return null;
   } catch (error) {
-    console.error(`Error getting Czech nutrition for ${ingredientName}:`, error);
+    console.error(`Error getting Czech nutrition:`, error);
     return null;
   }
 }

@@ -237,7 +237,7 @@ export function WeekMeals({
                       <CollapsibleContent>
                         <div className="px-4 pb-4 pt-4 space-y-3">
                           {/* Všechna jídla v jednom řádku podle pořadí */}
-                          <div className={`grid grid-cols-1 md:grid-cols-${Math.min(dayMeals.length -1, 5)} gap-3`}>
+                          <div className={`grid grid-cols-1 md:grid-cols-${Math.min(dayMeals.length -1)} gap-3`}>
                             {sortedMeals.map((meal) => (
                               <MealCard
                                 key={meal.id}

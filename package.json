@@ -15,7 +15,8 @@
     "test:clerk-webhook": "tsx scripts/test-clerk-webhook.ts",
     "studio": "prisma studio",
     "inngest": "inngest dev",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "stripe": "stripe listen --forward-to localhost:3000/api/webhooks/stripe"
   },
   "dependencies": {
     "@clerk/localizations": "^3.20.5",

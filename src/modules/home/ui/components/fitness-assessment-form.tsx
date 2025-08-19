@@ -46,6 +46,7 @@ interface AssessmentData {
 
   // Meal Planning
   mealPlanningEnabled: boolean;
+  numberOfDays: number;
   dietaryRestrictions: string[];
   allergies: string[];
   preferredCuisines: string[];
